@@ -1,0 +1,141 @@
+==================================================
+Smart Service Request Management
+Database Script History
+==================================================
+
+Purpose:
+This file contains all database changes for the project
+in chronological order.
+
+Database:
+[SmartServiceRequestDB]
+
+==================================================
+Date: 20-Aug-2026
+Change: Initial database setup
+==================================================
+
+-- Tables
+-- CREATE TABLE [dbo].[Requests](
+	[RequestId] [int] IDENTITY(1,1) NOT NULL,
+	[RequestCode]  AS ('SR-'+right('000000'+CONVERT([varchar](6),[RequestId]),(6))) PERSISTED,
+	[RequestType] [nvarchar](100) NOT NULL,
+	[RequestDescription] [nvarchar](1000) NOT NULL,
+	[Priority] [nvarchar](20) NOT NULL,
+	[Status] [nvarchar](30) NOT NULL,
+	[CreatedDate] [datetime2](7) NOT NULL,
+	[UpdatedDate] [datetime2](7) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[RequestId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+ALTER TABLE [dbo].[Requests] ADD  CONSTRAINT [DF_Requests_Status]  DEFAULT ('Open') FOR [Status]
+GO
+
+ALTER TABLE [dbo].[Requests] ADD  CONSTRAINT [DF_Requests_CreatedDate]  DEFAULT (sysutcdatetime()) FOR [CreatedDate]
+GO
+
+ALTER TABLE [dbo].[Requests]  WITH CHECK ADD  CONSTRAINT [CK_Requests_Priority] CHECK  (([Priority]='High' OR [Priority]='Medium' OR [Priority]='Low'))
+GO
+
+ALTER TABLE [dbo].[Requests] CHECK CONSTRAINT [CK_Requests_Priority]
+GO
+
+ALTER TABLE [dbo].[Requests]  WITH CHECK ADD  CONSTRAINT [CK_Requests_Status] CHECK  (([Status]='Resolved' OR [Status]='In Progress' OR [Status]='Open'))
+GO
+
+ALTER TABLE [dbo].[Requests] CHECK CONSTRAINT [CK_Requests_Status]
+GO
+
+
+
+-- Stored Procedures
+CREATE PROCEDURE [dbo].[SSR_Request_Create]
+(
+    @RequestType NVARCHAR(100),
+    @RequestDescription NVARCHAR(1000),
+    @Priority NVARCHAR(20)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO Requests
+    (
+        RequestType,
+        RequestDescription,
+        Priority
+    )
+    VALUES
+    (
+        @RequestType,
+        @RequestDescription,
+        @Priority
+    );
+
+    SELECT
+        RequestId,
+        RequestCode,
+        RequestType,
+        RequestDescription,
+        Priority,
+        Status,
+        CreatedDate
+    FROM Requests
+    WHERE RequestId = SCOPE_IDENTITY();
+END;
+
+CREATE PROCEDURE [dbo].[SSR_Request_Dashboard_GetTotalCount]
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT COUNT(*) AS TotalRequests
+    FROM Requests;
+END;
+
+
+CREATE PROCEDURE [dbo].[SSR_Request_GetAll]
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        RequestId,
+        RequestCode,
+        RequestType,
+        RequestDescription,
+        Priority,
+        Status,
+        CreatedDate,
+        UpdatedDate
+    FROM Requests
+    ORDER BY CreatedDate DESC;
+END;
+
+CREATE PROCEDURE [dbo].[SSR_Request_GetById]
+(
+    @RequestId INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        RequestId,
+        RequestCode,
+        RequestType,
+        RequestDescription,
+        Priority,
+        Status,
+        CreatedDate,
+        UpdatedDate
+    FROM Requests
+    WHERE RequestId = @RequestId;
+END;
+
+
+
