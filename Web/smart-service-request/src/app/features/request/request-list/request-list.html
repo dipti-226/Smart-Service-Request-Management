@@ -1,0 +1,107 @@
+<div class="table-card">
+
+  <div class="table-header">
+    <h3>Service Requests</h3>
+  </div>
+
+  @if (isLoading) {
+
+    <div class="state-message">
+      Loading requests...
+    </div>
+
+  } @else if (errorMessage) {
+
+    <div class="state-message error">
+      {{ errorMessage }}
+    </div>
+
+  } @else if (requests.length === 0) {
+
+    <div class="state-message">
+      No service requests found.
+    </div>
+
+  } @else {
+
+    <div class="table-wrapper">
+
+      <table>
+
+        <thead>
+          <tr>
+            <th>Sr. No.</th>
+            <th>Request ID</th>
+            <th>Request Type</th>
+            <th>Description</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Created Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          @for (
+            request of requests;
+            track request.requestId;
+            let i = $index
+          ) {
+
+            <tr>
+
+              <td>{{ i + 1 }}</td>
+
+              <td>
+                {{ request.requestCode }}
+              </td>
+
+              <td>
+                {{ request.requestType }}
+              </td>
+
+              <td class="description">
+                {{ request.requestDescription }}
+              </td>
+
+              <td>
+                <span
+                  class="priority"
+                  [class.high]="request.priority === 'High'"
+                  [class.critical]="request.priority === 'Critical'">
+                  {{ request.priority }}
+                </span>
+              </td>
+
+              <td>
+                <span class="status">
+                  {{ request.status }}
+                </span>
+              </td>
+
+              <td>
+                {{ request.createdDate | date:'dd-MM-yyyy HH:mm' }}
+              </td>
+
+              <td>
+                <button
+                  type="button"
+                  class="view-button">
+                  View
+                </button>
+              </td>
+
+            </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  }
+
+</div>

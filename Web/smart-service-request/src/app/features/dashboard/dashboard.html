@@ -1,0 +1,46 @@
+<div class="dashboard-container">
+
+  <div class="dashboard-header">
+
+    <div>
+      <h1>Dashboard</h1>
+      <p>Overview of service requests.</p>
+    </div>
+
+  </div>
+
+  @if (errorMessage) {
+    <div class="dashboard-error">
+      {{ errorMessage }}
+    </div>
+  }
+
+  <div class="cards">
+
+    <div class="summary-card">
+
+      <div class="card-content">
+
+        <span class="card-title">
+          Total Requests
+        </span>
+
+        @if (isLoading) {
+          <span class="card-value">
+            ...
+          </span>
+        } @else {
+          <span class="card-value">
+            {{ totalRequests }}
+          </span>
+        }
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <app-request-list></app-request-list>
+
+</div>

@@ -1,0 +1,169 @@
+<div class="page-container">
+
+  <div class="form-card">
+
+    <div class="form-header">
+      <h2>Create Service Request</h2>
+      <p>Report your problem by entering the details below.</p>
+    </div>
+
+    @if (successMessage) {
+      <div class="alert success">
+        {{ successMessage }}
+      </div>
+    }
+
+    @if (errorMessage) {
+      <div class="alert error">
+        {{ errorMessage }}
+      </div>
+    }
+
+    <form
+      [formGroup]="requestForm"
+      (ngSubmit)="submitRequest()">
+
+      <div class="form-group">
+
+        <label for="requestType">
+          Request Type
+        </label>
+
+        <select
+          id="requestType"
+          formControlName="requestType">
+
+          <option value="">
+            Select request type
+          </option>
+
+          <option value="Computer">
+            Computer
+          </option>
+
+          <option value="Network">
+            Network
+          </option>
+
+          <option value="Software">
+            Software
+          </option>
+
+          <option value="Hardware">
+            Hardware
+          </option>
+
+          <option value="Other">
+            Other
+          </option>
+
+        </select>
+
+        @if (
+          requestForm.controls.requestType.touched &&
+          requestForm.controls.requestType.invalid
+        ) {
+          <small class="validation-error">
+            Request type is required.
+          </small>
+        }
+
+      </div>
+
+      <div class="form-group">
+
+        <label for="requestDescription">
+          Request Description
+        </label>
+
+        <textarea
+          id="requestDescription"
+          rows="6"
+          maxlength="1000"
+          placeholder="Describe your problem..."
+          formControlName="requestDescription">
+        </textarea>
+
+        @if (
+          requestForm.controls.requestDescription.touched &&
+          requestForm.controls.requestDescription.invalid
+        ) {
+          <small class="validation-error">
+            Request description is required.
+          </small>
+        }
+
+      </div>
+
+      <div class="form-group">
+
+        <label for="priority">
+          Priority
+        </label>
+
+        <select
+          id="priority"
+          formControlName="priority">
+
+          <option value="">
+            Select priority
+          </option>
+
+          <option value="Low">
+            Low
+          </option>
+
+          <option value="Medium">
+            Medium
+          </option>
+
+          <option value="High">
+            High
+          </option>
+
+          <option value="Critical">
+            Critical
+          </option>
+
+        </select>
+
+        @if (
+          requestForm.controls.priority.touched &&
+          requestForm.controls.priority.invalid
+        ) {
+          <small class="validation-error">
+            Priority is required.
+          </small>
+        }
+
+      </div>
+
+      <div class="form-actions">
+
+        <button
+          type="button"
+          class="btn secondary"
+          (click)="requestForm.reset()">
+          Reset
+        </button>
+
+        <button
+          type="submit"
+          class="btn primary"
+          [disabled]="isSubmitting">
+
+          @if (isSubmitting) {
+            Submitting...
+          } @else {
+            Submit Request
+          }
+
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
