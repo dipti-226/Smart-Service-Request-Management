@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
-import { Request, CreateRequest } from '../models/request.model';
+import { Request, CreateRequest, UpdateRequest } from '../models/request.model';
 import { Dashboard } from '../models/dashboard.model';
 
 @Injectable({
@@ -31,6 +31,19 @@ export class RequestService {
 
   getRequestById(id: number): Observable<ApiResponse<Request>> {
     return this.http.get<ApiResponse<Request>>(
+      `${this.apiUrl}/${id}`
+    );
+  }
+
+  updateRequest(id: number, request: UpdateRequest): Observable<ApiResponse<Request>> {
+    return this.http.put<ApiResponse<Request>>(
+      `${this.apiUrl}/${id}`,
+      request
+    );
+  }
+
+  deleteRequest(id: number): Observable<ApiResponse<boolean>> {
+    return this.http.delete<ApiResponse<boolean>>(
       `${this.apiUrl}/${id}`
     );
   }

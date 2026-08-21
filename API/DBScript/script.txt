@@ -137,5 +137,173 @@ BEGIN
     WHERE RequestId = @RequestId;
 END;
 
+==================================================
+Date: 21-Aug-2026
+Change: Stage 2 - Admin login (plain password),
+        soft delete for Requests, dashboard status
+        summary, edit & delete procedures
+==================================================
 
+-- 1. Soft delete flag on Requests
+ALTER TABLE [dbo].[Requests]
+ADD [IsActive] [bit] NOT NULL CONSTRAINT [DF_Requests_IsActive] DEFAULT (1);
+GO
+
+-- 2. Admin login table (plain text password - no hashing for now)
+CREATE TABLE [dbo].[AdminUsers]
+(
+    [AdminId]     INT IDENTITY(1,1) NOT NULL,
+    [AdminName]   NVARCHAR(50)  NOT NULL,
+    [Password]    NVARCHAR(100) NOT NULL,
+    [CreatedDate] DATETIME      NOT NULL,
+    [IsActive]    BIT           NOT NULL,
+    PRIMARY KEY CLUSTERED ([AdminId] ASC)
+);
+GO
+ALTER TABLE [dbo].[AdminUsers] ADD CONSTRAINT [DF_AdminUsers_CreatedDate] DEFAULT (GETDATE()) FOR [CreatedDate]
+GO
+ALTER TABLE [dbo].[AdminUsers] ADD CONSTRAINT [DF_AdminUsers_IsActive] DEFAULT (1) FOR [IsActive]
+GO
+ALTER TABLE [dbo].[AdminUsers] ADD CONSTRAINT [UQ_AdminUsers_AdminName] UNIQUE ([AdminName])
+GO
+
+-- 3. Seed default admin (change this password after first login)
+INSERT INTO [dbo].[AdminUsers] (AdminName, Password)
+VALUES ('admin', 'Admin@123');
+GO
+
+-- 4. Admin lookup for login
+CREATE OR ALTER PROCEDURE [dbo].[SSR_Admin_GetByUsername]
+(
+    @AdminName NVARCHAR(50)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        AdminId,
+        AdminName,
+        Password,
+        IsActive
+    FROM AdminUsers
+    WHERE AdminName = @AdminName
+      AND IsActive = 1;
+END;
+GO
+
+-- 5. Existing procs -> only active requests
+CREATE OR ALTER PROCEDURE [dbo].[SSR_Request_GetAll]
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        RequestId,
+        RequestCode,
+        RequestType,
+        RequestDescription,
+        Priority,
+        Status,
+        CreatedDate,
+        UpdatedDate
+    FROM Requests
+    WHERE IsActive = 1
+    ORDER BY CreatedDate DESC;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE [dbo].[SSR_Request_GetById]
+(
+    @RequestId INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        RequestId,
+        RequestCode,
+        RequestType,
+        RequestDescription,
+        Priority,
+        Status,
+        CreatedDate,
+        UpdatedDate
+    FROM Requests
+    WHERE RequestId = @RequestId
+      AND IsActive = 1;
+END;
+GO
+
+-- 6. Dashboard summary (Total / Open / In Progress / Resolved)
+CREATE OR ALTER PROCEDURE [dbo].[SSR_Request_Dashboard_GetTotalCount]
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        COUNT(*) AS TotalRequests,
+        SUM(CASE WHEN Status = 'Open'        THEN 1 ELSE 0 END) AS OpenRequests,
+        SUM(CASE WHEN Status = 'In Progress' THEN 1 ELSE 0 END) AS InProgressRequests,
+        SUM(CASE WHEN Status = 'Resolved'    THEN 1 ELSE 0 END) AS ResolvedRequests
+    FROM Requests
+    WHERE IsActive = 1;
+END;
+GO
+
+-- 7. Update (edit) a request
+CREATE PROCEDURE [dbo].[SSR_Request_Update]
+(
+    @RequestId          INT,
+    @RequestType        NVARCHAR(100),
+    @RequestDescription NVARCHAR(1000),
+    @Priority            NVARCHAR(20),
+    @Status               NVARCHAR(30)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE Requests
+    SET RequestType        = @RequestType,
+        RequestDescription = @RequestDescription,
+        Priority            = @Priority,
+        Status              = @Status,
+        UpdatedDate         = SYSUTCDATETIME()
+    WHERE RequestId = @RequestId
+      AND IsActive = 1;
+
+    SELECT
+        RequestId,
+        RequestCode,
+        RequestType,
+        RequestDescription,
+        Priority,
+        Status,
+        CreatedDate,
+        UpdatedDate
+    FROM Requests
+    WHERE RequestId = @RequestId;
+END;
+GO
+
+-- 8. Soft delete a request
+CREATE PROCEDURE [dbo].[SSR_Request_SoftDelete]
+(
+    @RequestId INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE Requests
+    SET IsActive = 0,
+        UpdatedDate = SYSUTCDATETIME()
+    WHERE RequestId = @RequestId
+      AND IsActive = 1;
+
+    SELECT @@ROWCOUNT AS RowsAffected;
+END;
+GO
 

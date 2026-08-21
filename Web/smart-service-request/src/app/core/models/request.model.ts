@@ -14,3 +14,10 @@ export interface CreateRequest {
   requestDescription: string;
   priority: string;
 }
+
+export interface UpdateRequest {
+  requestType: string;
+  requestDescription: string;
+  priority: string;
+  status: string;
+}

@@ -1,5 +1,6 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, Output, EventEmitter, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { Router } from '@angular/router';
 
 import { RequestService } from '../../../core/services/request.service';
 import { Request } from '../../../core/models/request.model';
@@ -14,11 +15,17 @@ import { Request } from '../../../core/models/request.model';
 export class RequestListComponent implements OnInit {
 
   private readonly requestService = inject(RequestService);
+  private readonly router = inject(Router);
 
-  requests: Request[] = [];
+  @Output() requestsChanged = new EventEmitter<void>();
 
-  isLoading = false;
-  errorMessage = '';
+  // Signals so the table re-renders as soon as data changes,
+  // regardless of async timing (this app runs zoneless).
+  requests = signal<Request[]>([]);
+
+  isLoading = signal(false);
+  errorMessage = signal('');
+  deletingId = signal<number | null>(null);
 
   ngOnInit(): void {
     this.loadRequests();
@@ -26,34 +33,86 @@ export class RequestListComponent implements OnInit {
 
   loadRequests(): void {
 
-    this.isLoading = true;
-    this.errorMessage = '';
+    this.isLoading.set(true);
+    this.errorMessage.set('');
 
     this.requestService.getAllRequests().subscribe({
 
       next: response => {
 
-        this.isLoading = false;
+        this.isLoading.set(false);
 
         if (!response.success) {
-          this.errorMessage =
-            response.message || 'Unable to load requests.';
+          this.errorMessage.set(
+            response.message || 'Unable to load requests.'
+          );
           return;
         }
 
-        this.requests = response.data ?? [];
+        this.requests.set(response.data ?? []);
       },
 
       error: error => {
 
-        this.isLoading = false;
+        this.isLoading.set(false);
 
         console.error(error);
 
-        this.errorMessage =
-          'Unable to load requests.';
+        this.errorMessage.set(
+          error?.error?.message || 'Unable to load requests.'
+        );
       }
 
+    });
+  }
+
+  editRequest(request: Request): void {
+    this.router.navigate(['/request/edit', request.requestId]);
+  }
+
+  deleteRequest(request: Request): void {
+
+    const confirmed = confirm(
+      `Are you sure you want to delete request ${request.requestCode}?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.deletingId.set(request.requestId);
+    this.errorMessage.set('');
+
+    this.requestService.deleteRequest(request.requestId).subscribe({
+
+      next: response => {
+
+        this.deletingId.set(null);
+
+        if (!response.success) {
+          this.errorMessage.set(
+            response.message || 'Unable to delete request.'
+          );
+          return;
+        }
+
+        this.requests.update(
+          current => current.filter(r => r.requestId !== request.requestId)
+        );
+
+        this.requestsChanged.emit();
+      },
+
+      error: error => {
+
+        this.deletingId.set(null);
+
+        console.error(error);
+
+        this.errorMessage.set(
+          error?.error?.message || 'Unable to delete request.'
+        );
+      }
     });
   }
 }

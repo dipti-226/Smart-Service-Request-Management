@@ -9,12 +9,17 @@ body {
   padding: 0;
 
   font-family:
-    Arial,
+    'Segoe UI',
+    -apple-system,
+    BlinkMacSystemFont,
+    Roboto,
     Helvetica,
+    Arial,
     sans-serif;
 
   background-color: #f5f7fa;
   color: #111827;
+  -webkit-font-smoothing: antialiased;
 }
 
 button,

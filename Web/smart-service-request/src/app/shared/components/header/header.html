@@ -2,13 +2,25 @@
   <div class="header-container">
 
     <div class="logo">
-      Smart Service Request
+      <span class="logo-mark">SSR</span>
+      <span class="logo-text">Smart Service Request</span>
     </div>
 
-    <nav>
-      <a routerLink="/dashboard">Dashboard</a>
-      <a routerLink="/request/new">Create Request</a>
-    </nav>
+    @if (isLoggedIn) {
+
+      <nav>
+        <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+        <a routerLink="/request/new" routerLinkActive="active">Create Request</a>
+      </nav>
+
+      <div class="admin-area">
+        <span class="admin-badge">{{ adminName }}</span>
+        <button type="button" class="logout-btn" (click)="logout()">
+          Logout
+        </button>
+      </div>
+
+    }
 
   </div>
 </header>

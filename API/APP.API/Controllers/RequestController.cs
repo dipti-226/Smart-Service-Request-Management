@@ -66,5 +66,35 @@ namespace APP.API.Controllers
 
             return Ok(response);
         }
+
+        [HttpPut("{id:int}")]
+        public async Task<ActionResult<ApiResponse<RequestResponseDto>>>
+            UpdateRequest(int id, UpdateRequestDto dto)
+        {
+            var response =
+                await _requestService.UpdateRequestAsync(id, dto);
+
+            if (!response.Success)
+            {
+                return NotFound(response);
+            }
+
+            return Ok(response);
+        }
+
+        [HttpDelete("{id:int}")]
+        public async Task<ActionResult<ApiResponse<bool>>>
+            DeleteRequest(int id)
+        {
+            var response =
+                await _requestService.SoftDeleteRequestAsync(id);
+
+            if (!response.Success)
+            {
+                return NotFound(response);
+            }
+
+            return Ok(response);
+        }
     }
 }

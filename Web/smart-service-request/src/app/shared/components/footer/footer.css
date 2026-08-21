@@ -1,12 +1,15 @@
 .footer {
-  height: 60px;
+  min-height: 56px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  background-color: #1f2937;
-  color: #ffffff;
+  background: #111827;
+  color: rgba(255, 255, 255, 0.65);
 
-  font-size: 14px;
+  font-size: 13px;
+  letter-spacing: 0.2px;
+  padding: 10px 16px;
+  text-align: center;
 }

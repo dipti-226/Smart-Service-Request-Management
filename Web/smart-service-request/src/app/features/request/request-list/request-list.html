@@ -4,19 +4,19 @@
     <h3>Service Requests</h3>
   </div>
 
-  @if (isLoading) {
+  @if (isLoading()) {
 
     <div class="state-message">
       Loading requests...
     </div>
 
-  } @else if (errorMessage) {
+  } @else if (errorMessage()) {
 
     <div class="state-message error">
-      {{ errorMessage }}
+      {{ errorMessage() }}
     </div>
 
-  } @else if (requests.length === 0) {
+  } @else if (requests().length === 0) {
 
     <div class="state-message">
       No service requests found.
@@ -44,7 +44,7 @@
         <tbody>
 
           @for (
-            request of requests;
+            request of requests();
             track request.requestId;
             let i = $index
           ) {
@@ -85,11 +85,28 @@
               </td>
 
               <td>
-                <button
-                  type="button"
-                  class="view-button">
-                  View
-                </button>
+                <div class="action-buttons">
+
+                  <button
+                    type="button"
+                    class="edit-button"
+                    (click)="editRequest(request)">
+                    Edit
+                  </button>
+
+                  <button
+                    type="button"
+                    class="delete-button"
+                    [disabled]="deletingId() === request.requestId"
+                    (click)="deleteRequest(request)">
+                    @if (deletingId() === request.requestId) {
+                      Deleting...
+                    } @else {
+                      Delete
+                    }
+                  </button>
+
+                </div>
               </td>
 
             </tr>

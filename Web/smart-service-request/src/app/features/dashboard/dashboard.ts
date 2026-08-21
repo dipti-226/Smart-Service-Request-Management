@@ -1,7 +1,8 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 
 import { RequestService } from '../../core/services/request.service';
 import { RequestListComponent } from '../request/request-list/request-list';
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -13,10 +14,15 @@ export class DashboardComponent implements OnInit {
 
   private readonly requestService = inject(RequestService);
 
-  totalRequests = 0;
+  // Signals so the UI re-renders as soon as data changes,
+  // regardless of async timing (this app runs zoneless).
+  totalRequests = signal(0);
+  openRequests = signal(0);
+  inProgressRequests = signal(0);
+  resolvedRequests = signal(0);
 
-  isLoading = false;
-  errorMessage = '';
+  isLoading = signal(false);
+  errorMessage = signal('');
 
   ngOnInit(): void {
     this.loadDashboard();
@@ -24,33 +30,37 @@ export class DashboardComponent implements OnInit {
 
   loadDashboard(): void {
 
-    this.isLoading = true;
-    this.errorMessage = '';
+    this.isLoading.set(true);
+    this.errorMessage.set('');
 
     this.requestService.getDashboard().subscribe({
 
       next: response => {
 
-        this.isLoading = false;
+        this.isLoading.set(false);
 
         if (!response.success) {
-          this.errorMessage =
-            response.message || 'Unable to load dashboard.';
+          this.errorMessage.set(
+            response.message || 'Unable to load dashboard.'
+          );
           return;
         }
 
-        this.totalRequests =
-          response.data?.totalRequests ?? 0;
+        this.totalRequests.set(response.data?.totalRequests ?? 0);
+        this.openRequests.set(response.data?.openRequests ?? 0);
+        this.inProgressRequests.set(response.data?.inProgressRequests ?? 0);
+        this.resolvedRequests.set(response.data?.resolvedRequests ?? 0);
       },
 
       error: error => {
 
-        this.isLoading = false;
+        this.isLoading.set(false);
 
         console.error(error);
 
-        this.errorMessage =
-          'Unable to load dashboard.';
+        this.errorMessage.set(
+          error?.error?.message || 'Unable to load dashboard.'
+        );
       }
 
     });

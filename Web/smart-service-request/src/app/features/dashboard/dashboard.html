@@ -9,38 +9,60 @@
 
   </div>
 
-  @if (errorMessage) {
+  @if (errorMessage()) {
     <div class="dashboard-error">
-      {{ errorMessage }}
+      {{ errorMessage() }}
     </div>
   }
 
   <div class="cards">
 
-    <div class="summary-card">
-
+    <div class="summary-card total">
       <div class="card-content">
-
-        <span class="card-title">
-          Total Requests
-        </span>
-
-        @if (isLoading) {
-          <span class="card-value">
-            ...
-          </span>
+        <span class="card-title">Total Requests</span>
+        @if (isLoading()) {
+          <span class="card-value">...</span>
         } @else {
-          <span class="card-value">
-            {{ totalRequests }}
-          </span>
+          <span class="card-value">{{ totalRequests() }}</span>
         }
-
       </div>
+    </div>
 
+    <div class="summary-card open">
+      <div class="card-content">
+        <span class="card-title">Open</span>
+        @if (isLoading()) {
+          <span class="card-value">...</span>
+        } @else {
+          <span class="card-value">{{ openRequests() }}</span>
+        }
+      </div>
+    </div>
+
+    <div class="summary-card progress">
+      <div class="card-content">
+        <span class="card-title">In Progress</span>
+        @if (isLoading()) {
+          <span class="card-value">...</span>
+        } @else {
+          <span class="card-value">{{ inProgressRequests() }}</span>
+        }
+      </div>
+    </div>
+
+    <div class="summary-card resolved">
+      <div class="card-content">
+        <span class="card-title">Resolved</span>
+        @if (isLoading()) {
+          <span class="card-value">...</span>
+        } @else {
+          <span class="card-value">{{ resolvedRequests() }}</span>
+        }
+      </div>
     </div>
 
   </div>
 
-  <app-request-list></app-request-list>
+  <app-request-list (requestsChanged)="loadDashboard()"></app-request-list>
 
 </div>

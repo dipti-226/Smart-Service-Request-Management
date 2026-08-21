@@ -1,4 +1,7 @@
 using APP.Business.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +14,29 @@ builder.Services.AddSwaggerGen();
 
 // Business Services
 builder.Services.AddScoped<RequestService>();
+builder.Services.AddScoped<AuthService>();
+
+// JWT — issuing/validating tokens only. No [Authorize] applied to any endpoint yet.
+var jwtSection = builder.Configuration.GetSection("Jwt");
+var jwtKey = jwtSection["Key"]
+    ?? throw new InvalidOperationException("Jwt:Key is not configured.");
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtSection["Issuer"],
+            ValidAudience = jwtSection["Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+        };
+    });
+
 
 // CORS - Angular
 builder.Services.AddCors(options =>
@@ -39,7 +65,8 @@ app.UseHttpsRedirection();
 // CORS
 app.UseCors("AngularPolicy");
 
-// Authorization
+// Authentication & Authorization (no [Authorize] attributes yet — this just wires the pipeline)
+app.UseAuthentication();
 app.UseAuthorization();
 
 // Controllers
