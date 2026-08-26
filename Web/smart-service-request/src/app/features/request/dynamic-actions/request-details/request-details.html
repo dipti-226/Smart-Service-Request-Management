@@ -1,0 +1,29 @@
+<div class="request-details">
+
+  <h3>Request Details</h3>
+
+  @if (request) {
+
+    <div class="detail-row">
+      <strong>Request ID:</strong>
+      <span>{{ request.id }}</span>
+    </div>
+
+    <div class="detail-row">
+      <strong>Title:</strong>
+      <span>{{ request.title }}</span>
+    </div>
+
+    <div class="detail-row">
+      <strong>Description:</strong>
+      <span>{{ request.description }}</span>
+    </div>
+
+    <div class="detail-row">
+      <strong>Status:</strong>
+      <span>{{ request.status }}</span>
+    </div>
+
+  }
+
+</div>

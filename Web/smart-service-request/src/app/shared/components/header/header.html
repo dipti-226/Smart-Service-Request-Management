@@ -8,17 +8,26 @@
 
     @if (isLoggedIn) {
 
-      <nav>
-        <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
-        <a routerLink="/request/new" routerLinkActive="active">Create Request</a>
-      </nav>
+    <nav>
+      <a routerLink="/dashboard" routerLinkActive="active">
+        Dashboard
+      </a>
 
-      <div class="admin-area">
-        <span class="admin-badge">{{ adminName }}</span>
-        <button type="button" class="logout-btn" (click)="logout()">
-          Logout
-        </button>
-      </div>
+      <a routerLink="/request/new" routerLinkActive="active">
+        Create Request
+      </a>
+
+      <a routerLink="/advanced-components" routerLinkActive="active">
+        Advanced Components
+      </a>
+    </nav>
+
+    <div class="admin-area">
+      <span class="admin-badge">{{ adminName }}</span>
+      <button type="button" class="logout-btn" (click)="logout()">
+        Logout
+      </button>
+    </div>
 
     }
 

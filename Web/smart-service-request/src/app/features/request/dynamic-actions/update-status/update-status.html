@@ -1,0 +1,57 @@
+<div class="update-status">
+
+  <h3>Update Request Status</h3>
+
+  @if (request) {
+    <p>
+      <strong>Request:</strong>
+      {{ request.title }}
+    </p>
+
+    <p>
+      <strong>Current Status:</strong>
+      {{ request.status }}
+    </p>
+  }
+
+  <div class="status-form">
+
+    <label for="status">
+      New Status
+    </label>
+
+    <select
+      id="status"
+      [(ngModel)]="selectedStatus"
+    >
+      <option value="">
+        Select Status
+      </option>
+
+      <option value="Pending">
+        Pending
+      </option>
+
+      <option value="In Progress">
+        In Progress
+      </option>
+
+      <option value="Resolved">
+        Resolved
+      </option>
+
+      <option value="Closed">
+        Closed
+      </option>
+    </select>
+
+    <button
+      type="button"
+      (click)="updateStatus()"
+    >
+      Update Status
+    </button>
+
+  </div>
+
+</div>

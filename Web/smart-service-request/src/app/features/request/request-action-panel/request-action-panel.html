@@ -1,0 +1,90 @@
+<section class="request-action-panel" aria-labelledby="request-action-title">
+
+    <h2 id="request-action-title">
+        Request Actions
+    </h2>
+
+    <app-request-card>
+
+        <div card-title>
+            Request #{{ request.id }}
+        </div>
+
+        <div card-content>
+
+            <p>
+                <strong>Title:</strong>
+                {{ request.title }}
+            </p>
+
+            <p>
+                <strong>Status:</strong>
+                {{ request.status }}
+            </p>
+
+            <p>
+                <strong>Description:</strong>
+                {{ request.description }}
+            </p>
+
+            @if (assignedTechnician) {
+            <p>
+                <strong>Assigned Technician:</strong>
+                {{ assignedTechnician }}
+            </p>
+            }
+
+        </div>
+
+        <div card-actions>
+
+            <button type="button" (click)="onActionChange('details')">
+                View Details
+            </button>
+
+            <button type="button" (click)="onActionChange('status')">
+                Update Status
+            </button>
+
+            <button type="button" (click)="onActionChange('technician')">
+                Technician Action
+            </button>
+
+        </div>
+
+    </app-request-card>
+
+
+    <div class="action-selector">
+
+        <label for="action">
+            Select Action
+        </label>
+
+        <select id="action" #actionSelect [value]="selectedAction" (change)="onActionChange(actionSelect.value)">
+
+            <option value="">
+                Select an action
+            </option>
+
+            <option value="details">
+                View Request Details
+            </option>
+
+            <option value="status">
+                Update Status
+            </option>
+
+            <option value="technician">
+                Technician Action
+            </option>
+
+        </select>
+
+    </div>
+
+
+    <div #dynamicComponent class="dynamic-component-container" aria-live="polite">
+    </div>
+
+</section>

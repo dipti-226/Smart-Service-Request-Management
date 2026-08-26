@@ -1,0 +1,54 @@
+<div class="technician-action">
+
+  <h3>Technician Assignment</h3>
+
+  @if (request) {
+    <p>
+      <strong>Request:</strong>
+      {{ request.title }}
+    </p>
+
+    <p>
+      <strong>Status:</strong>
+      {{ request.status }}
+    </p>
+  }
+
+  <div class="technician-form">
+
+    <label for="technician">
+      Select Technician
+    </label>
+
+    <select
+      id="technician"
+      [(ngModel)]="selectedTechnician"
+    >
+      <option value="">
+        Select Technician
+      </option>
+
+      <option value="John">
+        John
+      </option>
+
+      <option value="Rahul">
+        Rahul
+      </option>
+
+      <option value="Priya">
+        Priya
+      </option>
+
+    </select>
+
+    <button
+      type="button"
+      (click)="assignTechnician()"
+    >
+      Assign Technician
+    </button>
+
+  </div>
+
+</div>

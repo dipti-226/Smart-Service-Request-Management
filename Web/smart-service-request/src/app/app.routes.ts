@@ -37,6 +37,15 @@ export const routes: Routes = [
         .then(m => m.RequestFormComponent)
   },
   {
+    path: 'advanced-components',
+    loadComponent: () =>
+      import(
+        './features/request/request-components-demo/request-components-demo'
+      ).then(
+        m => m.RequestComponentsDemoComponent
+      )
+  },
+  {
     path: '**',
     canActivate: [rootRedirectGuard],
     children: []

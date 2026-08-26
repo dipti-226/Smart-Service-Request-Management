@@ -1,0 +1,28 @@
+.update-status {
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #f8f9fa;
+}
+
+.update-status h3 {
+  margin-top: 0;
+}
+
+.status-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.status-form select {
+  padding: 10px;
+  font-size: 16px;
+}
+
+.status-form button {
+  width: fit-content;
+  padding: 10px 16px;
+  cursor: pointer;
+}

@@ -1,0 +1,63 @@
+.request-action-panel {
+  max-width: 800px;
+  margin: 30px auto;
+  padding: 24px;
+}
+
+.request-action-panel h2 {
+  margin-bottom: 20px;
+}
+
+.action-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.action-selector label {
+  font-weight: 600;
+}
+
+.action-selector select {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 12px;
+  font-size: 16px;
+  border: 1px solid #aaa;
+  border-radius: 6px;
+}
+
+.dynamic-component-container {
+  margin-top: 24px;
+}
+
+button {
+  padding: 10px 16px;
+  border: 1px solid #999;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #f0f0f0;
+}
+
+button:focus-visible,
+select:focus-visible {
+  outline: 3px solid #1a73e8;
+  outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+
+  .request-action-panel {
+    margin: 15px;
+    padding: 16px;
+  }
+
+  .request-action-panel app-request-card {
+    display: block;
+  }
+}

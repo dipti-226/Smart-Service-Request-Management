@@ -1,0 +1,25 @@
+.request-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.request-card-header {
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eee;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.request-card-content {
+  padding: 16px 0;
+}
+
+.request-card-actions {
+  display: flex;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+}

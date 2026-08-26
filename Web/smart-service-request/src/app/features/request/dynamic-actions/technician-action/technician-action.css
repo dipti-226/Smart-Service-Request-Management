@@ -1,0 +1,28 @@
+.technician-action {
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #f8f9fa;
+}
+
+.technician-action h3 {
+  margin-top: 0;
+}
+
+.technician-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.technician-form select {
+  padding: 10px;
+  font-size: 16px;
+}
+
+.technician-form button {
+  width: fit-content;
+  padding: 10px 16px;
+  cursor: pointer;
+}
