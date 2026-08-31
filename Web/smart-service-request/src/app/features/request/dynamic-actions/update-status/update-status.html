@@ -3,15 +3,22 @@
   <h3>Update Request Status</h3>
 
   @if (request) {
+
     <p>
       <strong>Request:</strong>
-      {{ request.title }}
+      {{ request.requestCode }}
+    </p>
+
+    <p>
+      <strong>Request Type:</strong>
+      {{ request.requestType }}
     </p>
 
     <p>
       <strong>Current Status:</strong>
       {{ request.status }}
     </p>
+
   }
 
   <div class="status-form">
@@ -24,12 +31,13 @@
       id="status"
       [(ngModel)]="selectedStatus"
     >
+
       <option value="">
         Select Status
       </option>
 
-      <option value="Pending">
-        Pending
+      <option value="Open">
+        Open
       </option>
 
       <option value="In Progress">
@@ -40,14 +48,12 @@
         Resolved
       </option>
 
-      <option value="Closed">
-        Closed
-      </option>
     </select>
 
     <button
       type="button"
       (click)="updateStatus()"
+      [disabled]="!selectedStatus"
     >
       Update Status
     </button>

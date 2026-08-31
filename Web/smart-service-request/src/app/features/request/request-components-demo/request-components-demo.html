@@ -12,8 +12,31 @@
 
   </header>
 
-  <app-request-action-panel
-    [request]="request">
-  </app-request-action-panel>
+
+  @if (loading) {
+
+    <div class="loading">
+      Loading request...
+    </div>
+
+  }
+
+
+  @if (errorMessage) {
+
+    <div class="error">
+      {{ errorMessage }}
+    </div>
+
+  }
+
+
+  @if (request) {
+
+    <app-request-action-panel
+      [request]="request">
+    </app-request-action-panel>
+
+  }
 
 </section>

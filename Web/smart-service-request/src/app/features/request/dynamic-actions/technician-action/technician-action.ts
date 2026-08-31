@@ -1,13 +1,12 @@
-import {
-  Component,
-  EventEmitter,
-  Input,
-  Output
-} from '@angular/core';
+import {Component,EventEmitter,Input,Output} from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 
-import { RequestDetails } from '../../models/request-details.model';
+import {
+  AdvancedRequest,
+  Technician
+} from '../../../../core/models/request.model';
+
 @Component({
   selector: 'app-technician-action',
   standalone: true,
@@ -15,23 +14,28 @@ import { RequestDetails } from '../../models/request-details.model';
   templateUrl: './technician-action.html',
   styleUrl: './technician-action.css'
 })
-
 export class TechnicianActionComponent {
 
-  @Input() request!: RequestDetails;
+  @Input()
+  request!: AdvancedRequest;
 
-  @Output() technicianAssigned =
-    new EventEmitter<string>();
+  @Input()
+  technicians: Technician[] = [];
 
-  selectedTechnician = '';
+  @Output()
+  technicianAssigned =
+    new EventEmitter<number>();
+
+  selectedTechnicianId: number | null = null;
 
   assignTechnician(): void {
-    if (!this.selectedTechnician) {
+
+    if (!this.selectedTechnicianId) {
       return;
     }
 
     this.technicianAssigned.emit(
-      this.selectedTechnician
+      this.selectedTechnicianId
     );
   }
 }

@@ -6,8 +6,7 @@ import {
 } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
-
-import { RequestDetails } from '../../models/request-details.model';
+import { AdvancedRequest } from '../../../../core/models/request.model';
 @Component({
   selector: 'app-update-status',
   standalone: true,
@@ -18,7 +17,7 @@ import { RequestDetails } from '../../models/request-details.model';
 
 export class UpdateStatusComponent {
 
-  @Input() request!: RequestDetails;
+  @Input() request!: AdvancedRequest;
 
   @Output() statusChanged = new EventEmitter<string>();
 

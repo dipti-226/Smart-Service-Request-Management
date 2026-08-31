@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 
-import { RequestDetails } from '../../models/request-details.model';
+import { AdvancedRequest } from '../../../../core/models/request.model';
 
 @Component({
   selector: 'app-request-details',
@@ -10,5 +10,6 @@ import { RequestDetails } from '../../models/request-details.model';
 })
 export class RequestDetailsComponent {
 
-  @Input() request!: RequestDetails;
+  @Input() request!: AdvancedRequest;
+
 }

@@ -1,17 +1,17 @@
-import {
-  Component,
-  EventEmitter,
-  Input,
-  Output,
-  ViewChild,
-  ViewContainerRef
-} from '@angular/core';
+import {Component,EventEmitter,Input,Output,ViewChild,ViewContainerRef,inject} from '@angular/core';
 
 import { RequestDetailsComponent } from '../dynamic-actions/request-details/request-details';
 import { UpdateStatusComponent } from '../dynamic-actions/update-status/update-status';
 import { TechnicianActionComponent } from '../dynamic-actions/technician-action/technician-action';
+
 import { RequestCardComponent } from '../../../shared/components/request-card/request-card';
-import { RequestDetails } from '../models/request-details.model';
+
+import {
+  AdvancedRequest,
+  Technician
+} from '../../../core/models/request.model';
+
+import { RequestService } from '../../../core/services/request.service';
 
 @Component({
   selector: 'app-request-action-panel',
@@ -22,104 +22,280 @@ import { RequestDetails } from '../models/request-details.model';
 })
 export class RequestActionPanelComponent {
 
+  private readonly requestService =
+    inject(RequestService);
+
   @Input()
-request!: RequestDetails;
+  request!: AdvancedRequest;
 
-@Output()
-actionSelected = new EventEmitter<string>();
+  @Output()
+  actionSelected =
+    new EventEmitter<string>();
 
-@ViewChild('dynamicComponent', {
-  read: ViewContainerRef
-})
-dynamicComponent!: ViewContainerRef;
+  @ViewChild('dynamicComponent', {
+    read: ViewContainerRef
+  })
+  dynamicComponent!: ViewContainerRef;
 
-selectedAction = '';
+  selectedAction = '';
 
-assignedTechnician = '';
+  technicians: Technician[] = [];
+
+  loadingTechnicians = false;
+
+  actionError = '';
+
+  actionSuccess = '';
+
 
   onActionChange(action: string): void {
 
-  this.selectedAction = action;
+    this.selectedAction = action;
 
-  this.dynamicComponent.clear();
+    this.actionError = '';
+    this.actionSuccess = '';
 
-  this.actionSelected.emit(action);
+    this.dynamicComponent.clear();
 
-  if (action === 'details') {
-    this.loadRequestDetails();
+    this.actionSelected.emit(action);
+
+    switch (action) {
+
+      case 'details':
+        this.loadRequestDetails();
+        break;
+
+      case 'status':
+        this.loadUpdateStatus();
+        break;
+
+      case 'technician':
+        this.loadTechnicians();
+        break;
+    }
   }
 
-  if (action === 'status') {
-    this.loadUpdateStatus();
-  }
 
-  if (action === 'technician') {
-    this.loadTechnicianAction();
-  }
-}
   private loadRequestDetails(): void {
 
-  const componentRef =
-    this.dynamicComponent.createComponent(
-      RequestDetailsComponent
-    );
+    const componentRef =
+      this.dynamicComponent.createComponent(
+        RequestDetailsComponent
+      );
 
-  componentRef.setInput(
-    'request',
-    this.request
-  );
-}
+    componentRef.setInput(
+      'request',
+      this.request
+    );
+  }
+
 
   private loadUpdateStatus(): void {
 
-  const componentRef =
-    this.dynamicComponent.createComponent(
-      UpdateStatusComponent
+    const componentRef =
+      this.dynamicComponent.createComponent(
+        UpdateStatusComponent
+      );
+
+    componentRef.setInput(
+      'request',
+      this.request
     );
 
-  componentRef.setInput(
-    'request',
-    this.request
-  );
+    componentRef.instance.statusChanged.subscribe(
+      (newStatus: string) => {
 
-  componentRef.instance.statusChanged.subscribe(
-    (newStatus: string) => {
+        this.updateStatus(newStatus);
 
-      this.request = {
-        ...this.request,
-        status: newStatus
-      };
-
-      console.log(
-        'Status changed:',
-        newStatus
-      );
-    }
-  );
-}
-
-  private loadTechnicianAction(): void {
-
-  const componentRef =
-    this.dynamicComponent.createComponent(
-      TechnicianActionComponent
+      }
     );
+  }
 
-  componentRef.setInput(
-    'request',
-    this.request
-  );
 
-  componentRef.instance.technicianAssigned.subscribe(
-    (technician: string) => {
+  private loadTechnicians(): void {
 
-      this.assignedTechnician = technician;
+    this.loadingTechnicians = true;
 
-      console.log(
-        'Technician assigned:',
-        technician
-      );
-    }
-  );
-}
+    this.requestService
+      .getTechnicians()
+      .subscribe({
+
+        next: (response) => {
+
+          this.loadingTechnicians = false;
+
+          if (
+            !response.success ||
+            !response.data
+          ) {
+
+            this.actionError =
+              response.message ||
+              'Unable to load technicians.';
+
+            return;
+          }
+
+          this.technicians = response.data;
+
+          const componentRef =
+            this.dynamicComponent.createComponent(
+              TechnicianActionComponent
+            );
+
+          componentRef.setInput(
+            'request',
+            this.request
+          );
+
+          componentRef.setInput(
+            'technicians',
+            this.technicians
+          );
+
+          componentRef.instance.technicianAssigned.subscribe(
+            (technicianId: number) => {
+
+              this.assignTechnician(
+                technicianId
+              );
+
+            }
+          );
+        },
+
+        error: (error) => {
+
+          this.loadingTechnicians = false;
+
+          console.error(
+            'Error loading technicians:',
+            error
+          );
+
+          this.actionError =
+            'Unable to load technicians.';
+        }
+      });
+  }
+
+
+  private updateStatus(
+    newStatus: string
+  ): void {
+
+    this.actionError = '';
+    this.actionSuccess = '';
+
+    this.requestService
+      .updateRequestStatus(
+        this.request.requestId,
+        {
+          status: newStatus
+        }
+      )
+      .subscribe({
+
+        next: (response) => {
+
+          if (
+            response.success &&
+            response.data
+          ) {
+
+            this.request =
+              response.data;
+
+            this.actionSuccess =
+              'Request status updated successfully.';
+
+            /*
+             * Recreate the selected component
+             * with the updated request.
+             */
+            this.dynamicComponent.clear();
+
+            this.loadUpdateStatus();
+
+          } else {
+
+            this.actionError =
+              response.message ||
+              'Unable to update request status.';
+          }
+        },
+
+        error: (error) => {
+
+          console.error(
+            'Error updating status:',
+            error
+          );
+
+          this.actionError =
+            error?.error?.message ||
+            'Unable to update request status.';
+        }
+      });
+  }
+
+
+  private assignTechnician(
+    technicianId: number
+  ): void {
+
+    this.actionError = '';
+    this.actionSuccess = '';
+
+    this.requestService
+      .assignTechnician(
+        this.request.requestId,
+        {
+          technicianId: technicianId
+        }
+      )
+      .subscribe({
+
+        next: (response) => {
+
+          if (
+            response.success &&
+            response.data
+          ) {
+
+            this.request =
+              response.data;
+
+            this.actionSuccess =
+              'Technician assigned successfully.';
+
+            /*
+             * Recreate the technician component
+             * using the updated request.
+             */
+            this.dynamicComponent.clear();
+
+            this.loadTechnicians();
+
+          } else {
+
+            this.actionError =
+              response.message ||
+              'Unable to assign technician.';
+          }
+        },
+
+        error: (error) => {
+
+          console.error(
+            'Error assigning technician:',
+            error
+          );
+
+          this.actionError =
+            error?.error?.message ||
+            'Unable to assign technician.';
+        }
+      });
+  }
 }

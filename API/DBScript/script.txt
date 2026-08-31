@@ -305,5 +305,274 @@ BEGIN
 
     SELECT @@ROWCOUNT AS RowsAffected;
 END;
+
+
+==================================================
+Stage 3 - Advanced Angular Components API Support
+27/08/2026
+==================================================
+
+USE [SmartServiceRequestDB];
 GO
 
+--------------------------------------------------
+-- 1. Create Technicians table
+--------------------------------------------------
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.tables
+    WHERE name = 'Technicians'
+      AND schema_id = SCHEMA_ID('dbo')
+)
+BEGIN
+
+    CREATE TABLE [dbo].[Technicians]
+    (
+        [TechnicianId] INT IDENTITY(1,1) NOT NULL,
+        [TechnicianName] NVARCHAR(100) NOT NULL,
+        [IsActive] BIT NOT NULL
+            CONSTRAINT [DF_Technicians_IsActive] DEFAULT (1),
+        [CreatedDate] DATETIME2(7) NOT NULL
+            CONSTRAINT [DF_Technicians_CreatedDate] DEFAULT (SYSUTCDATETIME()),
+
+        CONSTRAINT [PK_Technicians]
+            PRIMARY KEY CLUSTERED ([TechnicianId] ASC)
+    );
+
+END;
+GO
+
+
+--------------------------------------------------
+-- 2. Add TechnicianId to Requests
+--------------------------------------------------
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.columns
+    WHERE object_id = OBJECT_ID('dbo.Requests')
+      AND name = 'TechnicianId'
+)
+BEGIN
+
+    ALTER TABLE [dbo].[Requests]
+    ADD [TechnicianId] INT NULL;
+
+END;
+GO
+
+
+--------------------------------------------------
+-- 3. Add foreign key
+--------------------------------------------------
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.foreign_keys
+    WHERE name = 'FK_Requests_Technicians'
+)
+BEGIN
+
+    ALTER TABLE [dbo].[Requests]
+    ADD CONSTRAINT [FK_Requests_Technicians]
+        FOREIGN KEY ([TechnicianId])
+        REFERENCES [dbo].[Technicians]([TechnicianId]);
+
+END;
+GO
+
+
+--------------------------------------------------
+-- 4. Seed technicians
+--------------------------------------------------
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM dbo.Technicians
+    WHERE TechnicianName = 'John'
+)
+BEGIN
+
+    INSERT INTO dbo.Technicians
+    (
+        TechnicianName,
+        IsActive
+    )
+    VALUES
+    ('John', 1),
+    ('Rahul', 1),
+    ('Priya', 1);
+
+END;
+GO
+
+
+--------------------------------------------------
+-- 5. Get active technicians
+--------------------------------------------------
+
+CREATE OR ALTER PROCEDURE [dbo].[SSR_Technician_GetAll]
+AS
+BEGIN
+
+    SET NOCOUNT ON;
+
+    SELECT
+        TechnicianId,
+        TechnicianName,
+        IsActive,
+        CreatedDate
+    FROM dbo.Technicians
+    WHERE IsActive = 1
+    ORDER BY TechnicianName;
+
+END;
+GO
+
+
+--------------------------------------------------
+-- 6. Update request status only
+--------------------------------------------------
+
+CREATE OR ALTER PROCEDURE [dbo].[SSR_Request_UpdateStatus]
+(
+    @RequestId INT,
+    @Status NVARCHAR(30)
+)
+AS
+BEGIN
+
+    SET NOCOUNT ON;
+
+    UPDATE dbo.Requests
+    SET
+        Status = @Status,
+        UpdatedDate = SYSUTCDATETIME()
+    WHERE RequestId = @RequestId
+      AND IsActive = 1;
+
+    SELECT
+        r.RequestId,
+        r.RequestCode,
+        r.RequestType,
+        r.RequestDescription,
+        r.Priority,
+        r.Status,
+        r.TechnicianId,
+        t.TechnicianName,
+        r.CreatedDate,
+        r.UpdatedDate
+    FROM dbo.Requests r
+    LEFT JOIN dbo.Technicians t
+        ON r.TechnicianId = t.TechnicianId
+    WHERE r.RequestId = @RequestId
+      AND r.IsActive = 1;
+
+END;
+GO
+
+
+--------------------------------------------------
+-- 7. Assign technician
+--------------------------------------------------
+
+CREATE OR ALTER PROCEDURE [dbo].[SSR_Request_AssignTechnician]
+(
+    @RequestId INT,
+    @TechnicianId INT
+)
+AS
+BEGIN
+
+    SET NOCOUNT ON;
+
+    -- Validate request
+    IF NOT EXISTS
+    (
+        SELECT 1
+        FROM dbo.Requests
+        WHERE RequestId = @RequestId
+          AND IsActive = 1
+    )
+    BEGIN
+        SELECT
+            'REQUEST_NOT_FOUND' AS ErrorCode;
+        RETURN;
+    END;
+
+    -- Validate technician
+    IF NOT EXISTS
+    (
+        SELECT 1
+        FROM dbo.Technicians
+        WHERE TechnicianId = @TechnicianId
+          AND IsActive = 1
+    )
+    BEGIN
+        SELECT
+            'TECHNICIAN_NOT_FOUND' AS ErrorCode;
+        RETURN;
+    END;
+
+    -- Assign technician
+    UPDATE dbo.Requests
+    SET
+        TechnicianId = @TechnicianId,
+        UpdatedDate = SYSUTCDATETIME()
+    WHERE RequestId = @RequestId
+      AND IsActive = 1;
+
+    -- Return updated request
+    SELECT
+        r.RequestId,
+        r.RequestCode,
+        r.RequestType,
+        r.RequestDescription,
+        r.Priority,
+        r.Status,
+        r.TechnicianId,
+        t.TechnicianName,
+        r.CreatedDate,
+        r.UpdatedDate
+    FROM dbo.Requests r
+    LEFT JOIN dbo.Technicians t
+        ON r.TechnicianId = t.TechnicianId
+    WHERE r.RequestId = @RequestId
+      AND r.IsActive = 1;
+
+END;
+GO
+
+CREATE OR ALTER PROCEDURE [dbo].[SSR_AdvancedRequest_GetById]
+(
+    @RequestId INT
+)
+AS
+BEGIN
+
+    SET NOCOUNT ON;
+
+    SELECT
+        r.RequestId,
+        r.RequestCode,
+        r.RequestType,
+        r.RequestDescription,
+        r.Priority,
+        r.Status,
+        r.TechnicianId,
+        t.TechnicianName,
+        r.CreatedDate,
+        r.UpdatedDate
+    FROM dbo.Requests r
+    LEFT JOIN dbo.Technicians t
+        ON r.TechnicianId = t.TechnicianId
+    WHERE r.RequestId = @RequestId
+      AND r.IsActive = 1;
+
+END;
+GO

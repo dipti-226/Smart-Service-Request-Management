@@ -3,14 +3,31 @@
   <h3>Technician Assignment</h3>
 
   @if (request) {
+
     <p>
       <strong>Request:</strong>
-      {{ request.title }}
+      {{ request.requestCode }}
+    </p>
+
+    <p>
+      <strong>Request Type:</strong>
+      {{ request.requestType }}
     </p>
 
     <p>
       <strong>Status:</strong>
       {{ request.status }}
+    </p>
+
+    <p>
+      <strong>Current Technician:</strong>
+
+      @if (request.technicianName) {
+        {{ request.technicianName }}
+      } @else {
+        Not Assigned
+      }
+
     </p>
   }
 
@@ -22,29 +39,29 @@
 
     <select
       id="technician"
-      [(ngModel)]="selectedTechnician"
+      [(ngModel)]="selectedTechnicianId"
     >
-      <option value="">
+
+      <option [ngValue]="null">
         Select Technician
       </option>
 
-      <option value="John">
-        John
-      </option>
+      @for (technician of technicians; track technician.technicianId) {
 
-      <option value="Rahul">
-        Rahul
-      </option>
+        <option
+          [ngValue]="technician.technicianId"
+        >
+          {{ technician.technicianName }}
+        </option>
 
-      <option value="Priya">
-        Priya
-      </option>
+      }
 
     </select>
 
     <button
       type="button"
       (click)="assignTechnician()"
+      [disabled]="!selectedTechnicianId"
     >
       Assign Technician
     </button>

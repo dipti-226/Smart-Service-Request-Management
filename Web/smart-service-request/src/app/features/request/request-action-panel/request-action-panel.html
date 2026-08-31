@@ -1,90 +1,139 @@
-<section class="request-action-panel" aria-labelledby="request-action-title">
+<section
+  class="request-action-panel"
+  aria-labelledby="request-action-title"
+>
 
-    <h2 id="request-action-title">
-        Request Actions
-    </h2>
+  <h2 id="request-action-title">
+    Request Actions
+  </h2>
 
-    <app-request-card>
+  <app-request-card>
 
-        <div card-title>
-            Request #{{ request.id }}
-        </div>
+    <div card-title>
+      Request #{{ request.requestCode }}
+    </div>
 
-        <div card-content>
+    <div card-content>
 
-            <p>
-                <strong>Title:</strong>
-                {{ request.title }}
-            </p>
+      <p>
+        <strong>Request Type:</strong>
+        {{ request.requestType }}
+      </p>
 
-            <p>
-                <strong>Status:</strong>
-                {{ request.status }}
-            </p>
+      <p>
+        <strong>Priority:</strong>
+        {{ request.priority }}
+      </p>
 
-            <p>
-                <strong>Description:</strong>
-                {{ request.description }}
-            </p>
+      <p>
+        <strong>Status:</strong>
+        {{ request.status }}
+      </p>
 
-            @if (assignedTechnician) {
-            <p>
-                <strong>Assigned Technician:</strong>
-                {{ assignedTechnician }}
-            </p>
-            }
+      <p>
+        <strong>Description:</strong>
+        {{ request.requestDescription }}
+      </p>
 
-        </div>
+      <p>
+        <strong>Technician:</strong>
 
-        <div card-actions>
+        @if (request.technicianName) {
+          {{ request.technicianName }}
+        } @else {
+          Not Assigned
+        }
 
-            <button type="button" (click)="onActionChange('details')">
-                View Details
-            </button>
-
-            <button type="button" (click)="onActionChange('status')">
-                Update Status
-            </button>
-
-            <button type="button" (click)="onActionChange('technician')">
-                Technician Action
-            </button>
-
-        </div>
-
-    </app-request-card>
-
-
-    <div class="action-selector">
-
-        <label for="action">
-            Select Action
-        </label>
-
-        <select id="action" #actionSelect [value]="selectedAction" (change)="onActionChange(actionSelect.value)">
-
-            <option value="">
-                Select an action
-            </option>
-
-            <option value="details">
-                View Request Details
-            </option>
-
-            <option value="status">
-                Update Status
-            </option>
-
-            <option value="technician">
-                Technician Action
-            </option>
-
-        </select>
+      </p>
 
     </div>
 
+    <div card-actions>
 
-    <div #dynamicComponent class="dynamic-component-container" aria-live="polite">
+      <button
+        type="button"
+        (click)="onActionChange('details')"
+      >
+        View Details
+      </button>
+
+      <button
+        type="button"
+        (click)="onActionChange('status')"
+      >
+        Update Status
+      </button>
+
+      <button
+        type="button"
+        (click)="onActionChange('technician')"
+      >
+        Technician Action
+      </button>
+
     </div>
+
+  </app-request-card>
+
+  @if (actionSuccess) {
+
+    <div class="success">
+      {{ actionSuccess }}
+    </div>
+
+  }
+
+  @if (actionError) {
+
+    <div class="error">
+      {{ actionError }}
+    </div>
+
+  }
+
+  @if (loadingTechnicians) {
+
+    <div class="loading">
+      Loading technicians...
+    </div>
+
+  }
+
+  <div class="action-selector">
+
+    <label for="action">
+      Select Action
+    </label>
+
+    <select
+      id="action"
+      [value]="selectedAction"
+      (change)="onActionChange($any($event.target).value)"
+    >
+
+      <option value="">
+        Select Action
+      </option>
+
+      <option value="details">
+        View Details
+      </option>
+
+      <option value="status">
+        Update Status
+      </option>
+
+      <option value="technician">
+        Technician Action
+      </option>
+
+    </select>
+
+  </div>
+
+  <div
+    #dynamicComponent
+    class="dynamic-component-container"
+  ></div>
 
 </section>
