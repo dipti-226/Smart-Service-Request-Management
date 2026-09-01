@@ -38,6 +38,8 @@ builder.Services
         };
     });
 
+// Authorization
+builder.Services.AddAuthorization();
 
 // CORS - Angular
 builder.Services.AddCors(options =>

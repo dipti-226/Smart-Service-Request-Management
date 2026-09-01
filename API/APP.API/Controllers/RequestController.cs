@@ -1,6 +1,7 @@
 ﻿using APP.Business.Services;
 using APP.Common.Models;
 using APP.Models.DTOs.Requests;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,6 +9,8 @@ namespace APP.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "Admin")]
+
     public class RequestController : ControllerBase
     {
         private readonly RequestService _requestService;

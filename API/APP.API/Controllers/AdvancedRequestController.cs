@@ -2,7 +2,7 @@
 using APP.Common.Models;
 using APP.Models.DTOs.AdvancedRequests;
 using APP.Models.DTOs.Technicians;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace APP.API.Controllers
@@ -22,6 +22,7 @@ namespace APP.API.Controllers
         // api/AdvancedRequest/5
 
         [HttpGet("{id:int}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<AdvancedRequestDto>>>
             GetRequestDetails(int id)
         {
@@ -40,6 +41,7 @@ namespace APP.API.Controllers
         // api/AdvancedRequest/technicians
 
         [HttpGet("technicians")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<List<TechnicianDto>>>>
             GetTechnicians()
         {
@@ -51,6 +53,7 @@ namespace APP.API.Controllers
         // api/AdvancedRequest/5/status
 
         [HttpPut("{id:int}/status")]
+        [Authorize(Roles = "Admin,Technician")]
         public async Task<ActionResult<ApiResponse<AdvancedRequestDto>>>
             UpdateStatus(int id,UpdateRequestStatusDto dto)
         {
@@ -68,6 +71,7 @@ namespace APP.API.Controllers
         // api/AdvancedRequest/5/technician
 
         [HttpPut("{id:int}/technician")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<AdvancedRequestDto>>>
             AssignTechnician(int id,AssignTechnicianDto dto)
         {
