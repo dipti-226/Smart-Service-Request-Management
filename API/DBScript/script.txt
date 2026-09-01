@@ -824,3 +824,90 @@ BEGIN
         CAST(NULL AS NVARCHAR(50)) AS ErrorCode;
 END;
 GO
+
+--------------------------------------------------
+-- Create Technician User
+--------------------------------------------------
+
+CREATE OR ALTER PROCEDURE [dbo].[SSR_User_CreateTechnician]
+(
+    @Username NVARCHAR(50),
+    @Email NVARCHAR(150),
+    @Password NVARCHAR(100)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Check username
+    IF EXISTS
+    (
+        SELECT 1
+        FROM dbo.Users
+        WHERE Username = @Username
+    )
+    BEGIN
+        SELECT
+            CAST(0 AS bit) AS Success,
+            'USERNAME_EXISTS' AS ErrorCode;
+        RETURN;
+    END;
+
+    -- Check email
+    IF EXISTS
+    (
+        SELECT 1
+        FROM dbo.Users
+        WHERE Email = @Email
+    )
+    BEGIN
+        SELECT
+            CAST(0 AS bit) AS Success,
+            'EMAIL_EXISTS' AS ErrorCode;
+        RETURN;
+    END;
+
+    -- Get Technician role
+    DECLARE @TechnicianRoleId INT;
+
+    SELECT
+        @TechnicianRoleId = RoleId
+    FROM dbo.Roles
+    WHERE RoleName = 'Technician'
+      AND IsActive = 1;
+
+    -- Technician role not available
+    IF @TechnicianRoleId IS NULL
+    BEGIN
+        SELECT
+            CAST(0 AS bit) AS Success,
+            'TECHNICIAN_ROLE_NOT_FOUND' AS ErrorCode;
+        RETURN;
+    END;
+
+    -- Create technician
+    INSERT INTO dbo.Users
+    (
+        Username,
+        Email,
+        Password,
+        RoleId,
+        IsActive,
+        CreatedDate
+    )
+    VALUES
+    (
+        @Username,
+        @Email,
+        @Password,
+        @TechnicianRoleId,
+        1,
+        SYSUTCDATETIME()
+    );
+
+    -- Success
+    SELECT
+        CAST(1 AS bit) AS Success,
+        CAST(NULL AS NVARCHAR(50)) AS ErrorCode;
+END;
+GO

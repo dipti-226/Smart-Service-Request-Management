@@ -150,6 +150,52 @@ namespace APP.Business.Services
             };
         }
 
+        public async Task<ApiResponse<bool>> CreateTechnicianAsync(CreateTechnicianRequestDto dto)
+        {
+            await using SqlConnection connection = new SqlConnection(_connectionString);
+            await using SqlCommand command = new SqlCommand("SSR_User_CreateTechnician", connection);
+
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add("@Username",SqlDbType.NVarChar,50).Value = dto.Username.Trim();
+            command.Parameters.Add("@Email",SqlDbType.NVarChar,150).Value = dto.Email.Trim();
+            command.Parameters.Add("@Password",SqlDbType.NVarChar,100).Value = dto.Password;
+
+            await connection.OpenAsync();
+            await using SqlDataReader reader = await command.ExecuteReaderAsync();
+
+            if (!await reader.ReadAsync())
+            {
+                return new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "Technician creation failed.",
+                    Data = false
+                };
+            }
+
+            bool creationSucceeded = Convert.ToBoolean(reader["Success"]);
+
+            if (!creationSucceeded)
+            {
+                string errorCode = reader["ErrorCode"]?.ToString() ?? string.Empty;
+
+                return new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = GetTechnicianCreationErrorMessage(errorCode),
+                    Data = false
+                };
+            }
+
+            return new ApiResponse<bool>
+            {
+                Success = true,
+                Message = "Technician created successfully.",
+                Data = true
+            };
+        }
+
         private string GenerateJwtToken(int userId,string username,string roleName,int expiryMinutes)
         {
             var jwtSection = _configuration.GetSection("Jwt");
@@ -214,12 +260,20 @@ namespace APP.Business.Services
             return errorCode switch
             {
                 "USERNAME_EXISTS" => "Username already exists.",
-
                 "EMAIL_EXISTS" => "Email already exists.",
-
                 "EMPLOYEE_ROLE_NOT_FOUND" => "Employee role is not available.",
-
                 _ =>"Employee registration failed."
+            };
+        }
+
+        private static string GetTechnicianCreationErrorMessage(string errorCode)
+        {
+            return errorCode switch
+            {
+                "USERNAME_EXISTS" => "Username already exists.",
+                "EMAIL_EXISTS" => "Email already exists.",
+                "TECHNICIAN_ROLE_NOT_FOUND" => "Technician role is not available.",
+                _ => "Technician creation failed."
             };
         }
     }
