@@ -576,3 +576,164 @@ BEGIN
 
 END;
 GO
+
+/* =========================================================
+   01/09/2026
+   ROLES
+   ========================================================= */
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.tables
+    WHERE name = 'Roles'
+)
+BEGIN
+    CREATE TABLE Roles
+    (
+        RoleId INT IDENTITY(1,1) PRIMARY KEY,
+        RoleName NVARCHAR(50) NOT NULL UNIQUE,
+        IsActive BIT NOT NULL DEFAULT 1
+    );
+END;
+
+/* =========================================================
+   ROLE SEED DATA
+   ========================================================= */
+
+IF NOT EXISTS (SELECT 1 FROM Roles WHERE RoleName = 'Admin')
+BEGIN
+    INSERT INTO Roles (RoleName, IsActive)
+    VALUES ('Admin', 1);
+END;
+
+IF NOT EXISTS (SELECT 1 FROM Roles WHERE RoleName = 'Employee')
+BEGIN
+    INSERT INTO Roles (RoleName, IsActive)
+    VALUES ('Employee', 1);
+END;
+
+IF NOT EXISTS (SELECT 1 FROM Roles WHERE RoleName = 'Technician')
+BEGIN
+    INSERT INTO Roles (RoleName, IsActive)
+    VALUES ('Technician', 1);
+END;
+
+/* =========================================================
+   USERS TABLE
+   01/09/2026
+   ========================================================= */
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.tables
+    WHERE name = 'Users'
+      AND schema_id = SCHEMA_ID('dbo')
+)
+BEGIN
+    CREATE TABLE [dbo].[Users]
+    (
+        [UserId] INT IDENTITY(1,1) NOT NULL,
+        [Username] NVARCHAR(50) NOT NULL,
+        [Email] NVARCHAR(150) NOT NULL,
+        [Password] NVARCHAR(100) NOT NULL,
+        [RoleId] INT NOT NULL,
+        [IsActive] BIT NOT NULL
+            CONSTRAINT [DF_Users_IsActive] DEFAULT (1),
+        [CreatedDate] DATETIME2(7) NOT NULL
+            CONSTRAINT [DF_Users_CreatedDate] DEFAULT (SYSUTCDATETIME()),
+        [UpdatedDate] DATETIME2(7) NULL,
+
+        CONSTRAINT [PK_Users]
+            PRIMARY KEY CLUSTERED ([UserId] ASC),
+
+        CONSTRAINT [UQ_Users_Username]
+            UNIQUE ([Username]),
+
+        CONSTRAINT [UQ_Users_Email]
+            UNIQUE ([Email]),
+
+        CONSTRAINT [FK_Users_Roles]
+            FOREIGN KEY ([RoleId])
+            REFERENCES [dbo].[Roles]([RoleId])
+    );
+END;
+GO
+
+/* =========================================================
+   INDEX ON ROLE
+   ========================================================= */
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'IX_Users_RoleId'
+      AND object_id = OBJECT_ID('dbo.Users')
+)
+BEGIN
+    CREATE INDEX [IX_Users_RoleId]
+        ON [dbo].[Users]([RoleId]);
+END;
+GO
+
+/* =========================================================
+   SEED DEFAULT ADMIN USER
+   ========================================================= */
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM dbo.Users
+    WHERE Username = 'admin'
+)
+BEGIN
+    INSERT INTO dbo.Users
+    (
+        Username,
+        Email,
+        Password,
+        RoleId,
+        IsActive
+    )
+    SELECT
+        'admin',
+        'admin@smartservice.local',
+        'Admin@123',
+        RoleId,
+        1
+    FROM dbo.Roles
+    WHERE RoleName = 'Admin'
+      AND IsActive = 1;
+END;
+GO
+
+--------------------------------------------------
+-- Get active user by username
+--------------------------------------------------
+
+CREATE OR ALTER PROCEDURE [dbo].[SSR_User_GetByUsername]
+(
+    @Username NVARCHAR(50)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        u.UserId,
+        u.Username,
+        u.Email,
+        u.Password,
+        u.RoleId,
+        r.RoleName,
+        u.IsActive
+    FROM dbo.Users u
+    INNER JOIN dbo.Roles r
+        ON u.RoleId = r.RoleId
+    WHERE u.Username = @Username
+      AND u.IsActive = 1
+      AND r.IsActive = 1;
+END;
+GO

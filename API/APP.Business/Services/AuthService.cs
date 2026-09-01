@@ -35,10 +35,15 @@ namespace APP.Business.Services
                 new SqlConnection(_connectionString);
 
             await using SqlCommand command =
-                new SqlCommand("SSR_Admin_GetByUsername", connection);
+                new SqlCommand("SSR_User_GetByUsername", connection);
 
             command.CommandType = CommandType.StoredProcedure;
-            command.Parameters.AddWithValue("@AdminName", dto.AdminName);
+
+            command.Parameters.Add(
+                "@Username",
+                SqlDbType.NVarChar,
+                50
+            ).Value = dto.AdminName;
 
             await connection.OpenAsync();
 
@@ -47,32 +52,36 @@ namespace APP.Business.Services
 
             if (!await reader.ReadAsync())
             {
-                return new ApiResponse<LoginResponseDto>
-                {
-                    Success = false,
-                    Message = "Invalid username or password.",
-                    Data = null
-                };
+                return InvalidLoginResponse();
             }
 
-            int adminId = Convert.ToInt32(reader["AdminId"]);
-            string adminName = reader["AdminName"]?.ToString() ?? string.Empty;
-            string storedPassword = reader["Password"]?.ToString() ?? string.Empty;
+            int userId = Convert.ToInt32(reader["UserId"]);
 
-            await reader.CloseAsync();
+            string username =
+                reader["Username"]?.ToString() ?? string.Empty;
 
-            if (!string.Equals(dto.Password, storedPassword, StringComparison.Ordinal))
+            string storedPassword =
+                reader["Password"]?.ToString() ?? string.Empty;
+
+            string roleName =
+                reader["RoleName"]?.ToString() ?? string.Empty;
+
+            if (!string.Equals(
+                    dto.Password,
+                    storedPassword,
+                    StringComparison.Ordinal))
             {
-                return new ApiResponse<LoginResponseDto>
-                {
-                    Success = false,
-                    Message = "Invalid username or password.",
-                    Data = null
-                };
+                return InvalidLoginResponse();
             }
 
             int expiryMinutes = GetExpiryMinutes();
-            string token = GenerateJwtToken(adminId, adminName, expiryMinutes);
+
+            string token = GenerateJwtToken(
+                userId,
+                username,
+                roleName,
+                expiryMinutes
+            );
 
             return new ApiResponse<LoginResponseDto>
             {
@@ -81,28 +90,54 @@ namespace APP.Business.Services
                 Data = new LoginResponseDto
                 {
                     Token = token,
-                    AdminName = adminName,
+                    AdminName = username,
+                    RoleName = roleName,
                     ExpiresAt = DateTime.UtcNow.AddMinutes(expiryMinutes)
                 }
             };
         }
 
-        private string GenerateJwtToken(int adminId, string adminName, int expiryMinutes)
+        private string GenerateJwtToken(
+            int userId,
+            string username,
+            string roleName,
+            int expiryMinutes)
         {
             var jwtSection = _configuration.GetSection("Jwt");
 
-            var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(
-                    jwtSection["Key"]
-                    ?? throw new InvalidOperationException("Jwt:Key is not configured.")));
+            string jwtKey =
+                jwtSection["Key"]
+                ?? throw new InvalidOperationException(
+                    "Jwt:Key is not configured.");
 
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var key = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtKey));
+
+            var credentials = new SigningCredentials(
+                key,
+                SecurityAlgorithms.HmacSha256);
 
             var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub, adminName),
-                new Claim("adminId", adminId.ToString()),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                new Claim(
+                    JwtRegisteredClaimNames.Sub,
+                    username),
+
+                new Claim(
+                    ClaimTypes.Name,
+                    username),
+
+                new Claim(
+                    ClaimTypes.Role,
+                    roleName),
+
+                new Claim(
+                    "userId",
+                    userId.ToString()),
+
+                new Claim(
+                    JwtRegisteredClaimNames.Jti,
+                    Guid.NewGuid().ToString())
             };
 
             var token = new JwtSecurityToken(
@@ -110,7 +145,7 @@ namespace APP.Business.Services
                 audience: jwtSection["Audience"],
                 claims: claims,
                 expires: DateTime.UtcNow.AddMinutes(expiryMinutes),
-                signingCredentials: creds
+                signingCredentials: credentials
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
@@ -118,9 +153,21 @@ namespace APP.Business.Services
 
         private int GetExpiryMinutes()
         {
-            return int.TryParse(_configuration["Jwt:ExpiryMinutes"], out int minutes)
-                ? minutes
-                : 60;
+            return int.TryParse(
+                _configuration["Jwt:ExpiryMinutes"],
+                out int minutes)
+                    ? minutes
+                    : 60;
+        }
+
+        private static ApiResponse<LoginResponseDto> InvalidLoginResponse()
+        {
+            return new ApiResponse<LoginResponseDto>
+            {
+                Success = false,
+                Message = "Invalid username or password.",
+                Data = null
+            };
         }
     }
 }
