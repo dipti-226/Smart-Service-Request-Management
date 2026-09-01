@@ -31,24 +31,15 @@ namespace APP.Business.Services
 
         public async Task<ApiResponse<LoginResponseDto>> LoginAsync(LoginRequestDto dto)
         {
-            await using SqlConnection connection =
-                new SqlConnection(_connectionString);
-
-            await using SqlCommand command =
-                new SqlCommand("SSR_User_GetByUsername", connection);
+            await using SqlConnection connection = new SqlConnection(_connectionString);
+            await using SqlCommand command = new SqlCommand("SSR_User_GetByUsername", connection);
 
             command.CommandType = CommandType.StoredProcedure;
 
-            command.Parameters.Add(
-                "@Username",
-                SqlDbType.NVarChar,
-                50
-            ).Value = dto.AdminName;
+            command.Parameters.Add("@Username",SqlDbType.NVarChar,50).Value = dto.AdminName;
 
             await connection.OpenAsync();
-
-            await using SqlDataReader reader =
-                await command.ExecuteReaderAsync();
+            await using SqlDataReader reader = await command.ExecuteReaderAsync();
 
             if (!await reader.ReadAsync())
             {
@@ -56,15 +47,9 @@ namespace APP.Business.Services
             }
 
             int userId = Convert.ToInt32(reader["UserId"]);
-
-            string username =
-                reader["Username"]?.ToString() ?? string.Empty;
-
-            string storedPassword =
-                reader["Password"]?.ToString() ?? string.Empty;
-
-            string roleName =
-                reader["RoleName"]?.ToString() ?? string.Empty;
+            string username = reader["Username"]?.ToString() ?? string.Empty;
+            string storedPassword = reader["Password"]?.ToString() ?? string.Empty;
+            string roleName = reader["RoleName"]?.ToString() ?? string.Empty;
 
             if (!string.Equals(
                     dto.Password,
@@ -97,26 +82,80 @@ namespace APP.Business.Services
             };
         }
 
-        private string GenerateJwtToken(
-            int userId,
-            string username,
-            string roleName,
-            int expiryMinutes)
+        public async Task<ApiResponse<bool>> RegisterEmployeeAsync(
+    RegisterRequestDto dto)
+        {
+            await using SqlConnection connection =
+                new SqlConnection(_connectionString);
+
+            await using SqlCommand command =
+                new SqlCommand("SSR_User_RegisterEmployee", connection);
+
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add(
+                "@Username",
+                SqlDbType.NVarChar,
+                50
+            ).Value = dto.Username.Trim();
+
+            command.Parameters.Add(
+                "@Email",
+                SqlDbType.NVarChar,
+                150
+            ).Value = dto.Email.Trim();
+
+            command.Parameters.Add(
+                "@Password",
+                SqlDbType.NVarChar,
+                100
+            ).Value = dto.Password;
+
+            await connection.OpenAsync();
+
+            await using SqlDataReader reader =
+                await command.ExecuteReaderAsync();
+
+            if (!await reader.ReadAsync())
+            {
+                return new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "Employee registration failed.",
+                    Data = false
+                };
+            }
+
+            bool registrationSucceeded =
+                Convert.ToBoolean(reader["Success"]);
+
+            if (!registrationSucceeded)
+            {
+                string errorCode =
+                    reader["ErrorCode"]?.ToString() ?? string.Empty;
+
+                return new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = GetRegistrationErrorMessage(errorCode),
+                    Data = false
+                };
+            }
+
+            return new ApiResponse<bool>
+            {
+                Success = true,
+                Message = "Employee registration successful.",
+                Data = true
+            };
+        }
+
+        private string GenerateJwtToken(int userId,string username,string roleName,int expiryMinutes)
         {
             var jwtSection = _configuration.GetSection("Jwt");
-
-            string jwtKey =
-                jwtSection["Key"]
-                ?? throw new InvalidOperationException(
-                    "Jwt:Key is not configured.");
-
-            var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwtKey));
-
-            var credentials = new SigningCredentials(
-                key,
-                SecurityAlgorithms.HmacSha256);
-
+            string jwtKey = jwtSection["Key"] ?? throw new InvalidOperationException("Jwt:Key is not configured.");
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+            var credentials = new SigningCredentials(key,SecurityAlgorithms.HmacSha256);
             var claims = new List<Claim>
             {
                 new Claim(
@@ -167,6 +206,20 @@ namespace APP.Business.Services
                 Success = false,
                 Message = "Invalid username or password.",
                 Data = null
+            };
+        }
+
+        private static string GetRegistrationErrorMessage(string errorCode)
+        {
+            return errorCode switch
+            {
+                "USERNAME_EXISTS" => "Username already exists.",
+
+                "EMAIL_EXISTS" => "Email already exists.",
+
+                "EMPLOYEE_ROLE_NOT_FOUND" => "Employee role is not available.",
+
+                _ =>"Employee registration failed."
             };
         }
     }

@@ -21,11 +21,27 @@ namespace APP.API.Controllers
         public async Task<ActionResult<ApiResponse<LoginResponseDto>>>
             Login(LoginRequestDto dto)
         {
-            var response = await _authService.LoginAsync(dto);
+            var response =
+                await _authService.LoginAsync(dto);
 
             if (!response.Success)
             {
                 return Unauthorized(response);
+            }
+
+            return Ok(response);
+        }
+
+        [HttpPost("register")]
+        public async Task<ActionResult<ApiResponse<bool>>>
+            Register(RegisterRequestDto dto)
+        {
+            var response =
+                await _authService.RegisterEmployeeAsync(dto);
+
+            if (!response.Success)
+            {
+                return BadRequest(response);
             }
 
             return Ok(response);

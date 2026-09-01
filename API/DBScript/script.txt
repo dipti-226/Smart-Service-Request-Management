@@ -737,3 +737,90 @@ BEGIN
       AND r.IsActive = 1;
 END;
 GO
+
+--------------------------------------------------
+-- Register Employee
+--------------------------------------------------
+
+CREATE OR ALTER PROCEDURE [dbo].[SSR_User_RegisterEmployee]
+(
+    @Username NVARCHAR(50),
+    @Email NVARCHAR(150),
+    @Password NVARCHAR(100)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Username already exists
+    IF EXISTS
+    (
+        SELECT 1
+        FROM dbo.Users
+        WHERE Username = @Username
+    )
+    BEGIN
+        SELECT
+            CAST(0 AS bit) AS Success,
+            'USERNAME_EXISTS' AS ErrorCode;
+        RETURN;
+    END;
+
+    -- Email already exists
+    IF EXISTS
+    (
+        SELECT 1
+        FROM dbo.Users
+        WHERE Email = @Email
+    )
+    BEGIN
+        SELECT
+            CAST(0 AS bit) AS Success,
+            'EMAIL_EXISTS' AS ErrorCode;
+        RETURN;
+    END;
+
+    -- Get Employee role
+    DECLARE @EmployeeRoleId INT;
+
+    SELECT
+        @EmployeeRoleId = RoleId
+    FROM dbo.Roles
+    WHERE RoleName = 'Employee'
+      AND IsActive = 1;
+
+    -- Employee role not available
+    IF @EmployeeRoleId IS NULL
+    BEGIN
+        SELECT
+            CAST(0 AS bit) AS Success,
+            'EMPLOYEE_ROLE_NOT_FOUND' AS ErrorCode;
+        RETURN;
+    END;
+
+    -- Create employee
+    INSERT INTO dbo.Users
+    (
+        Username,
+        Email,
+        Password,
+        RoleId,
+        IsActive,
+        CreatedDate
+    )
+    VALUES
+    (
+        @Username,
+        @Email,
+        @Password,
+        @EmployeeRoleId,
+        1,
+        SYSUTCDATETIME()
+    );
+
+    -- Registration successful
+    SELECT
+        CAST(1 AS bit) AS Success,
+        CAST(NULL AS NVARCHAR(50)) AS ErrorCode;
+END;
+GO
