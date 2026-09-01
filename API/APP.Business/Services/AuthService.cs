@@ -36,7 +36,7 @@ namespace APP.Business.Services
 
             command.CommandType = CommandType.StoredProcedure;
 
-            command.Parameters.Add("@Username",SqlDbType.NVarChar,50).Value = dto.AdminName;
+            command.Parameters.Add("@Username",SqlDbType.NVarChar,50).Value = dto.Username.Trim();
 
             await connection.OpenAsync();
             await using SqlDataReader reader = await command.ExecuteReaderAsync();
@@ -75,7 +75,7 @@ namespace APP.Business.Services
                 Data = new LoginResponseDto
                 {
                     Token = token,
-                    AdminName = username,
+                    Username = username,
                     RoleName = roleName,
                     ExpiresAt = DateTime.UtcNow.AddMinutes(expiryMinutes)
                 }
