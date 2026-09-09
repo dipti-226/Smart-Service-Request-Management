@@ -6,7 +6,7 @@ import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
 import { LoginRequest, LoginResponse } from '../models/auth.model';
 
-const TOKEN_KEY = 'ssr_auth_token';
+const TOKEN_KEY = 'ssr_token';
 const USERNAME_KEY = 'ssr_username';
 const ROLE_KEY = 'ssr_role';
 
@@ -38,7 +38,6 @@ export class AuthService {
     localStorage.removeItem(USERNAME_KEY);
     localStorage.removeItem(ROLE_KEY);
   }
-
   getToken(): string | null {
     return localStorage.getItem(TOKEN_KEY);
   }

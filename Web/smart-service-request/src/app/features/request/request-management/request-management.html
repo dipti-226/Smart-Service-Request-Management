@@ -1,0 +1,144 @@
+<div class="request-management-container">
+
+  @if (loading) {
+    <div class="loading-state">
+      <p>Loading...</p>
+    </div>
+  }
+
+  @if (errorMessage) {
+    <div class="error-state">
+      <p>{{ errorMessage }}</p>
+    </div>
+  }
+
+  @if (!loading && !errorMessage) {
+
+    @if (request) {
+
+      <div class="page-header">
+        <div>
+          <button
+            type="button"
+            class="back-button"
+            (click)="backToRequests()">
+            ← Back to Requests
+          </button>
+
+          <h1>Request Management</h1>
+          <p>Manage request {{ request.requestCode }}</p>
+        </div>
+      </div>
+
+      <div class="request-details">
+        <h2>Request Details</h2>
+
+        <div class="details-grid">
+
+          <div class="detail-item">
+            <span class="label">Request Code</span>
+            <span class="value">{{ request.requestCode }}</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="label">Request Type</span>
+            <span class="value">{{ request.requestType }}</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="label">Priority</span>
+            <span class="value">{{ request.priority }}</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="label">Status</span>
+            <span class="value">{{ request.status }}</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="label">Created Date</span>
+            <span class="value">
+              {{ request.createdDate | date:'dd-MMM-yyyy' }}
+            </span>
+          </div>
+
+          <div class="detail-item full-width">
+            <span class="label">Description</span>
+            <span class="value">{{ request.requestDescription }}</span>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="action-panel-container">
+        <app-request-action-panel
+          [request]="request">
+        </app-request-action-panel>
+      </div>
+
+    } @else {
+
+      <div class="page-header">
+        <div>
+          <h1>Request Management</h1>
+          <p>View and manage service requests.</p>
+        </div>
+      </div>
+
+      @if (requests.length > 0) {
+
+        <div class="table-container">
+          <table class="request-table">
+
+            <thead>
+              <tr>
+                <th>Request Code</th>
+                <th>Type</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Created Date</th>
+                <th>Manage</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (requestItem of requests; track requestItem.requestId) {
+                <tr>
+
+                  <td>{{ requestItem.requestCode }}</td>
+                  <td>{{ requestItem.requestType }}</td>
+                  <td>{{ requestItem.priority }}</td>
+                  <td>{{ requestItem.status }}</td>
+                  <td>
+                    {{ requestItem.createdDate | date:'dd-MMM-yyyy' }}
+                  </td>
+
+                  <td>
+                    <button
+                      type="button"
+                      class="manage-button"
+                      (click)="manageRequest(requestItem.requestId)">
+                      Manage
+                    </button>
+                  </td>
+
+                </tr>
+              }
+            </tbody>
+
+          </table>
+        </div>
+
+      } @else {
+
+        <div class="empty-state">
+          <p>No service requests found.</p>
+        </div>
+
+      }
+
+    }
+
+  }
+
+</div>

@@ -37,13 +37,18 @@ export const routes: Routes = [
         .then(m => m.RequestFormComponent)
   },
   {
-    path: 'advanced-components',
+    path: 'request-management',
+    canActivate: [authGuard],
     loadComponent: () =>
-      import(
-        './features/request/request-components-demo/request-components-demo'
-      ).then(
-        m => m.RequestComponentsDemoComponent
-      )
+      import('./features/request/request-management/request-management')
+        .then(m => m.RequestManagementComponent)
+  },
+  {
+    path: 'request-management/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/request/request-management/request-management')
+        .then(m => m.RequestManagementComponent)
   },
   {
     path: '**',
