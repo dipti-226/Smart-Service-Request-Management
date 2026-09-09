@@ -1,10 +1,11 @@
 export interface LoginRequest {
-  adminName: string;
+  username: string;
   password: string;
 }
 
 export interface LoginResponse {
   token: string;
-  adminName: string;
+  username: string;
+  roleName: string;
   expiresAt: string;
 }

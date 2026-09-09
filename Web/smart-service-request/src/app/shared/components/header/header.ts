@@ -20,7 +20,7 @@ export class HeaderComponent {
   }
 
   get adminName(): string | null {
-    return this.authService.getAdminName();
+    return this.authService.getUsername();
   }
 
   logout(): void {

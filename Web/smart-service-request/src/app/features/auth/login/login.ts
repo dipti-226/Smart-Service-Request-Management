@@ -17,13 +17,11 @@ export class LoginComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
-  // Signals so the button/error state re-renders reliably
-  // (this app runs zoneless).
   isSubmitting = signal(false);
   errorMessage = signal('');
 
   loginForm = this.fb.nonNullable.group({
-    adminName: ['', Validators.required],
+    username: ['', Validators.required],
     password: ['', Validators.required]
   });
 

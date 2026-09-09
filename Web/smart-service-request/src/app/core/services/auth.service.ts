@@ -6,8 +6,9 @@ import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
 import { LoginRequest, LoginResponse } from '../models/auth.model';
 
-const TOKEN_KEY = 'ssr_admin_token';
-const ADMIN_NAME_KEY = 'ssr_admin_name';
+const TOKEN_KEY = 'ssr_auth_token';
+const USERNAME_KEY = 'ssr_username';
+const ROLE_KEY = 'ssr_role';
 
 @Injectable({
   providedIn: 'root'
@@ -25,7 +26,8 @@ export class AuthService {
         tap(response => {
           if (response.success && response.data) {
             localStorage.setItem(TOKEN_KEY, response.data.token);
-            localStorage.setItem(ADMIN_NAME_KEY, response.data.adminName);
+            localStorage.setItem(USERNAME_KEY, response.data.username);
+            localStorage.setItem(ROLE_KEY, response.data.roleName);
           }
         })
       );
@@ -33,15 +35,20 @@ export class AuthService {
 
   logout(): void {
     localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(ADMIN_NAME_KEY);
+    localStorage.removeItem(USERNAME_KEY);
+    localStorage.removeItem(ROLE_KEY);
   }
 
   getToken(): string | null {
     return localStorage.getItem(TOKEN_KEY);
   }
 
-  getAdminName(): string | null {
-    return localStorage.getItem(ADMIN_NAME_KEY);
+  getUsername(): string | null {
+    return localStorage.getItem(USERNAME_KEY);
+  }
+
+  getRole(): string | null {
+    return localStorage.getItem(ROLE_KEY);
   }
 
   isLoggedIn(): boolean {
