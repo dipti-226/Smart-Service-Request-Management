@@ -1,20 +1,20 @@
 <div class="request-management-container">
 
-  @if (loading) {
+  @if (loading()) {
     <div class="loading-state">
       <p>Loading...</p>
     </div>
   }
 
-  @if (errorMessage) {
+  @if (errorMessage()) {
     <div class="error-state">
-      <p>{{ errorMessage }}</p>
+      <p>{{ errorMessage() }}</p>
     </div>
   }
 
-  @if (!loading && !errorMessage) {
+  @if (!loading() && !errorMessage()) {
 
-    @if (request) {
+    @if (request()) {
 
       <div class="page-header">
         <div>
@@ -26,7 +26,7 @@
           </button>
 
           <h1>Request Management</h1>
-          <p>Manage request {{ request.requestCode }}</p>
+          <p>Manage request {{ request()!.requestCode }}</p>
         </div>
       </div>
 
@@ -37,34 +37,34 @@
 
           <div class="detail-item">
             <span class="label">Request Code</span>
-            <span class="value">{{ request.requestCode }}</span>
+            <span class="value">{{ request()!.requestCode }}</span>
           </div>
 
           <div class="detail-item">
             <span class="label">Request Type</span>
-            <span class="value">{{ request.requestType }}</span>
+            <span class="value">{{ request()!.requestType }}</span>
           </div>
 
           <div class="detail-item">
             <span class="label">Priority</span>
-            <span class="value">{{ request.priority }}</span>
+            <span class="value">{{ request()!.priority }}</span>
           </div>
 
           <div class="detail-item">
             <span class="label">Status</span>
-            <span class="value">{{ request.status }}</span>
+            <span class="value">{{ request()!.status }}</span>
           </div>
 
           <div class="detail-item">
             <span class="label">Created Date</span>
             <span class="value">
-              {{ request.createdDate | date:'dd-MMM-yyyy' }}
+              {{ request()!.createdDate | date:'dd-MMM-yyyy' }}
             </span>
           </div>
 
           <div class="detail-item full-width">
             <span class="label">Description</span>
-            <span class="value">{{ request.requestDescription }}</span>
+            <span class="value">{{ request()!.requestDescription }}</span>
           </div>
 
         </div>
@@ -72,7 +72,7 @@
 
       <div class="action-panel-container">
         <app-request-action-panel
-          [request]="request">
+          [request]="request()!">
         </app-request-action-panel>
       </div>
 
@@ -85,7 +85,7 @@
         </div>
       </div>
 
-      @if (requests.length > 0) {
+      @if (requests().length > 0) {
 
         <div class="table-container">
           <table class="request-table">
@@ -102,7 +102,7 @@
             </thead>
 
             <tbody>
-              @for (requestItem of requests; track requestItem.requestId) {
+              @for (requestItem of requests(); track requestItem.requestId) {
                 <tr>
 
                   <td>{{ requestItem.requestCode }}</td>

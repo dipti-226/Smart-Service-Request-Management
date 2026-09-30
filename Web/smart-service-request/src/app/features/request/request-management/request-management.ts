@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import {
@@ -18,11 +18,13 @@ import { RequestActionPanelComponent } from '../request-action-panel/request-act
 })
 export class RequestManagementComponent implements OnInit {
 
-  requests: Request[] = [];
-  request: AdvancedRequest | null = null;
+  // Signals so the UI re-renders as soon as data changes,
+  // regardless of async timing (this app runs zoneless).
+  requests = signal<Request[]>([]);
+  request = signal<AdvancedRequest | null>(null);
 
-  loading = false;
-  errorMessage = '';
+  loading = signal(false);
+  errorMessage = signal('');
 
   constructor(
     private requestService: RequestService,
@@ -41,35 +43,35 @@ export class RequestManagementComponent implements OnInit {
   }
 
   private loadRequests(): void {
-    this.loading = true;
-    this.errorMessage = '';
+    this.loading.set(true);
+    this.errorMessage.set('');
 
     this.requestService.getAllRequests().subscribe({
       next: (response) => {
-        this.requests = response.data ?? [];
-        this.loading = false;
+        this.requests.set(response.data ?? []);
+        this.loading.set(false);
       },
       error: (error) => {
         console.error('Failed to load requests:', error);
-        this.errorMessage = 'Failed to load requests.';
-        this.loading = false;
+        this.errorMessage.set('Failed to load requests.');
+        this.loading.set(false);
       }
     });
   }
 
   private loadRequest(requestId: number): void {
-    this.loading = true;
-    this.errorMessage = '';
+    this.loading.set(true);
+    this.errorMessage.set('');
 
     this.requestService.getAdvancedRequestById(requestId).subscribe({
       next: (response) => {
-        this.request = response.data;
-        this.loading = false;
+        this.request.set(response.data);
+        this.loading.set(false);
       },
       error: (error) => {
         console.error('Failed to load request:', error);
-        this.errorMessage = 'Failed to load request.';
-        this.loading = false;
+        this.errorMessage.set('Failed to load request.');
+        this.loading.set(false);
       }
     });
   }
