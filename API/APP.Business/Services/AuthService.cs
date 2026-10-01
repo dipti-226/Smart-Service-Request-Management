@@ -3,14 +3,10 @@ using APP.Models.DTOs.Auth;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
 using System.Data;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace APP.Business.Services
 {
@@ -25,8 +21,7 @@ namespace APP.Business.Services
 
             _connectionString =
                 configuration.GetConnectionString("DefaultConnection")
-                ?? throw new InvalidOperationException(
-                    "DefaultConnection is not configured.");
+                ?? throw new InvalidOperationException("DefaultConnection is not configured.");
         }
 
         public async Task<ApiResponse<LoginResponseDto>> LoginAsync(LoginRequestDto dto)
@@ -85,36 +80,18 @@ namespace APP.Business.Services
         public async Task<ApiResponse<bool>> RegisterEmployeeAsync(
     RegisterRequestDto dto)
         {
-            await using SqlConnection connection =
-                new SqlConnection(_connectionString);
-
-            await using SqlCommand command =
-                new SqlCommand("SSR_User_RegisterEmployee", connection);
+            await using SqlConnection connection = new SqlConnection(_connectionString);
+            await using SqlCommand command = new SqlCommand("SSR_User_RegisterEmployee", connection);
 
             command.CommandType = CommandType.StoredProcedure;
 
-            command.Parameters.Add(
-                "@Username",
-                SqlDbType.NVarChar,
-                50
-            ).Value = dto.Username.Trim();
-
-            command.Parameters.Add(
-                "@Email",
-                SqlDbType.NVarChar,
-                150
-            ).Value = dto.Email.Trim();
-
-            command.Parameters.Add(
-                "@Password",
-                SqlDbType.NVarChar,
-                100
-            ).Value = dto.Password;
+            command.Parameters.Add("@Username",SqlDbType.NVarChar,50).Value = dto.Username.Trim();
+            command.Parameters.Add("@Email",SqlDbType.NVarChar,150).Value = dto.Email.Trim();
+            command.Parameters.Add("@Password",SqlDbType.NVarChar,100).Value = dto.Password;
 
             await connection.OpenAsync();
 
-            await using SqlDataReader reader =
-                await command.ExecuteReaderAsync();
+            await using SqlDataReader reader = await command.ExecuteReaderAsync();
 
             if (!await reader.ReadAsync())
             {
@@ -126,13 +103,11 @@ namespace APP.Business.Services
                 };
             }
 
-            bool registrationSucceeded =
-                Convert.ToBoolean(reader["Success"]);
+            bool registrationSucceeded = Convert.ToBoolean(reader["Success"]);
 
             if (!registrationSucceeded)
             {
-                string errorCode =
-                    reader["ErrorCode"]?.ToString() ?? string.Empty;
+                string errorCode = reader["ErrorCode"]?.ToString() ?? string.Empty;
 
                 return new ApiResponse<bool>
                 {
@@ -204,25 +179,11 @@ namespace APP.Business.Services
             var credentials = new SigningCredentials(key,SecurityAlgorithms.HmacSha256);
             var claims = new List<Claim>
             {
-                new Claim(
-                    JwtRegisteredClaimNames.Sub,
-                    username),
-
-                new Claim(
-                    ClaimTypes.Name,
-                    username),
-
-                new Claim(
-                    ClaimTypes.Role,
-                    roleName),
-
-                new Claim(
-                    "userId",
-                    userId.ToString()),
-
-                new Claim(
-                    JwtRegisteredClaimNames.Jti,
-                    Guid.NewGuid().ToString())
+                new Claim(JwtRegisteredClaimNames.Sub,username),
+                new Claim(ClaimTypes.Name,username),
+                new Claim(ClaimTypes.Role,roleName),
+                new Claim("userId",userId.ToString()),
+                new Claim(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString())
             };
 
             var token = new JwtSecurityToken(
