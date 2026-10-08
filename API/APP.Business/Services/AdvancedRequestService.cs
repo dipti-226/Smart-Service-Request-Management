@@ -52,11 +52,9 @@ namespace APP.Business.Services
 
         // Get Technicians
 
-        public async Task<ApiResponse<List<TechnicianDto>>>
-            GetTechniciansAsync()
+        public async Task<ApiResponse<List<TechnicianDto>>>GetTechniciansAsync()
         {
             await using SqlConnection connection = new SqlConnection(_connectionString);
-
             await using SqlCommand command = new SqlCommand("SSR_Technician_GetAll", connection);
 
             command.CommandType = CommandType.StoredProcedure;
@@ -88,15 +86,14 @@ namespace APP.Business.Services
 
         // Update Request Status
 
-        public async Task<ApiResponse<AdvancedRequestDto>>
-            UpdateRequestStatusAsync(int requestId,UpdateRequestStatusDto dto)
+        public async Task<ApiResponse<AdvancedRequestDto>>UpdateRequestStatusAsync(int requestId,UpdateRequestStatusDto dto,int? callerUserId = null,string? callerRole = null)
         {
             // Validate status at API/service level
             var allowedStatuses = new[]
             {
-                "Open",
-                "In Progress",
-                "Resolved"
+                 "Open",
+                 "In Progress",
+                 "Resolved"
             };
 
             if (!allowedStatuses.Contains(dto.Status))
@@ -110,10 +107,15 @@ namespace APP.Business.Services
             }
 
             await using SqlConnection connection = new SqlConnection(_connectionString);
-            await using SqlCommand command =new SqlCommand("SSR_Request_UpdateStatus",connection);
+            await using SqlCommand command = new SqlCommand("SSR_Request_UpdateStatus", connection);
             command.CommandType = CommandType.StoredProcedure;
-            command.Parameters.AddWithValue("@RequestId",requestId);
-            command.Parameters.AddWithValue("@Status",dto.Status);
+            command.Parameters.AddWithValue("@RequestId", requestId);
+            command.Parameters.AddWithValue("@Status", dto.Status);
+
+            // Caller info (used by the SP only for the Technician ownership check)
+            command.Parameters.Add("@CallerUserId", SqlDbType.Int).Value = (object?)callerUserId ?? DBNull.Value;
+            command.Parameters.Add("@CallerRole", SqlDbType.NVarChar, 50).Value = (object?)callerRole ?? DBNull.Value;
+
             await connection.OpenAsync();
             await using SqlDataReader reader = await command.ExecuteReaderAsync();
             if (!await reader.ReadAsync())
@@ -122,6 +124,18 @@ namespace APP.Business.Services
                 {
                     Success = false,
                     Message = "Request not found or already inactive.",
+                    Data = null
+                };
+            }
+
+            // SP returned only an ErrorCode column -> technician is not assigned
+            if (HasColumn(reader, "ErrorCode"))
+            {
+                return new ApiResponse<AdvancedRequestDto>
+                {
+                    Success = false,
+                    Message = "You can update the status only for requests assigned to you.",
+                    ErrorCode = "NOT_ASSIGNED",
                     Data = null
                 };
             }
@@ -138,8 +152,7 @@ namespace APP.Business.Services
 
         // Assign Technician
 
-        public async Task<ApiResponse<AdvancedRequestDto>>
-            AssignTechnicianAsync(int requestId,AssignTechnicianDto dto)
+        public async Task<ApiResponse<AdvancedRequestDto>>AssignTechnicianAsync(int requestId,AssignTechnicianDto dto)
         {
             await using SqlConnection connection = new SqlConnection(_connectionString);
             await using SqlCommand command = new SqlCommand("SSR_Request_AssignTechnician",connection);
@@ -168,10 +181,20 @@ namespace APP.Business.Services
                 Data = request
             };
         }
+        private static bool HasColumn(SqlDataReader reader, string columnName)
+        {
+            for (int i = 0; i < reader.FieldCount; i++)
+            {
+                if (string.Equals(reader.GetName(i), columnName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
 
+            return false;
+        }
         // Mapping
-        private static AdvancedRequestDto MapRequest(
-            SqlDataReader reader)
+        private static AdvancedRequestDto MapRequest(SqlDataReader reader)
         {
             return new AdvancedRequestDto
             {

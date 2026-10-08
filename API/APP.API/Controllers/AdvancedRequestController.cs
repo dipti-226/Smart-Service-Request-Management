@@ -23,8 +23,7 @@ namespace APP.API.Controllers
 
         [HttpGet("{id:int}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResponse<AdvancedRequestDto>>>
-            GetRequestDetails(int id)
+        public async Task<ActionResult<ApiResponse<AdvancedRequestDto>>>GetRequestDetails(int id)
         {
             var response = await _advancedRequestService.GetRequestDetailsAsync(id);
 
@@ -42,8 +41,7 @@ namespace APP.API.Controllers
 
         [HttpGet("technicians")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResponse<List<TechnicianDto>>>>
-            GetTechnicians()
+        public async Task<ActionResult<ApiResponse<List<TechnicianDto>>>>GetTechnicians()
         {
             var response = await _advancedRequestService.GetTechniciansAsync();
             return Ok(response);
@@ -54,15 +52,40 @@ namespace APP.API.Controllers
 
         [HttpPut("{id:int}/status")]
         [Authorize(Roles = "Admin,Technician")]
-        public async Task<ActionResult<ApiResponse<AdvancedRequestDto>>>
-            UpdateStatus(int id,UpdateRequestStatusDto dto)
+        public async Task<ActionResult<ApiResponse<AdvancedRequestDto>>>UpdateStatus(int id, UpdateRequestStatusDto dto)
         {
-            var response = await _advancedRequestService.UpdateRequestStatusAsync(id, dto);
-            if (!response.Success)
+            int? callerUserId = null;
+            string? callerRole = null;
+
+            // Technician can update only the requests assigned to them.
+            // Admin passes nothing, so the Admin flow is unchanged.
+            if (User.IsInRole("Technician"))
             {
-                return BadRequest(response);
+                callerRole = "Technician";
+
+                if (!int.TryParse(User.FindFirst("userId")?.Value, out int userId))
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden,
+                        new ApiResponse<AdvancedRequestDto>
+                        {
+                            Success = false,
+                            Message = "Invalid user."
+                        });
+                }
+                callerUserId = userId;
             }
 
+            var response = await _advancedRequestService.UpdateRequestStatusAsync(id, dto, callerUserId, callerRole);
+
+            if (!response.Success)
+            {
+                if (response.ErrorCode == "NOT_ASSIGNED")
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, response);
+                }
+
+                return BadRequest(response);
+            }
             return Ok(response);
         }
 
@@ -72,8 +95,7 @@ namespace APP.API.Controllers
 
         [HttpPut("{id:int}/technician")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResponse<AdvancedRequestDto>>>
-            AssignTechnician(int id,AssignTechnicianDto dto)
+        public async Task<ActionResult<ApiResponse<AdvancedRequestDto>>>AssignTechnician(int id,AssignTechnicianDto dto)
         {
             var response = await _advancedRequestService.AssignTechnicianAsync(id, dto);
             if (!response.Success)

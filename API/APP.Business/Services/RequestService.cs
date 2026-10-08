@@ -154,7 +154,9 @@ namespace APP.Business.Services
                 Priority = reader["Priority"]?.ToString() ?? string.Empty,
                 Status = reader["Status"]?.ToString() ?? string.Empty,
                 CreatedDate = Convert.ToDateTime(reader["CreatedDate"]),
-                UpdatedDate = null
+                UpdatedDate = reader["UpdatedDate"] == DBNull.Value
+                    ? null
+                    : Convert.ToDateTime(reader["UpdatedDate"])
             };
         }
 

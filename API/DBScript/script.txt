@@ -911,3 +911,291 @@ BEGIN
         CAST(NULL AS NVARCHAR(50)) AS ErrorCode;
 END;
 GO
+
+
+==================================================
+Date: 02-Oct-2026
+Change: Allow 'Critical' priority in Requests
+==================================================
+
+IF EXISTS
+(
+    SELECT 1
+    FROM sys.check_constraints
+    WHERE name = 'CK_Requests_Priority'
+      AND parent_object_id = OBJECT_ID('dbo.Requests')
+)
+BEGIN
+    ALTER TABLE [dbo].[Requests]
+    DROP CONSTRAINT [CK_Requests_Priority];
+END;
+GO
+
+ALTER TABLE [dbo].[Requests] WITH CHECK
+ADD CONSTRAINT [CK_Requests_Priority]
+CHECK ([Priority] IN ('Low', 'Medium', 'High', 'Critical'));
+GO
+
+
+==================================================
+Change: SSR_Request_Create now returns UpdatedDate
+==================================================
+
+CREATE OR ALTER PROCEDURE [dbo].[SSR_Request_Create]
+(
+    @RequestType NVARCHAR(100),
+    @RequestDescription NVARCHAR(1000),
+    @Priority NVARCHAR(20)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO Requests
+    (
+        RequestType,
+        RequestDescription,
+        Priority
+    )
+    VALUES
+    (
+        @RequestType,
+        @RequestDescription,
+        @Priority
+    );
+
+    SELECT
+        RequestId,
+        RequestCode,
+        RequestType,
+        RequestDescription,
+        Priority,
+        Status,
+        CreatedDate,
+        UpdatedDate
+    FROM Requests
+    WHERE RequestId = SCOPE_IDENTITY();
+END;
+GO
+
+==================================================
+Date: 08-Oct-2026
+Change: Link Technicians to Users (UserId), create technician
+        row with technician user, technician ownership check
+        in SSR_Request_UpdateStatus
+==================================================
+
+USE [SmartServiceRequestDB];
+GO
+
+--------------------------------------------------
+-- 1. Link Technicians to Users (nullable)
+--------------------------------------------------
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.columns
+    WHERE object_id = OBJECT_ID('dbo.Technicians')
+      AND name = 'UserId'
+)
+BEGIN
+    ALTER TABLE [dbo].[Technicians]
+    ADD [UserId] INT NULL;
+END;
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.foreign_keys
+    WHERE name = 'FK_Technicians_Users'
+)
+BEGIN
+    ALTER TABLE [dbo].[Technicians]
+    ADD CONSTRAINT [FK_Technicians_Users]
+        FOREIGN KEY ([UserId])
+        REFERENCES [dbo].[Users]([UserId]);
+END;
+GO
+
+--------------------------------------------------
+-- 2. Backfill existing technician users
+--------------------------------------------------
+
+-- 2a. Link by name if a seeded technician has the same name as a technician user
+UPDATE t
+SET t.UserId = u.UserId
+FROM dbo.Technicians t
+INNER JOIN dbo.Users u ON u.Username = t.TechnicianName
+INNER JOIN dbo.Roles r ON r.RoleId = u.RoleId AND r.RoleName = 'Technician'
+WHERE t.UserId IS NULL
+  AND NOT EXISTS (SELECT 1 FROM dbo.Technicians x WHERE x.UserId = u.UserId);
+GO
+
+-- 2b. Create a Technicians row for technician users that still have none
+INSERT INTO dbo.Technicians (TechnicianName, IsActive, UserId)
+SELECT u.Username, u.IsActive, u.UserId
+FROM dbo.Users u
+INNER JOIN dbo.Roles r ON u.RoleId = r.RoleId
+WHERE r.RoleName = 'Technician'
+  AND NOT EXISTS
+  (
+      SELECT 1 FROM dbo.Technicians t WHERE t.UserId = u.UserId
+  );
+GO
+
+--------------------------------------------------
+-- 3. One user = one technician row
+--------------------------------------------------
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'UX_Technicians_UserId'
+      AND object_id = OBJECT_ID('dbo.Technicians')
+)
+BEGIN
+    CREATE UNIQUE INDEX [UX_Technicians_UserId]
+        ON [dbo].[Technicians]([UserId])
+        WHERE [UserId] IS NOT NULL;
+END;
+GO
+
+--------------------------------------------------
+-- 4. Create technician: Users row + Technicians row
+--    (same result set as before: Success, ErrorCode)
+--------------------------------------------------
+CREATE OR ALTER PROCEDURE [dbo].[SSR_User_CreateTechnician]
+(
+    @Username NVARCHAR(50),
+    @Email NVARCHAR(150),
+    @Password NVARCHAR(100)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    -- Check username
+    IF EXISTS (SELECT 1 FROM dbo.Users WHERE Username = @Username)
+    BEGIN
+        SELECT CAST(0 AS bit) AS Success, 'USERNAME_EXISTS' AS ErrorCode;
+        RETURN;
+    END;
+
+    -- Check email
+    IF EXISTS (SELECT 1 FROM dbo.Users WHERE Email = @Email)
+    BEGIN
+        SELECT CAST(0 AS bit) AS Success, 'EMAIL_EXISTS' AS ErrorCode;
+        RETURN;
+    END;
+
+    -- Get Technician role
+    DECLARE @TechnicianRoleId INT;
+
+    SELECT @TechnicianRoleId = RoleId
+    FROM dbo.Roles
+    WHERE RoleName = 'Technician'
+      AND IsActive = 1;
+
+    IF @TechnicianRoleId IS NULL
+    BEGIN
+        SELECT CAST(0 AS bit) AS Success, 'TECHNICIAN_ROLE_NOT_FOUND' AS ErrorCode;
+        RETURN;
+    END;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        INSERT INTO dbo.Users
+        (
+            Username, Email, Password, RoleId, IsActive, CreatedDate
+        )
+        VALUES
+        (
+            @Username, @Email, @Password, @TechnicianRoleId, 1, SYSUTCDATETIME()
+        );
+
+        DECLARE @NewUserId INT = SCOPE_IDENTITY();
+
+        INSERT INTO dbo.Technicians (TechnicianName, IsActive, UserId)
+        VALUES (@Username, 1, @NewUserId);
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH;
+
+    SELECT CAST(1 AS bit) AS Success, CAST(NULL AS NVARCHAR(50)) AS ErrorCode;
+END;
+GO
+
+--------------------------------------------------
+-- 5. Update status: technician can update only assigned requests
+--    New parameters have defaults, so old calls still work
+--------------------------------------------------
+CREATE OR ALTER PROCEDURE [dbo].[SSR_Request_UpdateStatus]
+(
+    @RequestId INT,
+    @Status NVARCHAR(30),
+    @CallerUserId INT = NULL,
+    @CallerRole NVARCHAR(50) = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Ownership check only for Technician callers.
+    -- If the request does not exist, fall through to the normal "not found" flow.
+    IF @CallerRole = 'Technician'
+       AND EXISTS
+       (
+           SELECT 1
+           FROM dbo.Requests
+           WHERE RequestId = @RequestId
+             AND IsActive = 1
+       )
+       AND NOT EXISTS
+       (
+           SELECT 1
+           FROM dbo.Requests r
+           INNER JOIN dbo.Technicians t
+               ON r.TechnicianId = t.TechnicianId
+           WHERE r.RequestId = @RequestId
+             AND r.IsActive = 1
+             AND t.IsActive = 1
+             AND t.UserId = @CallerUserId
+       )
+    BEGIN
+        SELECT 'NOT_ASSIGNED' AS ErrorCode;
+        RETURN;
+    END;
+
+    UPDATE dbo.Requests
+    SET
+        Status = @Status,
+        UpdatedDate = SYSUTCDATETIME()
+    WHERE RequestId = @RequestId
+      AND IsActive = 1;
+
+    SELECT
+        r.RequestId,
+        r.RequestCode,
+        r.RequestType,
+        r.RequestDescription,
+        r.Priority,
+        r.Status,
+        r.TechnicianId,
+        t.TechnicianName,
+        r.CreatedDate,
+        r.UpdatedDate
+    FROM dbo.Requests r
+    LEFT JOIN dbo.Technicians t
+        ON r.TechnicianId = t.TechnicianId
+    WHERE r.RequestId = @RequestId
+      AND r.IsActive = 1;
+END;
+GO
