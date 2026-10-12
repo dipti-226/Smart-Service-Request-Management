@@ -114,3 +114,20 @@
   color: #991b1b;
   border: 1px solid #fecaca;
 }
+
+.form-footer {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.form-footer a {
+  color: #2563eb;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.form-footer a:hover {
+  text-decoration: underline;
+}

@@ -4,7 +4,7 @@ import { Observable, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
-import { LoginRequest, LoginResponse } from '../models/auth.model';
+import { LoginRequest, LoginResponse, RegisterRequest } from '../models/auth.model';
 
 const TOKEN_KEY = 'ssr_token';
 const USERNAME_KEY = 'ssr_username';
@@ -33,6 +33,14 @@ export class AuthService {
       );
   }
 
+    // Creates an Employee account. No token is saved here.
+  register(request: RegisterRequest): Observable<ApiResponse<boolean>> {
+    return this.http.post<ApiResponse<boolean>>(
+      `${this.apiUrl}/register`,
+      request
+    );
+  }
+  
   logout(): void {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USERNAME_KEY);
