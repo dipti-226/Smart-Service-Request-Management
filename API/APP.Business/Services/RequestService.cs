@@ -16,7 +16,9 @@ namespace APP.Business.Services
                 ?? throw new InvalidOperationException("DefaultConnection is not configured.");
         }
 
-        public async Task<ApiResponse<RequestResponseDto>> CreateRequestAsync(CreateRequestDto dto)
+        public async Task<ApiResponse<RequestResponseDto>> CreateRequestAsync(
+    CreateRequestDto dto,
+    int? createdByUserId = null)
         {
             try
             {
@@ -24,9 +26,11 @@ namespace APP.Business.Services
                 await using SqlCommand command = new SqlCommand("SSR_Request_Create", connection);
 
                 command.CommandType = CommandType.StoredProcedure;
-                command.Parameters.AddWithValue("@RequestType",dto.RequestType);
-                command.Parameters.AddWithValue("@RequestDescription",dto.RequestDescription);
-                command.Parameters.AddWithValue("@Priority",dto.Priority);
+                command.Parameters.AddWithValue("@RequestType", dto.RequestType);
+                command.Parameters.AddWithValue("@RequestDescription", dto.RequestDescription);
+                command.Parameters.AddWithValue("@Priority", dto.Priority);
+                command.Parameters.Add("@CreatedByUserId", SqlDbType.Int).Value =
+                    (object?)createdByUserId ?? DBNull.Value;
 
                 await connection.OpenAsync();
 
@@ -63,6 +67,33 @@ namespace APP.Business.Services
             await using SqlCommand command = new SqlCommand("SSR_Request_GetAll", connection);
 
             command.CommandType = CommandType.StoredProcedure;
+
+            await connection.OpenAsync();
+
+            await using SqlDataReader reader = await command.ExecuteReaderAsync();
+
+            var requests = new List<RequestResponseDto>();
+
+            while (await reader.ReadAsync())
+            {
+                requests.Add(MapRequest(reader));
+            }
+
+            return new ApiResponse<List<RequestResponseDto>>
+            {
+                Success = true,
+                Message = "Requests retrieved successfully.",
+                Data = requests
+            };
+        }
+
+        public async Task<ApiResponse<List<RequestResponseDto>>> GetMyRequestsAsync(int userId)
+        {
+            await using SqlConnection connection = new SqlConnection(_connectionString);
+            await using SqlCommand command = new SqlCommand("SSR_Request_GetByUser", connection);
+
+            command.CommandType = CommandType.StoredProcedure;
+            command.Parameters.Add("@UserId", SqlDbType.Int).Value = userId;
 
             await connection.OpenAsync();
 

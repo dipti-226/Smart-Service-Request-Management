@@ -2,13 +2,14 @@
 using APP.Common.Models;
 using APP.Models.DTOs.Requests;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace APP.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin")]
+    [Authorize]
 
     public class RequestController : ControllerBase
     {
@@ -19,12 +20,21 @@ namespace APP.API.Controllers
             _requestService = requestService;
         }
 
+        // Reads the logged-in user id from the JWT "userId" claim
+        private int? GetCurrentUserId()
+        {
+            return int.TryParse(User.FindFirst("userId")?.Value, out int userId)
+                ? userId
+                : null;
+        }
+
         [HttpPost]
+        [Authorize(Roles = "Admin,Employee")]
         public async Task<ActionResult<ApiResponse<RequestResponseDto>>>
             CreateRequest(CreateRequestDto dto)
         {
             var response =
-                await _requestService.CreateRequestAsync(dto);
+                await _requestService.CreateRequestAsync(dto, GetCurrentUserId());
 
             if (!response.Success)
             {
@@ -34,7 +44,32 @@ namespace APP.API.Controllers
             return Ok(response);
         }
 
+        // GET: api/Request/my
+        // Requests created by the logged-in user
+        [HttpGet("my")]
+        [Authorize(Roles = "Admin,Employee")]
+        public async Task<ActionResult<ApiResponse<List<RequestResponseDto>>>>
+            GetMyRequests()
+        {
+            int? userId = GetCurrentUserId();
+
+            if (userId == null)
+            {
+                return Unauthorized(new ApiResponse<List<RequestResponseDto>>
+                {
+                    Success = false,
+                    Message = "Invalid user."
+                });
+            }
+
+            var response =
+                await _requestService.GetMyRequestsAsync(userId.Value);
+
+            return Ok(response);
+        }
+
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<List<RequestResponseDto>>>>
             GetAllRequests()
         {
@@ -45,6 +80,7 @@ namespace APP.API.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<RequestResponseDto>>>
             GetRequestById(int id)
         {
@@ -60,6 +96,7 @@ namespace APP.API.Controllers
         }
 
         [HttpGet("dashboard")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<DashboardDto>>>
             GetDashboard()
         {
@@ -70,6 +107,7 @@ namespace APP.API.Controllers
         }
 
         [HttpPut("{id:int}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<RequestResponseDto>>>
             UpdateRequest(int id, UpdateRequestDto dto)
         {
@@ -85,6 +123,7 @@ namespace APP.API.Controllers
         }
 
         [HttpDelete("{id:int}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<bool>>>
             DeleteRequest(int id)
         {

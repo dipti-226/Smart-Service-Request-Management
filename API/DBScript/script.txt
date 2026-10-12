@@ -1199,3 +1199,129 @@ BEGIN
       AND r.IsActive = 1;
 END;
 GO
+
+==================================================
+Date: 12-Oct-2026
+Change: Requests.CreatedByUserId (who created the request),
+        SSR_Request_Create accepts @CreatedByUserId,
+        new SSR_Request_GetByUser for Employee "my requests"
+==================================================
+
+USE [SmartServiceRequestDB];
+GO
+
+--------------------------------------------------
+-- 1. Who created the request (nullable, old rows stay NULL)
+--------------------------------------------------
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.columns
+    WHERE object_id = OBJECT_ID('dbo.Requests')
+      AND name = 'CreatedByUserId'
+)
+BEGIN
+    ALTER TABLE [dbo].[Requests]
+    ADD [CreatedByUserId] INT NULL;
+END;
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.foreign_keys
+    WHERE name = 'FK_Requests_Users_CreatedBy'
+)
+BEGIN
+    ALTER TABLE [dbo].[Requests]
+    ADD CONSTRAINT [FK_Requests_Users_CreatedBy]
+        FOREIGN KEY ([CreatedByUserId])
+        REFERENCES [dbo].[Users]([UserId]);
+END;
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'IX_Requests_CreatedByUserId'
+      AND object_id = OBJECT_ID('dbo.Requests')
+)
+BEGIN
+    CREATE INDEX [IX_Requests_CreatedByUserId]
+        ON [dbo].[Requests]([CreatedByUserId]);
+END;
+GO
+
+--------------------------------------------------
+-- 2. Create request: new optional parameter
+--    (old calls without it still work)
+--------------------------------------------------
+CREATE OR ALTER PROCEDURE [dbo].[SSR_Request_Create]
+(
+    @RequestType NVARCHAR(100),
+    @RequestDescription NVARCHAR(1000),
+    @Priority NVARCHAR(20),
+    @CreatedByUserId INT = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO Requests
+    (
+        RequestType,
+        RequestDescription,
+        Priority,
+        CreatedByUserId
+    )
+    VALUES
+    (
+        @RequestType,
+        @RequestDescription,
+        @Priority,
+        @CreatedByUserId
+    );
+
+    SELECT
+        RequestId,
+        RequestCode,
+        RequestType,
+        RequestDescription,
+        Priority,
+        Status,
+        CreatedDate,
+        UpdatedDate
+    FROM Requests
+    WHERE RequestId = SCOPE_IDENTITY();
+END;
+GO
+
+--------------------------------------------------
+-- 3. New: requests created by one user
+--    (same columns as SSR_Request_GetAll)
+--------------------------------------------------
+CREATE OR ALTER PROCEDURE [dbo].[SSR_Request_GetByUser]
+(
+    @UserId INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        RequestId,
+        RequestCode,
+        RequestType,
+        RequestDescription,
+        Priority,
+        Status,
+        CreatedDate,
+        UpdatedDate
+    FROM Requests
+    WHERE IsActive = 1
+      AND CreatedByUserId = @UserId
+    ORDER BY CreatedDate DESC;
+END;
+GO
+
