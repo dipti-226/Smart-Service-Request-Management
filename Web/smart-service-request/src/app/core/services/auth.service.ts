@@ -38,6 +38,7 @@ export class AuthService {
     localStorage.removeItem(USERNAME_KEY);
     localStorage.removeItem(ROLE_KEY);
   }
+
   getToken(): string | null {
     return localStorage.getItem(TOKEN_KEY);
   }
@@ -52,5 +53,34 @@ export class AuthService {
 
   isLoggedIn(): boolean {
     return !!this.getToken();
+  }
+
+  // true if the logged-in user has any of the given roles
+  hasRole(roles: string[]): boolean {
+    const role = this.getRole();
+
+    return !!role &&
+      roles.some(r => r.toLowerCase() === role.toLowerCase());
+  }
+
+  isAdmin(): boolean {
+    return this.hasRole(['Admin']);
+  }
+
+  isEmployee(): boolean {
+    return this.hasRole(['Employee']);
+  }
+
+  // First page for each role after login
+  getHomeRoute(): string {
+    if (this.isAdmin()) {
+      return '/dashboard';
+    }
+
+    if (this.isEmployee()) {
+      return '/my-requests';
+    }
+
+    return '/no-access';
   }
 }

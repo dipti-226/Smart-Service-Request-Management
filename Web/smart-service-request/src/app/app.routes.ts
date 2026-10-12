@@ -1,6 +1,10 @@
 import { Routes } from '@angular/router';
 
-import { authGuard, rootRedirectGuard } from './core/guards/auth.guard';
+import {
+  authGuard,
+  roleGuard,
+  rootRedirectGuard
+} from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -17,38 +21,58 @@ export const routes: Routes = [
   },
   {
     path: 'dashboard',
-    canActivate: [authGuard],
+    canActivate: [roleGuard],
+    data: { roles: ['Admin'] },
     loadComponent: () =>
       import('./features/dashboard/dashboard')
         .then(m => m.DashboardComponent)
   },
   {
+    path: 'my-requests',
+    canActivate: [roleGuard],
+    data: { roles: ['Employee'] },
+    loadComponent: () =>
+      import('./features/request/my-requests/my-requests')
+        .then(m => m.MyRequestsComponent)
+  },
+  {
     path: 'request/new',
-    canActivate: [authGuard],
+    canActivate: [roleGuard],
+    data: { roles: ['Admin', 'Employee'] },
     loadComponent: () =>
       import('./features/request/request-form/request-form')
         .then(m => m.RequestFormComponent)
   },
   {
     path: 'request/edit/:id',
-    canActivate: [authGuard],
+    canActivate: [roleGuard],
+    data: { roles: ['Admin'] },
     loadComponent: () =>
       import('./features/request/request-form/request-form')
         .then(m => m.RequestFormComponent)
   },
   {
     path: 'request-management',
-    canActivate: [authGuard],
+    canActivate: [roleGuard],
+    data: { roles: ['Admin'] },
     loadComponent: () =>
       import('./features/request/request-management/request-management')
         .then(m => m.RequestManagementComponent)
   },
   {
     path: 'request-management/:id',
-    canActivate: [authGuard],
+    canActivate: [roleGuard],
+    data: { roles: ['Admin'] },
     loadComponent: () =>
       import('./features/request/request-management/request-management')
         .then(m => m.RequestManagementComponent)
+  },
+  {
+    path: 'no-access',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/no-access/no-access')
+        .then(m => m.NoAccessComponent)
   },
   {
     path: '**',

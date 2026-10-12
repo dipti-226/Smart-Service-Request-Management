@@ -23,6 +23,14 @@ export class HeaderComponent {
     return this.authService.getUsername();
   }
 
+    get isAdmin(): boolean {
+    return this.authService.isAdmin();
+  }
+
+  get isEmployee(): boolean {
+    return this.authService.isEmployee();
+  }
+  
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/login']);

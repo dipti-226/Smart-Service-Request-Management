@@ -8,20 +8,32 @@
 
     @if (isLoggedIn) {
 
-    <nav>
-      <a routerLink="/dashboard" routerLinkActive="active">
-        Dashboard
-      </a>
+        <nav>
+      @if (isAdmin) {
+        <a routerLink="/dashboard" routerLinkActive="active">
+          Dashboard
+        </a>
 
-      <a routerLink="/request/new" routerLinkActive="active">
-        Create Request
-      </a>
+        <a routerLink="/request/new" routerLinkActive="active">
+          Create Request
+        </a>
 
-      <a routerLink="/request-management" routerLinkActive="active">
-         Advanced Components
-       </a>
+        <a routerLink="/request-management" routerLinkActive="active">
+          Advanced Components
+        </a>
+      }
+
+      @if (isEmployee) {
+        <a routerLink="/my-requests" routerLinkActive="active">
+          My Requests
+        </a>
+
+        <a routerLink="/request/new" routerLinkActive="active">
+          Create Request
+        </a>
+      }
     </nav>
-
+    
     <div class="admin-area">
       <span class="admin-badge">{{ adminName }}</span>
       <button type="button" class="logout-btn" (click)="logout()">

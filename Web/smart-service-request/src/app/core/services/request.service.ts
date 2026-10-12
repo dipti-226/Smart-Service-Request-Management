@@ -30,6 +30,12 @@ export class RequestService {
     );
   }
 
+    getMyRequests(): Observable<ApiResponse<Request[]>> {
+    return this.http.get<ApiResponse<Request[]>>(
+      `${this.apiUrl}/my`
+    );
+  }
+  
   getRequestById(id: number): Observable<ApiResponse<Request>> {
     return this.http.get<ApiResponse<Request>>(
       `${this.apiUrl}/${id}`
