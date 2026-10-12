@@ -152,13 +152,14 @@ namespace APP.Business.Services
 
         // Assign Technician
 
-        public async Task<ApiResponse<AdvancedRequestDto>>AssignTechnicianAsync(int requestId,AssignTechnicianDto dto)
+        public async Task<ApiResponse<AdvancedRequestDto>>AssignTechnicianAsync(int requestId, AssignTechnicianDto dto)
         {
             await using SqlConnection connection = new SqlConnection(_connectionString);
-            await using SqlCommand command = new SqlCommand("SSR_Request_AssignTechnician",connection);
+            await using SqlCommand command = new SqlCommand("SSR_Request_AssignTechnician", connection);
             command.CommandType = CommandType.StoredProcedure;
-            command.Parameters.AddWithValue("@RequestId",requestId);
-            command.Parameters.AddWithValue("@TechnicianId",dto.TechnicianId);
+            command.Parameters.AddWithValue("@RequestId", requestId);
+            command.Parameters.AddWithValue("@TechnicianId", dto.TechnicianId);
+
             await connection.OpenAsync();
             await using SqlDataReader reader = await command.ExecuteReaderAsync();
 
@@ -168,6 +169,27 @@ namespace APP.Business.Services
                 {
                     Success = false,
                     Message = "Request or technician not found.",
+                    Data = null
+                };
+            }
+
+            // SP returned only an ErrorCode column (request or technician not valid)
+            if (HasColumn(reader, "ErrorCode"))
+            {
+                string errorCode = reader["ErrorCode"]?.ToString() ?? string.Empty;
+
+                string message = errorCode switch
+                {
+                    "REQUEST_NOT_FOUND" => "Request not found or already inactive.",
+                    "TECHNICIAN_NOT_FOUND" => "Technician not found or inactive.",
+                    _ => "Request or technician not found."
+                };
+
+                return new ApiResponse<AdvancedRequestDto>
+                {
+                    Success = false,
+                    Message = message,
+                    ErrorCode = errorCode,
                     Data = null
                 };
             }
