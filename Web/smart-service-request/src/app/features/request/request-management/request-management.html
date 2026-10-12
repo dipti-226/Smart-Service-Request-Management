@@ -14,7 +14,7 @@
 
   @if (!loading() && !errorMessage()) {
 
-    @if (request()) {
+    @if (request(); as req) {
 
       <div class="page-header">
         <div>
@@ -22,11 +22,11 @@
             type="button"
             class="back-button"
             (click)="backToRequests()">
-            ← Back to Requests
+             Back to Requests
           </button>
 
           <h1>Request Management</h1>
-          <p>Manage request {{ request()!.requestCode }}</p>
+          <p>Manage request {{ req.requestCode }}</p>
         </div>
       </div>
 
@@ -37,34 +37,34 @@
 
           <div class="detail-item">
             <span class="label">Request Code</span>
-            <span class="value">{{ request()!.requestCode }}</span>
+            <span class="value">{{ req.requestCode }}</span>
           </div>
 
           <div class="detail-item">
             <span class="label">Request Type</span>
-            <span class="value">{{ request()!.requestType }}</span>
+            <span class="value">{{ req.requestType }}</span>
           </div>
 
           <div class="detail-item">
             <span class="label">Priority</span>
-            <span class="value">{{ request()!.priority }}</span>
+            <span class="value">{{ req.priority }}</span>
           </div>
 
           <div class="detail-item">
             <span class="label">Status</span>
-            <span class="value">{{ request()!.status }}</span>
+            <span class="value">{{ req.status }}</span>
           </div>
 
           <div class="detail-item">
             <span class="label">Created Date</span>
             <span class="value">
-              {{ request()!.createdDate | date:'dd-MMM-yyyy' }}
+              {{ req.createdDate | date:'dd-MMM-yyyy' }}
             </span>
           </div>
 
           <div class="detail-item full-width">
             <span class="label">Description</span>
-            <span class="value">{{ request()!.requestDescription }}</span>
+            <span class="value">{{ req.requestDescription }}</span>
           </div>
 
         </div>
@@ -72,7 +72,7 @@
 
       <div class="action-panel-container">
         <app-request-action-panel
-          [request]="request()!">
+          [request]="req">
         </app-request-action-panel>
       </div>
 

@@ -1,3 +1,5 @@
+@let req = currentRequest();
+
 <section
   class="request-action-panel"
   aria-labelledby="request-action-title"
@@ -10,36 +12,36 @@
   <app-request-card>
 
     <div card-title>
-      Request #{{ request.requestCode }}
+      Request #{{ req.requestCode }}
     </div>
 
     <div card-content>
 
       <p>
         <strong>Request Type:</strong>
-        {{ request.requestType }}
+        {{ req.requestType }}
       </p>
 
       <p>
         <strong>Priority:</strong>
-        {{ request.priority }}
+        {{ req.priority }}
       </p>
 
       <p>
         <strong>Status:</strong>
-        {{ request.status }}
+        {{ req.status }}
       </p>
 
       <p>
         <strong>Description:</strong>
-        {{ request.requestDescription }}
+        {{ req.requestDescription }}
       </p>
 
       <p>
         <strong>Technician:</strong>
 
-        @if (request.technicianName) {
-          {{ request.technicianName }}
+        @if (req.technicianName) {
+          {{ req.technicianName }}
         } @else {
           Not Assigned
         }
@@ -75,23 +77,23 @@
 
   </app-request-card>
 
-  @if (actionSuccess) {
+  @if (actionSuccess()) {
 
     <div class="success">
-      {{ actionSuccess }}
+      {{ actionSuccess() }}
     </div>
 
   }
 
-  @if (actionError) {
+  @if (actionError()) {
 
     <div class="error">
-      {{ actionError }}
+      {{ actionError() }}
     </div>
 
   }
 
-  @if (loadingTechnicians) {
+  @if (loadingTechnicians()) {
 
     <div class="loading">
       Loading technicians...
@@ -107,7 +109,7 @@
 
     <select
       id="action"
-      [value]="selectedAction"
+      [value]="selectedAction()"
       (change)="onActionChange($any($event.target).value)"
     >
 

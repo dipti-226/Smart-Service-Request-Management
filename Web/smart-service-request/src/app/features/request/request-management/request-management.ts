@@ -2,10 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import {
-  Request,
-  AdvancedRequest
-} from '../../../core/models/request.model';
+import {Request,AdvancedRequest} from '../../../core/models/request.model';
 import { RequestService } from '../../../core/services/request.service';
 import { RequestActionPanelComponent } from '../request-action-panel/request-action-panel';
 
@@ -18,8 +15,6 @@ import { RequestActionPanelComponent } from '../request-action-panel/request-act
 })
 export class RequestManagementComponent implements OnInit {
 
-  // Signals so the UI re-renders as soon as data changes,
-  // regardless of async timing (this app runs zoneless).
   requests = signal<Request[]>([]);
   request = signal<AdvancedRequest | null>(null);
 

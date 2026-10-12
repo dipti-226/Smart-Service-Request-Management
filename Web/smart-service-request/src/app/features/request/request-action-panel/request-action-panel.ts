@@ -1,4 +1,4 @@
-import {Component,EventEmitter,Input,Output,ViewChild,ViewContainerRef,inject} from '@angular/core';
+import {Component,EventEmitter,Output,ViewChild,ViewContainerRef,inject,input,linkedSignal,signal} from '@angular/core';
 
 import { RequestDetailsComponent } from '../dynamic-actions/request-details/request-details';
 import { UpdateStatusComponent } from '../dynamic-actions/update-status/update-status';
@@ -6,10 +6,7 @@ import { TechnicianActionComponent } from '../dynamic-actions/technician-action/
 
 import { RequestCardComponent } from '../../../shared/components/request-card/request-card';
 
-import {
-  AdvancedRequest,
-  Technician
-} from '../../../core/models/request.model';
+import {AdvancedRequest,Technician} from '../../../core/models/request.model';
 
 import { RequestService } from '../../../core/services/request.service';
 
@@ -25,8 +22,12 @@ export class RequestActionPanelComponent {
   private readonly requestService =
     inject(RequestService);
 
-  @Input()
-  request!: AdvancedRequest;
+  // Request received from the parent page
+  request = input.required<AdvancedRequest>();
+
+  // Working copy: starts from the input and is replaced
+  // after a status update or technician assignment
+  currentRequest = linkedSignal(() => this.request());
 
   @Output()
   actionSelected =
@@ -37,23 +38,23 @@ export class RequestActionPanelComponent {
   })
   dynamicComponent!: ViewContainerRef;
 
-  selectedAction = '';
+  selectedAction = signal('');
 
-  technicians: Technician[] = [];
+  technicians = signal<Technician[]>([]);
 
-  loadingTechnicians = false;
+  loadingTechnicians = signal(false);
 
-  actionError = '';
+  actionError = signal('');
 
-  actionSuccess = '';
+  actionSuccess = signal('');
 
 
   onActionChange(action: string): void {
 
-    this.selectedAction = action;
+    this.selectedAction.set(action);
 
-    this.actionError = '';
-    this.actionSuccess = '';
+    this.actionError.set('');
+    this.actionSuccess.set('');
 
     this.dynamicComponent.clear();
 
@@ -85,7 +86,7 @@ export class RequestActionPanelComponent {
 
     componentRef.setInput(
       'request',
-      this.request
+      this.currentRequest()
     );
   }
 
@@ -99,7 +100,7 @@ export class RequestActionPanelComponent {
 
     componentRef.setInput(
       'request',
-      this.request
+      this.currentRequest()
     );
 
     componentRef.instance.statusChanged.subscribe(
@@ -114,7 +115,7 @@ export class RequestActionPanelComponent {
 
   private loadTechnicians(): void {
 
-    this.loadingTechnicians = true;
+    this.loadingTechnicians.set(true);
 
     this.requestService
       .getTechnicians()
@@ -122,21 +123,22 @@ export class RequestActionPanelComponent {
 
         next: (response) => {
 
-          this.loadingTechnicians = false;
+          this.loadingTechnicians.set(false);
 
           if (
             !response.success ||
             !response.data
           ) {
 
-            this.actionError =
+            this.actionError.set(
               response.message ||
-              'Unable to load technicians.';
+              'Unable to load technicians.'
+            );
 
             return;
           }
 
-          this.technicians = response.data;
+          this.technicians.set(response.data);
 
           const componentRef =
             this.dynamicComponent.createComponent(
@@ -145,12 +147,12 @@ export class RequestActionPanelComponent {
 
           componentRef.setInput(
             'request',
-            this.request
+            this.currentRequest()
           );
 
           componentRef.setInput(
             'technicians',
-            this.technicians
+            this.technicians()
           );
 
           componentRef.instance.technicianAssigned.subscribe(
@@ -166,15 +168,16 @@ export class RequestActionPanelComponent {
 
         error: (error) => {
 
-          this.loadingTechnicians = false;
+          this.loadingTechnicians.set(false);
 
           console.error(
             'Error loading technicians:',
             error
           );
 
-          this.actionError =
-            'Unable to load technicians.';
+          this.actionError.set(
+            'Unable to load technicians.'
+          );
         }
       });
   }
@@ -184,12 +187,12 @@ export class RequestActionPanelComponent {
     newStatus: string
   ): void {
 
-    this.actionError = '';
-    this.actionSuccess = '';
+    this.actionError.set('');
+    this.actionSuccess.set('');
 
     this.requestService
       .updateRequestStatus(
-        this.request.requestId,
+        this.currentRequest().requestId,
         {
           status: newStatus
         }
@@ -203,11 +206,13 @@ export class RequestActionPanelComponent {
             response.data
           ) {
 
-            this.request =
-              response.data;
+            this.currentRequest.set(
+              response.data
+            );
 
-            this.actionSuccess =
-              'Request status updated successfully.';
+            this.actionSuccess.set(
+              'Request status updated successfully.'
+            );
 
             /*
              * Recreate the selected component
@@ -219,9 +224,10 @@ export class RequestActionPanelComponent {
 
           } else {
 
-            this.actionError =
+            this.actionError.set(
               response.message ||
-              'Unable to update request status.';
+              'Unable to update request status.'
+            );
           }
         },
 
@@ -232,9 +238,10 @@ export class RequestActionPanelComponent {
             error
           );
 
-          this.actionError =
+          this.actionError.set(
             error?.error?.message ||
-            'Unable to update request status.';
+            'Unable to update request status.'
+          );
         }
       });
   }
@@ -244,12 +251,12 @@ export class RequestActionPanelComponent {
     technicianId: number
   ): void {
 
-    this.actionError = '';
-    this.actionSuccess = '';
+    this.actionError.set('');
+    this.actionSuccess.set('');
 
     this.requestService
       .assignTechnician(
-        this.request.requestId,
+        this.currentRequest().requestId,
         {
           technicianId: technicianId
         }
@@ -263,11 +270,13 @@ export class RequestActionPanelComponent {
             response.data
           ) {
 
-            this.request =
-              response.data;
+            this.currentRequest.set(
+              response.data
+            );
 
-            this.actionSuccess =
-              'Technician assigned successfully.';
+            this.actionSuccess.set(
+              'Technician assigned successfully.'
+            );
 
             /*
              * Recreate the technician component
@@ -279,9 +288,10 @@ export class RequestActionPanelComponent {
 
           } else {
 
-            this.actionError =
+            this.actionError.set(
               response.message ||
-              'Unable to assign technician.';
+              'Unable to assign technician.'
+            );
           }
         },
 
@@ -292,9 +302,10 @@ export class RequestActionPanelComponent {
             error
           );
 
-          this.actionError =
+          this.actionError.set(
             error?.error?.message ||
-            'Unable to assign technician.';
+            'Unable to assign technician.'
+          );
         }
       });
   }
