@@ -7,5 +7,8 @@ namespace APP.Models.DTOs.Requests
         public int OpenRequests { get; set; }
         public int InProgressRequests { get; set; }
         public int ResolvedRequests { get; set; }
+        public int OnHoldRequests { get; set; }
+        public int ClosedRequests { get; set; }
+        public int CancelledRequests { get; set; }
     }
 }

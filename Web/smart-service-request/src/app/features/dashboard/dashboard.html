@@ -10,9 +10,9 @@
   </div>
 
   @if (errorMessage()) {
-    <div class="dashboard-error">
-      {{ errorMessage() }}
-    </div>
+  <div class="dashboard-error">
+    {{ errorMessage() }}
+  </div>
   }
 
   <div class="cards">
@@ -21,9 +21,9 @@
       <div class="card-content">
         <span class="card-title">Total Requests</span>
         @if (isLoading()) {
-          <span class="card-value">...</span>
+        <span class="card-value">...</span>
         } @else {
-          <span class="card-value">{{ totalRequests() }}</span>
+        <span class="card-value">{{ totalRequests() }}</span>
         }
       </div>
     </div>
@@ -32,9 +32,9 @@
       <div class="card-content">
         <span class="card-title">Open</span>
         @if (isLoading()) {
-          <span class="card-value">...</span>
+        <span class="card-value">...</span>
         } @else {
-          <span class="card-value">{{ openRequests() }}</span>
+        <span class="card-value">{{ openRequests() }}</span>
         }
       </div>
     </div>
@@ -43,9 +43,20 @@
       <div class="card-content">
         <span class="card-title">In Progress</span>
         @if (isLoading()) {
-          <span class="card-value">...</span>
+        <span class="card-value">...</span>
         } @else {
-          <span class="card-value">{{ inProgressRequests() }}</span>
+        <span class="card-value">{{ inProgressRequests() }}</span>
+        }
+      </div>
+    </div>
+
+    <div class="summary-card onhold">
+      <div class="card-content">
+        <span class="card-title">On Hold</span>
+        @if (isLoading()) {
+        <span class="card-value">...</span>
+        } @else {
+        <span class="card-value">{{ onHoldRequests() }}</span>
         }
       </div>
     </div>
@@ -54,9 +65,31 @@
       <div class="card-content">
         <span class="card-title">Resolved</span>
         @if (isLoading()) {
-          <span class="card-value">...</span>
+        <span class="card-value">...</span>
         } @else {
-          <span class="card-value">{{ resolvedRequests() }}</span>
+        <span class="card-value">{{ resolvedRequests() }}</span>
+        }
+      </div>
+    </div>
+
+    <div class="summary-card closed">
+      <div class="card-content">
+        <span class="card-title">Closed</span>
+        @if (isLoading()) {
+        <span class="card-value">...</span>
+        } @else {
+        <span class="card-value">{{ closedRequests() }}</span>
+        }
+      </div>
+    </div>
+
+    <div class="summary-card cancelled">
+      <div class="card-content">
+        <span class="card-title">Cancelled</span>
+        @if (isLoading()) {
+        <span class="card-value">...</span>
+        } @else {
+        <span class="card-value">{{ cancelledRequests() }}</span>
         }
       </div>
     </div>

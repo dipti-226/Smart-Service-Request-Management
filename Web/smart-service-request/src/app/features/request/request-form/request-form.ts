@@ -1,9 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import {
-  FormBuilder,
-  ReactiveFormsModule,
-  Validators
-} from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { RequestService } from '../../../core/services/request.service';
@@ -31,36 +27,19 @@ export class RequestFormComponent implements OnInit {
 
   isEditMode = signal(false);
   requestId: number | null = null;
+  statusOptions = signal<string[]>([]);   // Status dropdown (edit mode): current status + allowed next statuses
 
   requestForm = this.fb.nonNullable.group({
-    requestType: [
-      '',
-      [
-        Validators.required,
-        Validators.maxLength(100)
-      ]
-    ],
 
-    requestDescription: [
-      '',
-      [
-        Validators.required,
-        Validators.maxLength(1000)
-      ]
-    ],
-
-    priority: [
-      '',
-      Validators.required
-    ],
-
+    requestType: ['', [Validators.required, Validators.maxLength(100)]],
+    requestDescription: ['', [Validators.required, Validators.maxLength(1000)]],
+    priority: ['', Validators.required],
     status: ['']
   });
 
   ngOnInit(): void {
 
     this.route.paramMap.subscribe(params => {
-
       const idParam = params.get('id');
 
       this.errorMessage.set('');
@@ -81,12 +60,7 @@ export class RequestFormComponent implements OnInit {
         this.requestForm.controls.status.clearValidators();
         this.requestForm.controls.status.updateValueAndValidity();
 
-        this.requestForm.reset({
-          requestType: '',
-          requestDescription: '',
-          priority: '',
-          status: ''
-        });
+        this.requestForm.reset({ requestType: '', requestDescription: '', priority: '', status: '' });
       }
     });
   }
@@ -99,13 +73,9 @@ export class RequestFormComponent implements OnInit {
     this.requestService.getRequestById(id).subscribe({
 
       next: response => {
-
         this.isLoading.set(false);
-
         if (!response.success || !response.data) {
-          this.errorMessage.set(
-            response.message || 'Unable to load request.'
-          );
+          this.errorMessage.set(response.message || 'Unable to load request.');
           return;
         }
 
@@ -115,21 +85,33 @@ export class RequestFormComponent implements OnInit {
           priority: response.data.priority,
           status: response.data.status
         });
+        this.loadStatusOptions(id, response.data.status);
       },
 
       error: error => {
 
         this.isLoading.set(false);
-
         console.error(error);
-
-        this.errorMessage.set(
-          error?.error?.message || 'Unable to load request.'
-        );
+        this.errorMessage.set(error?.error?.message || 'Unable to load request.');
       }
     });
   }
 
+  private loadStatusOptions(id: number, currentStatus: string): void {
+
+    // The current status is always selectable, so a request can be
+    // edited without changing its status.
+    this.statusOptions.set([currentStatus]);
+
+    this.requestService.getAllowedStatuses(id).subscribe({
+
+      next: response => {
+        this.statusOptions.set([currentStatus, ...(response.data ?? [])]);
+      },
+
+      error: error => { console.error(error); }
+    });
+  }
   submitRequest(): void {
 
     this.errorMessage.set('');
@@ -155,15 +137,11 @@ export class RequestFormComponent implements OnInit {
           this.isSubmitting.set(false);
 
           if (!response.success || !response.data) {
-            this.errorMessage.set(
-              response.message || 'Unable to create request.'
-            );
+            this.errorMessage.set(response.message || 'Unable to create request.');
             return;
           }
 
-          this.successMessage.set(
-            `Request ${response.data.requestCode} created successfully.`
-          );
+          this.successMessage.set(`Request ${response.data.requestCode} created successfully.`);
 
           this.requestForm.reset({
             requestType: '',

@@ -109,29 +109,19 @@ namespace APP.API.Controllers
         [HttpPut("{id:int}")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<RequestResponseDto>>>
-            UpdateRequest(int id, UpdateRequestDto dto)
+    UpdateRequest(int id, UpdateRequestDto dto)
         {
             var response =
-                await _requestService.UpdateRequestAsync(id, dto);
+                await _requestService.UpdateRequestAsync(id, dto, GetCurrentUserId(), "Admin");
 
             if (!response.Success)
             {
-                return NotFound(response);
-            }
+                // Status change not allowed -> 400, request missing -> 404 (as before)
+                if (response.ErrorCode == "INVALID_TRANSITION")
+                {
+                    return BadRequest(response);
+                }
 
-            return Ok(response);
-        }
-
-        [HttpDelete("{id:int}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResponse<bool>>>
-            DeleteRequest(int id)
-        {
-            var response =
-                await _requestService.SoftDeleteRequestAsync(id);
-
-            if (!response.Success)
-            {
                 return NotFound(response);
             }
 

@@ -4,29 +4,23 @@
 
     <div class="form-header">
       @if (isEditMode()) {
-        <h2>Edit Service Request</h2>
-        <p>Update the details of this request.</p>
+      <h2>Edit Service Request</h2>
+      <p>Update the details of this request.</p>
       } @else {
-        <h2>Create Service Request</h2>
-        <p>Report your problem by entering the details below.</p>
+      <h2>Create Service Request</h2>
+      <p>Report your problem by entering the details below.</p>
       }
     </div>
 
     @if (successMessage()) {
-      <div class="alert success">
-        {{ successMessage() }}
-      </div>
+    <div class="alert success">{{ successMessage() }}</div>
     }
 
     @if (errorMessage()) {
-      <div class="alert error">
-        {{ errorMessage() }}
-      </div>
+    <div class="alert error">{{ errorMessage() }}</div>
     }
 
-    <form
-      [formGroup]="requestForm"
-      (ngSubmit)="submitRequest()">
+    <form [formGroup]="requestForm" (ngSubmit)="submitRequest()">
 
       <div class="form-group">
 
@@ -34,9 +28,7 @@
           Request Type
         </label>
 
-        <select
-          id="requestType"
-          formControlName="requestType">
+        <select id="requestType" formControlName="requestType">
 
           <option value="">Select request type</option>
           <option value="Computer">Computer</option>
@@ -47,51 +39,31 @@
 
         </select>
 
-        @if (
-          requestForm.controls.requestType.touched &&
-          requestForm.controls.requestType.invalid
-        ) {
-          <small class="validation-error">
-            Request type is required.
-          </small>
+        @if (requestForm.controls.requestType.touched && requestForm.controls.requestType.invalid) {
+        <small class="validation-error">Request type is required.</small>
         }
 
       </div>
 
       <div class="form-group">
 
-        <label for="requestDescription">
-          Request Description
-        </label>
+        <label for="requestDescription">Request Description</label>
 
-        <textarea
-          id="requestDescription"
-          rows="6"
-          maxlength="1000"
-          placeholder="Describe your problem..."
+        <textarea id="requestDescription" rows="6" maxlength="1000" placeholder="Describe your problem..."
           formControlName="requestDescription">
         </textarea>
 
-        @if (
-          requestForm.controls.requestDescription.touched &&
-          requestForm.controls.requestDescription.invalid
-        ) {
-          <small class="validation-error">
-            Request description is required.
-          </small>
+        @if (requestForm.controls.requestDescription.touched && requestForm.controls.requestDescription.invalid) {
+        <small class="validation-error">Request description is required.</small>
         }
 
       </div>
 
       <div class="form-group">
 
-        <label for="priority">
-          Priority
-        </label>
+        <label for="priority">Priority</label>
 
-        <select
-          id="priority"
-          formControlName="priority">
+        <select id="priority" formControlName="priority">
 
           <option value="">Select priority</option>
           <option value="Low">Low</option>
@@ -101,67 +73,50 @@
 
         </select>
 
-        @if (
-          requestForm.controls.priority.touched &&
-          requestForm.controls.priority.invalid
-        ) {
-          <small class="validation-error">
-            Priority is required.
-          </small>
+        @if (requestForm.controls.priority.touched && requestForm.controls.priority.invalid) {
+        <small class="validation-error">Priority is required.</small>
         }
 
       </div>
 
       @if (isEditMode()) {
 
-        <div class="form-group">
+      <div class="form-group">
 
-          <label for="status">
-            Status
-          </label>
+        <label for="status">Status</label>
 
-          <select
-            id="status"
-            formControlName="status">
+        <select id="status" formControlName="status">
 
-            <option value="">Select status</option>
-            <option value="Open">Open</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Resolved">Resolved</option>
+          <option value="">Select status</option>
+          <option value="">Select status</option>
 
-          </select>
-
-          @if (
-            requestForm.controls.status.touched &&
-            requestForm.controls.status.invalid
-          ) {
-            <small class="validation-error">
-              Status is required.
-            </small>
+          @for (statusOption of statusOptions(); track statusOption) {
+          <option [value]="statusOption">{{ statusOption }}</option>
           }
 
-        </div>
+        </select>
+
+        @if (requestForm.controls.status.touched && requestForm.controls.status.invalid
+        ) {
+        <small class="validation-error">Status is required.</small>
+        }
+
+      </div>
 
       }
 
       <div class="form-actions">
 
-        <button
-          type="button"
-          class="btn secondary"
-          (click)="requestForm.reset()">
+        <button type="button" class="btn secondary" (click)="requestForm.reset()">
           Reset
         </button>
 
-        <button
-          type="submit"
-          class="btn primary"
-          [disabled]="isSubmitting()">
+        <button type="submit" class="btn primary" [disabled]="isSubmitting()">
 
           @if (isSubmitting()) {
-            @if (isEditMode()) { Updating... } @else { Submitting... }
+          @if (isEditMode()) { Updating... } @else { Submitting... }
           } @else {
-            @if (isEditMode()) { Update Request } @else { Submit Request }
+          @if (isEditMode()) { Update Request } @else { Submit Request }
           }
 
         </button>

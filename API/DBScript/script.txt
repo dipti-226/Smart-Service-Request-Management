@@ -1325,3 +1325,490 @@ BEGIN
 END;
 GO
 
+--------------------------------------------------
+-- 1. Allow the 6 statuses
+--------------------------------------------------
+IF EXISTS
+(
+    SELECT 1
+    FROM sys.check_constraints
+    WHERE name = 'CK_Requests_Status'
+      AND parent_object_id = OBJECT_ID('dbo.Requests')
+)
+BEGIN
+    ALTER TABLE [dbo].[Requests]
+    DROP CONSTRAINT [CK_Requests_Status];
+END;
+GO
+
+ALTER TABLE [dbo].[Requests] WITH CHECK
+ADD CONSTRAINT [CK_Requests_Status]
+CHECK ([Status] IN ('Open', 'In Progress', 'On Hold', 'Resolved', 'Closed', 'Cancelled'));
+GO
+
+--------------------------------------------------
+-- 2. Status history (audit)
+--------------------------------------------------
+IF OBJECT_ID('dbo.RequestStatusHistory', 'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[RequestStatusHistory]
+    (
+        [HistoryId]       INT IDENTITY(1,1) NOT NULL,
+        [RequestId]       INT NOT NULL,
+        [OldStatus]       NVARCHAR(30) NULL,
+        [NewStatus]       NVARCHAR(30) NOT NULL,
+        [ChangedByUserId] INT NULL,
+        [ChangedByRole]   NVARCHAR(50) NULL,
+        [Remarks]         NVARCHAR(500) NULL,
+        [ChangedDate]     DATETIME2(7) NOT NULL
+            CONSTRAINT [DF_RequestStatusHistory_ChangedDate] DEFAULT (SYSUTCDATETIME()),
+        CONSTRAINT [PK_RequestStatusHistory] PRIMARY KEY CLUSTERED ([HistoryId]),
+        CONSTRAINT [FK_RequestStatusHistory_Requests]
+            FOREIGN KEY ([RequestId]) REFERENCES [dbo].[Requests]([RequestId]),
+        CONSTRAINT [FK_RequestStatusHistory_Users]
+            FOREIGN KEY ([ChangedByUserId]) REFERENCES [dbo].[Users]([UserId])
+    );
+
+    CREATE INDEX [IX_RequestStatusHistory_RequestId]
+        ON [dbo].[RequestStatusHistory] ([RequestId], [ChangedDate]);
+END;
+GO
+
+-- One starting row for every request that exists today
+INSERT INTO dbo.RequestStatusHistory
+    (RequestId, OldStatus, NewStatus, ChangedByUserId, ChangedByRole, Remarks, ChangedDate)
+SELECT
+    r.RequestId,
+    NULL,
+    r.Status,
+    r.CreatedByUserId,
+    NULL,
+    'History started (existing request)',
+    ISNULL(r.UpdatedDate, r.CreatedDate)
+FROM dbo.Requests r
+WHERE NOT EXISTS
+(
+    SELECT 1 FROM dbo.RequestStatusHistory h WHERE h.RequestId = r.RequestId
+);
+GO
+
+--------------------------------------------------
+-- 3. Allowed transitions (the rules)
+--------------------------------------------------
+IF OBJECT_ID('dbo.RequestStatusTransitions', 'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[RequestStatusTransitions]
+    (
+        [TransitionId] INT IDENTITY(1,1) NOT NULL,
+        [RoleName]     NVARCHAR(50) NOT NULL,
+        [FromStatus]   NVARCHAR(30) NOT NULL,
+        [ToStatus]     NVARCHAR(30) NOT NULL,
+        CONSTRAINT [PK_RequestStatusTransitions] PRIMARY KEY CLUSTERED ([TransitionId]),
+        CONSTRAINT [UQ_RequestStatusTransitions]
+            UNIQUE ([RoleName], [FromStatus], [ToStatus])
+    );
+END;
+GO
+
+INSERT INTO dbo.RequestStatusTransitions (RoleName, FromStatus, ToStatus)
+SELECT v.RoleName, v.FromStatus, v.ToStatus
+FROM (VALUES
+    ('Admin',      'Open',        'In Progress'),
+    ('Admin',      'Open',        'Cancelled'),
+    ('Admin',      'In Progress', 'On Hold'),
+    ('Admin',      'In Progress', 'Resolved'),
+    ('Admin',      'On Hold',     'In Progress'),
+    ('Admin',      'Resolved',    'Closed'),
+    ('Admin',      'Resolved',    'Open'),
+
+    ('Technician', 'Open',        'In Progress'),
+    ('Technician', 'In Progress', 'On Hold'),
+    ('Technician', 'In Progress', 'Resolved'),
+    ('Technician', 'On Hold',     'In Progress'),
+
+    ('Employee',   'Open',        'Cancelled'),
+    ('Employee',   'Resolved',    'Closed'),
+    ('Employee',   'Resolved',    'Open')
+) AS v (RoleName, FromStatus, ToStatus)
+WHERE NOT EXISTS
+(
+    SELECT 1
+    FROM dbo.RequestStatusTransitions t
+    WHERE t.RoleName = v.RoleName
+      AND t.FromStatus = v.FromStatus
+      AND t.ToStatus = v.ToStatus
+);
+GO
+
+--------------------------------------------------
+-- 4. Create request: also writes the first history row
+--------------------------------------------------
+CREATE OR ALTER PROCEDURE [dbo].[SSR_Request_Create]
+(
+    @RequestType NVARCHAR(100),
+    @RequestDescription NVARCHAR(1000),
+    @Priority NVARCHAR(20),
+    @CreatedByUserId INT = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    DECLARE @NewRequestId INT;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        INSERT INTO Requests
+        (
+            RequestType,
+            RequestDescription,
+            Priority,
+            CreatedByUserId
+        )
+        VALUES
+        (
+            @RequestType,
+            @RequestDescription,
+            @Priority,
+            @CreatedByUserId
+        );
+
+        SET @NewRequestId = SCOPE_IDENTITY();
+
+        INSERT INTO dbo.RequestStatusHistory
+            (RequestId, OldStatus, NewStatus, ChangedByUserId, Remarks)
+        VALUES
+            (@NewRequestId, NULL, 'Open', @CreatedByUserId, 'Request created');
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH;
+
+    SELECT
+        RequestId,
+        RequestCode,
+        RequestType,
+        RequestDescription,
+        Priority,
+        Status,
+        CreatedDate,
+        UpdatedDate
+    FROM Requests
+    WHERE RequestId = @NewRequestId;
+END;
+GO
+
+--------------------------------------------------
+-- 5. Update status: ownership + transition rules + history
+--    Old calls (no role) are treated as Admin
+--------------------------------------------------
+CREATE OR ALTER PROCEDURE [dbo].[SSR_Request_UpdateStatus]
+(
+    @RequestId INT,
+    @Status NVARCHAR(30),
+    @CallerUserId INT = NULL,
+    @CallerRole NVARCHAR(50) = NULL,
+    @Remarks NVARCHAR(500) = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    DECLARE @Role NVARCHAR(50) = ISNULL(@CallerRole, 'Admin');
+    DECLARE @OldStatus NVARCHAR(30);
+
+    SELECT @OldStatus = Status
+    FROM dbo.Requests
+    WHERE RequestId = @RequestId
+      AND IsActive = 1;
+
+    -- Request not found or inactive: return nothing
+    IF @OldStatus IS NULL
+        RETURN;
+
+    -- Technician: only for requests assigned to them
+    IF @Role = 'Technician'
+       AND NOT EXISTS
+       (
+           SELECT 1
+           FROM dbo.Requests r
+           INNER JOIN dbo.Technicians t ON r.TechnicianId = t.TechnicianId
+           WHERE r.RequestId = @RequestId
+             AND r.IsActive = 1
+             AND t.IsActive = 1
+             AND t.UserId = @CallerUserId
+       )
+    BEGIN
+        SELECT 'NOT_ASSIGNED' AS ErrorCode, @OldStatus AS CurrentStatus;
+        RETURN;
+    END;
+
+    -- Employee: only for their own requests
+    IF @Role = 'Employee'
+       AND NOT EXISTS
+       (
+           SELECT 1
+           FROM dbo.Requests
+           WHERE RequestId = @RequestId
+             AND IsActive = 1
+             AND CreatedByUserId = @CallerUserId
+       )
+    BEGIN
+        SELECT 'NOT_OWNER' AS ErrorCode, @OldStatus AS CurrentStatus;
+        RETURN;
+    END;
+
+    -- The move must be allowed for this role
+    IF NOT EXISTS
+    (
+        SELECT 1
+        FROM dbo.RequestStatusTransitions
+        WHERE RoleName = @Role
+          AND FromStatus = @OldStatus
+          AND ToStatus = @Status
+    )
+    BEGIN
+        SELECT 'INVALID_TRANSITION' AS ErrorCode, @OldStatus AS CurrentStatus;
+        RETURN;
+    END;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        UPDATE dbo.Requests
+        SET Status = @Status,
+            UpdatedDate = SYSUTCDATETIME()
+        WHERE RequestId = @RequestId
+          AND IsActive = 1
+          AND Status = @OldStatus;
+
+        -- Somebody changed the request at the same moment
+        IF @@ROWCOUNT = 0
+        BEGIN
+            ROLLBACK TRANSACTION;
+            SELECT 'INVALID_TRANSITION' AS ErrorCode, @OldStatus AS CurrentStatus;
+            RETURN;
+        END;
+
+        INSERT INTO dbo.RequestStatusHistory
+            (RequestId, OldStatus, NewStatus, ChangedByUserId, ChangedByRole, Remarks)
+        VALUES
+            (@RequestId, @OldStatus, @Status, @CallerUserId, @Role, @Remarks);
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH;
+
+    SELECT
+        r.RequestId,
+        r.RequestCode,
+        r.RequestType,
+        r.RequestDescription,
+        r.Priority,
+        r.Status,
+        r.TechnicianId,
+        t.TechnicianName,
+        r.CreatedDate,
+        r.UpdatedDate
+    FROM dbo.Requests r
+    LEFT JOIN dbo.Technicians t
+        ON r.TechnicianId = t.TechnicianId
+    WHERE r.RequestId = @RequestId
+      AND r.IsActive = 1;
+END;
+GO
+
+--------------------------------------------------
+-- 6. Edit request (Admin form): same rules when the status changes
+--------------------------------------------------
+CREATE OR ALTER PROCEDURE [dbo].[SSR_Request_Update]
+(
+    @RequestId          INT,
+    @RequestType        NVARCHAR(100),
+    @RequestDescription NVARCHAR(1000),
+    @Priority           NVARCHAR(20),
+    @Status             NVARCHAR(30),
+    @CallerUserId       INT = NULL,
+    @CallerRole         NVARCHAR(50) = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    DECLARE @Role NVARCHAR(50) = ISNULL(@CallerRole, 'Admin');
+    DECLARE @OldStatus NVARCHAR(30);
+
+    SELECT @OldStatus = Status
+    FROM dbo.Requests
+    WHERE RequestId = @RequestId
+      AND IsActive = 1;
+
+    -- Request not found or inactive: return nothing
+    IF @OldStatus IS NULL
+        RETURN;
+
+    -- Status changed: the move must be allowed
+    IF @OldStatus <> @Status
+       AND NOT EXISTS
+       (
+           SELECT 1
+           FROM dbo.RequestStatusTransitions
+           WHERE RoleName = @Role
+             AND FromStatus = @OldStatus
+             AND ToStatus = @Status
+       )
+    BEGIN
+        SELECT 'INVALID_TRANSITION' AS ErrorCode, @OldStatus AS CurrentStatus;
+        RETURN;
+    END;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        UPDATE dbo.Requests
+        SET RequestType        = @RequestType,
+            RequestDescription = @RequestDescription,
+            Priority           = @Priority,
+            Status             = @Status,
+            UpdatedDate        = SYSUTCDATETIME()
+        WHERE RequestId = @RequestId
+          AND IsActive = 1
+          AND Status = @OldStatus;
+
+        -- Somebody changed the request at the same moment
+        IF @@ROWCOUNT = 0
+        BEGIN
+            ROLLBACK TRANSACTION;
+            SELECT 'INVALID_TRANSITION' AS ErrorCode, @OldStatus AS CurrentStatus;
+            RETURN;
+        END;
+
+        IF @OldStatus <> @Status
+        BEGIN
+            INSERT INTO dbo.RequestStatusHistory
+                (RequestId, OldStatus, NewStatus, ChangedByUserId, ChangedByRole)
+            VALUES
+                (@RequestId, @OldStatus, @Status, @CallerUserId, @Role);
+        END;
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH;
+
+    SELECT
+        RequestId,
+        RequestCode,
+        RequestType,
+        RequestDescription,
+        Priority,
+        Status,
+        CreatedDate,
+        UpdatedDate
+    FROM Requests
+    WHERE RequestId = @RequestId
+      AND IsActive = 1;
+END;
+GO
+
+--------------------------------------------------
+-- 7. Allowed next statuses for one request and one role
+--------------------------------------------------
+CREATE OR ALTER PROCEDURE [dbo].[SSR_Request_GetAllowedStatuses]
+(
+    @RequestId INT,
+    @CallerUserId INT = NULL,
+    @CallerRole NVARCHAR(50) = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @Role NVARCHAR(50) = ISNULL(@CallerRole, 'Admin');
+    DECLARE @CurrentStatus NVARCHAR(30);
+
+    SELECT @CurrentStatus = Status
+    FROM dbo.Requests
+    WHERE RequestId = @RequestId
+      AND IsActive = 1;
+
+    IF @CurrentStatus IS NULL
+        RETURN;
+
+    -- Technician sees options only for requests assigned to them
+    IF @Role = 'Technician'
+       AND NOT EXISTS
+       (
+           SELECT 1
+           FROM dbo.Requests r
+           INNER JOIN dbo.Technicians t ON r.TechnicianId = t.TechnicianId
+           WHERE r.RequestId = @RequestId
+             AND r.IsActive = 1
+             AND t.IsActive = 1
+             AND t.UserId = @CallerUserId
+       )
+        RETURN;
+
+    -- Employee sees options only for their own requests
+    IF @Role = 'Employee'
+       AND NOT EXISTS
+       (
+           SELECT 1
+           FROM dbo.Requests
+           WHERE RequestId = @RequestId
+             AND IsActive = 1
+             AND CreatedByUserId = @CallerUserId
+       )
+        RETURN;
+
+    SELECT ToStatus
+    FROM dbo.RequestStatusTransitions
+    WHERE RoleName = @Role
+      AND FromStatus = @CurrentStatus
+    ORDER BY CASE ToStatus
+                 WHEN 'In Progress' THEN 1
+                 WHEN 'On Hold'     THEN 2
+                 WHEN 'Resolved'    THEN 3
+                 WHEN 'Closed'      THEN 4
+                 WHEN 'Open'        THEN 5
+                 WHEN 'Cancelled'   THEN 6
+                 ELSE 7
+             END;
+END;
+GO
+
+--------------------------------------------------
+-- 8. Dashboard: counts for all statuses
+--------------------------------------------------
+CREATE OR ALTER PROCEDURE [dbo].[SSR_Request_Dashboard_GetTotalCount]
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        COUNT(*) AS TotalRequests,
+        SUM(CASE WHEN Status = 'Open'        THEN 1 ELSE 0 END) AS OpenRequests,
+        SUM(CASE WHEN Status = 'In Progress' THEN 1 ELSE 0 END) AS InProgressRequests,
+        SUM(CASE WHEN Status = 'On Hold'     THEN 1 ELSE 0 END) AS OnHoldRequests,
+        SUM(CASE WHEN Status = 'Resolved'    THEN 1 ELSE 0 END) AS ResolvedRequests,
+        SUM(CASE WHEN Status = 'Closed'      THEN 1 ELSE 0 END) AS ClosedRequests,
+        SUM(CASE WHEN Status = 'Cancelled'   THEN 1 ELSE 0 END) AS CancelledRequests
+    FROM Requests
+    WHERE IsActive = 1;
+END;
+GO

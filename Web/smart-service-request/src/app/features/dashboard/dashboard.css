@@ -67,6 +67,9 @@
 .summary-card.open::before { background: #f59e0b; }
 .summary-card.progress::before { background: #7c3aed; }
 .summary-card.resolved::before { background: #16a34a; }
+.summary-card.onhold::before { background: #f97316; }
+.summary-card.closed::before { background: #0f766e; }
+.summary-card.cancelled::before { background: #dc2626; }
 
 .card-content {
   display: flex;

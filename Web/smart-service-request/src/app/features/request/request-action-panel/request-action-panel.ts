@@ -91,27 +91,61 @@ export class RequestActionPanelComponent {
   }
 
 
-  private loadUpdateStatus(): void {
+    private loadUpdateStatus(): void {
 
-    const componentRef =
-      this.dynamicComponent.createComponent(
-        UpdateStatusComponent
-      );
+    this.requestService
+      .getAllowedStatuses(this.currentRequest().requestId)
+      .subscribe({
 
-    componentRef.setInput(
-      'request',
-      this.currentRequest()
-    );
+        next: (response) => {
 
-    componentRef.instance.statusChanged.subscribe(
-      (newStatus: string) => {
+          // The user may have picked another action while
+          // this call was running.
+          if (this.selectedAction() !== 'status') {
+            return;
+          }
 
-        this.updateStatus(newStatus);
+          // Avoid two copies if the button was clicked twice.
+          this.dynamicComponent.clear();
 
-      }
-    );
+          const componentRef =
+            this.dynamicComponent.createComponent(
+              UpdateStatusComponent
+            );
+
+          componentRef.setInput(
+            'request',
+            this.currentRequest()
+          );
+
+          componentRef.setInput(
+            'allowedStatuses',
+            response.data ?? []
+          );
+
+          componentRef.instance.statusChanged.subscribe(
+            (newStatus: string) => {
+
+              this.updateStatus(newStatus);
+
+            }
+          );
+        },
+
+        error: (error) => {
+
+          console.error(
+            'Error loading allowed statuses:',
+            error
+          );
+
+          this.actionError.set(
+            error?.error?.message ||
+            'Unable to load allowed statuses.'
+          );
+        }
+      });
   }
-
 
   private loadTechnicians(): void {
 

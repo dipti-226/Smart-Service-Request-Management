@@ -30,23 +30,18 @@
     <select
       id="status"
       [(ngModel)]="selectedStatus"
+      [disabled]="allowedStatuses.length === 0"
     >
 
       <option value="">
         Select Status
       </option>
 
-      <option value="Open">
-        Open
-      </option>
-
-      <option value="In Progress">
-        In Progress
-      </option>
-
-      <option value="Resolved">
-        Resolved
-      </option>
+      @for (status of allowedStatuses; track status) {
+        <option [value]="status">
+          {{ status }}
+        </option>
+      }
 
     </select>
 
@@ -59,5 +54,11 @@
     </button>
 
   </div>
+
+  @if (allowedStatuses.length === 0) {
+    <p class="no-options">
+      No further status changes are available for this request.
+    </p>
+  }
 
 </div>

@@ -20,8 +20,8 @@ namespace APP.Models.DTOs.Requests
 
         [Required]
         [RegularExpression(
-            "^(Open|In Progress|Resolved)$",
-            ErrorMessage = "Status must be Open, In Progress or Resolved.")]
+    "^(Open|In Progress|On Hold|Resolved|Closed|Cancelled)$",
+    ErrorMessage = "Status must be Open, In Progress, On Hold, Resolved, Closed or Cancelled.")]
         public string Status { get; set; } = string.Empty;
     }
 }

@@ -91,9 +91,12 @@ namespace APP.Business.Services
             // Validate status at API/service level
             var allowedStatuses = new[]
             {
-                 "Open",
-                 "In Progress",
-                 "Resolved"
+                "Open",
+                "In Progress",
+                "On Hold",
+                "Resolved",
+                "Closed",
+                "Cancelled"
             };
 
             if (!allowedStatuses.Contains(dto.Status))
@@ -112,9 +115,9 @@ namespace APP.Business.Services
             command.Parameters.AddWithValue("@RequestId", requestId);
             command.Parameters.AddWithValue("@Status", dto.Status);
 
-            // Caller info (used by the SP only for the Technician ownership check)
-            command.Parameters.Add("@CallerUserId", SqlDbType.Int).Value = (object?)callerUserId ?? DBNull.Value;
-            command.Parameters.Add("@CallerRole", SqlDbType.NVarChar, 50).Value = (object?)callerRole ?? DBNull.Value;
+            // Caller info: used by the SP for ownership, transition rules and history
+            command.Parameters.Add("@CallerUserId", SqlDbType.Int).Value =(object?)callerUserId ?? DBNull.Value;
+            command.Parameters.Add("@CallerRole", SqlDbType.NVarChar, 50).Value =(object?)callerRole ?? DBNull.Value;
 
             await connection.OpenAsync();
             await using SqlDataReader reader = await command.ExecuteReaderAsync();
@@ -128,14 +131,29 @@ namespace APP.Business.Services
                 };
             }
 
-            // SP returned only an ErrorCode column -> technician is not assigned
+            // The SP returned only an error row
             if (HasColumn(reader, "ErrorCode"))
             {
+                string errorCode = reader["ErrorCode"]?.ToString() ?? string.Empty;
+
+                string currentStatus = HasColumn(reader, "CurrentStatus")? reader["CurrentStatus"]?.ToString() ?? string.Empty: string.Empty;
+
+                string message = errorCode switch
+                {
+                    "NOT_ASSIGNED" => "You can update the status only for requests assigned to you.",
+                    "NOT_OWNER" => "You can update the status only for your own requests.",
+                    "INVALID_TRANSITION" =>
+                        string.Equals(currentStatus, dto.Status, StringComparison.OrdinalIgnoreCase)
+                            ? $"Request is already in '{currentStatus}' status."
+                            : $"Status cannot be changed from '{currentStatus}' to '{dto.Status}'.",
+                    _ => "Request status could not be updated."
+                };
+
                 return new ApiResponse<AdvancedRequestDto>
                 {
                     Success = false,
-                    Message = "You can update the status only for requests assigned to you.",
-                    ErrorCode = "NOT_ASSIGNED",
+                    Message = message,
+                    ErrorCode = errorCode,
                     Data = null
                 };
             }
@@ -147,6 +165,38 @@ namespace APP.Business.Services
                 Success = true,
                 Message = "Request status updated successfully.",
                 Data = request
+            };
+        }
+
+        public async Task<ApiResponse<List<string>>> GetAllowedStatusesAsync(
+    int requestId,
+    int? callerUserId,
+    string callerRole)
+        {
+            await using SqlConnection connection = new SqlConnection(_connectionString);
+            await using SqlCommand command = new SqlCommand("SSR_Request_GetAllowedStatuses", connection);
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add("@RequestId", SqlDbType.Int).Value = requestId;
+            command.Parameters.Add("@CallerUserId", SqlDbType.Int).Value =
+                (object?)callerUserId ?? DBNull.Value;
+            command.Parameters.Add("@CallerRole", SqlDbType.NVarChar, 50).Value = callerRole;
+
+            await connection.OpenAsync();
+            await using SqlDataReader reader = await command.ExecuteReaderAsync();
+
+            var statuses = new List<string>();
+
+            while (await reader.ReadAsync())
+            {
+                statuses.Add(reader.GetString(0));
+            }
+
+            return new ApiResponse<List<string>>
+            {
+                Success = true,
+                Message = "Allowed statuses retrieved successfully.",
+                Data = statuses
             };
         }
 

@@ -18,6 +18,8 @@ import { AdvancedRequest } from '../../../../core/models/request.model';
 export class UpdateStatusComponent {
 
   @Input() request!: AdvancedRequest;
+    // Next statuses the logged-in user is allowed to choose (from the API)
+  @Input() allowedStatuses: string[] = [];
 
   @Output() statusChanged = new EventEmitter<string>();
 

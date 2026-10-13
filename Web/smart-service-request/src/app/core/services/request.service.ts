@@ -102,4 +102,12 @@ assignTechnician(
   );
 }
   
+  getAllowedStatuses(
+    id: number
+  ): Observable<ApiResponse<string[]>> {
+
+    return this.http.get<ApiResponse<string[]>>(
+      `${this.advancedApiUrl}/${id}/allowed-statuses`
+    );
+  }
 }

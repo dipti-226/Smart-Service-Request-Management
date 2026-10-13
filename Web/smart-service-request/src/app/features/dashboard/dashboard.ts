@@ -19,7 +19,10 @@ export class DashboardComponent implements OnInit {
   totalRequests = signal(0);
   openRequests = signal(0);
   inProgressRequests = signal(0);
+  onHoldRequests = signal(0);
   resolvedRequests = signal(0);
+  closedRequests = signal(0);
+  cancelledRequests = signal(0);
 
   isLoading = signal(false);
   errorMessage = signal('');
@@ -49,7 +52,10 @@ export class DashboardComponent implements OnInit {
         this.totalRequests.set(response.data?.totalRequests ?? 0);
         this.openRequests.set(response.data?.openRequests ?? 0);
         this.inProgressRequests.set(response.data?.inProgressRequests ?? 0);
+        this.onHoldRequests.set(response.data?.onHoldRequests ?? 0);
         this.resolvedRequests.set(response.data?.resolvedRequests ?? 0);
+        this.closedRequests.set(response.data?.closedRequests ?? 0);
+        this.cancelledRequests.set(response.data?.cancelledRequests ?? 0);
       },
 
       error: error => {

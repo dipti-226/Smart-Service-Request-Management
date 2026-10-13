@@ -164,6 +164,9 @@ namespace APP.Business.Services
                 dashboard.OpenRequests = reader["OpenRequests"] == DBNull.Value ? 0 : Convert.ToInt32(reader["OpenRequests"]);
                 dashboard.InProgressRequests = reader["InProgressRequests"] == DBNull.Value ? 0 : Convert.ToInt32(reader["InProgressRequests"]);
                 dashboard.ResolvedRequests = reader["ResolvedRequests"] == DBNull.Value ? 0 : Convert.ToInt32(reader["ResolvedRequests"]);
+                dashboard.OnHoldRequests = reader["OnHoldRequests"] == DBNull.Value ? 0 : Convert.ToInt32(reader["OnHoldRequests"]);
+                dashboard.ClosedRequests = reader["ClosedRequests"] == DBNull.Value ? 0 : Convert.ToInt32(reader["ClosedRequests"]);
+                dashboard.CancelledRequests = reader["CancelledRequests"] == DBNull.Value ? 0 : Convert.ToInt32(reader["CancelledRequests"]);
             }
 
             return new ApiResponse<DashboardDto>
@@ -191,7 +194,20 @@ namespace APP.Business.Services
             };
         }
 
-        public async Task<ApiResponse<RequestResponseDto>> UpdateRequestAsync(int requestId,UpdateRequestDto dto)
+        private static bool HasColumn(SqlDataReader reader, string columnName)
+        {
+            for (int i = 0; i < reader.FieldCount; i++)
+            {
+                if (string.Equals(reader.GetName(i), columnName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public async Task<ApiResponse<RequestResponseDto>> UpdateRequestAsync(int requestId,UpdateRequestDto dto,int? callerUserId = null,string? callerRole = null)
         {
             await using SqlConnection connection = new SqlConnection(_connectionString);
             await using SqlCommand command = new SqlCommand("SSR_Request_Update", connection);
@@ -203,6 +219,10 @@ namespace APP.Business.Services
             command.Parameters.AddWithValue("@RequestDescription", dto.RequestDescription);
             command.Parameters.AddWithValue("@Priority", dto.Priority);
             command.Parameters.AddWithValue("@Status", dto.Status);
+            command.Parameters.Add("@CallerUserId", SqlDbType.Int).Value =
+                (object?)callerUserId ?? DBNull.Value;
+            command.Parameters.Add("@CallerRole", SqlDbType.NVarChar, 50).Value =
+                (object?)callerRole ?? DBNull.Value;
 
             await connection.OpenAsync();
 
@@ -214,6 +234,22 @@ namespace APP.Business.Services
                 {
                     Success = false,
                     Message = "Request not found or already inactive.",
+                    Data = null
+                };
+            }
+
+            // The SP returned only an error row (status change not allowed)
+            if (HasColumn(reader, "ErrorCode"))
+            {
+                string currentStatus = HasColumn(reader, "CurrentStatus")
+                    ? reader["CurrentStatus"]?.ToString() ?? string.Empty
+                    : string.Empty;
+
+                return new ApiResponse<RequestResponseDto>
+                {
+                    Success = false,
+                    Message = $"Status cannot be changed from '{currentStatus}' to '{dto.Status}'.",
+                    ErrorCode = reader["ErrorCode"]?.ToString(),
                     Data = null
                 };
             }
