@@ -1,0 +1,150 @@
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <h1>Users</h1>
+      <p>Manage Employee and Technician accounts.</p>
+    </div>
+
+    <a routerLink="/users/technician/new" class="primary-btn">+ Create Technician</a>
+  </div>
+
+  @if (successMessage()) {
+    <div class="success-banner">{{ successMessage() }}</div>
+  }
+
+  <div class="table-card">
+
+    <app-list-filter-bar
+      placeholder="Search by username or email"
+      statusLabel="All statuses"
+      priorityLabel="All roles"
+      [statuses]="statuses"
+      [priorities]="roles"
+      (changed)="onFiltersChanged($event)">
+    </app-list-filter-bar>
+
+    @if (errorMessage()) {
+
+      <div class="state-message error">{{ errorMessage() }}</div>
+
+    } @else if (isLoading() && users().length === 0) {
+
+      <div class="state-message">Loading users...</div>
+
+    } @else if (users().length === 0) {
+
+      <div class="state-message">
+        @if (state.hasFilters()) {
+          No users match your filters.
+        } @else {
+          No users found.
+        }
+      </div>
+
+    } @else {
+
+      <div class="table-wrapper" [class.reloading]="isLoading()">
+        <table>
+          <thead>
+            <tr>
+              <th>Sr. No.</th>
+
+              <th class="sortable" [attr.aria-sort]="state.ariaSort('Username')"
+                  (click)="onSort('Username')">
+                Username {{ state.sortIcon('Username') }}
+              </th>
+
+              <th class="sortable" [attr.aria-sort]="state.ariaSort('Email')"
+                  (click)="onSort('Email')">
+                Email {{ state.sortIcon('Email') }}
+              </th>
+
+              <th class="sortable" [attr.aria-sort]="state.ariaSort('RoleName')"
+                  (click)="onSort('RoleName')">
+                Role {{ state.sortIcon('RoleName') }}
+              </th>
+
+              <th class="sortable" [attr.aria-sort]="state.ariaSort('IsActive')"
+                  (click)="onSort('IsActive')">
+                Status {{ state.sortIcon('IsActive') }}
+              </th>
+
+              <th class="sortable" [attr.aria-sort]="state.ariaSort('CreatedDate')"
+                  (click)="onSort('CreatedDate')">
+                Created Date {{ state.sortIcon('CreatedDate') }}
+              </th>
+
+              <th>Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (user of users(); track user.userId; let i = $index) {
+              <tr>
+                <td>{{ state.startIndex() + i + 1 }}</td>
+
+                <td>
+                  {{ user.username }}
+                  @if (isSelf(user)) {
+                    <span class="you">(you)</span>
+                  }
+                </td>
+
+                <td>{{ user.email }}</td>
+
+                <td>
+                  <span class="role" [class.technician]="user.roleName === 'Technician'">
+                    {{ user.roleName }}
+                  </span>
+                </td>
+
+                <td>
+                  <span class="active-badge" [class.inactive]="!user.isActive">
+                    {{ user.isActive ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+
+                <td>{{ user.createdDate | date:'dd-MM-yyyy HH:mm' }}</td>
+
+                <td>
+                  @if (canChange(user)) {
+                    <button
+                      type="button"
+                      class="toggle-btn"
+                      [class.deactivate]="user.isActive"
+                      [disabled]="changingId() === user.userId"
+                      (click)="toggleActive(user)">
+                      @if (changingId() === user.userId) {
+                        Please wait...
+                      } @else if (user.isActive) {
+                        Deactivate
+                      } @else {
+                        Activate
+                      }
+                    </button>
+                  } @else {
+                    <span class="no-action">—</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+    }
+
+    @if (state.totalCount() > 0) {
+      <app-pager
+        [pageNumber]="state.pageNumber()"
+        [pageSize]="state.pageSize()"
+        [totalCount]="state.totalCount()"
+        [totalPages]="state.totalPages()"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)">
+      </app-pager>
+    }
+
+  </div>
+</div>

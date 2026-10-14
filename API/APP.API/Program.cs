@@ -46,6 +46,7 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddScoped<RequestService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<AdvancedRequestService>();
+builder.Services.AddScoped<UserService>();
 
 // JWT — issuing/validating tokens only. No [Authorize] applied to any endpoint yet.
 var jwtSection = builder.Configuration.GetSection("Jwt");

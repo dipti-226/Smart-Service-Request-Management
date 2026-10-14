@@ -73,6 +73,23 @@ export const routes: Routes = [
       import('./features/request/request-management/request-management')
         .then(m => m.RequestManagementComponent)
   },
+
+  {
+    path: 'users',
+    canActivate: [roleGuard],
+    data: { roles: ['Admin'] },
+    loadComponent: () =>
+      import('./features/user/user-list/user-list')
+        .then(m => m.UserListComponent)
+  },
+  {
+    path: 'users/technician/new',
+    canActivate: [roleGuard],
+    data: { roles: ['Admin'] },
+    loadComponent: () =>
+      import('./features/user/technician-form/technician-form')
+        .then(m => m.TechnicianFormComponent)
+  },
   {
     path: 'no-access',
     canActivate: [authGuard],

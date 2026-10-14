@@ -1931,3 +1931,186 @@ BEGIN
     FETCH NEXT @PageSize ROWS ONLY;
 END;
 GO
+
+==================================================
+Date: 14-Oct-2026
+Change: Step 3 - Admin user management
+        SSR_User_GetPaged (list users, paged),
+        SSR_User_SetActive (activate / deactivate)
+==================================================
+
+USE [SmartServiceRequestDB];
+GO
+
+--------------------------------------------------
+-- 1. Users list: search, role/status filter, sort, paging
+--------------------------------------------------
+CREATE OR ALTER PROCEDURE [dbo].[SSR_User_GetPaged]
+(
+    @Search     NVARCHAR(100) = NULL,
+    @RoleName   NVARCHAR(50)  = NULL,
+    @IsActive   BIT           = NULL,
+    @SortBy     NVARCHAR(30)  = 'CreatedDate',
+    @SortDir    NVARCHAR(4)   = 'DESC',
+    @PageNumber INT           = 1,
+    @PageSize   INT           = 10
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @PageNumber < 1 SET @PageNumber = 1;
+    IF @PageSize < 1 SET @PageSize = 10;
+    IF @PageSize > 100 SET @PageSize = 100;
+    SET @SortDir = CASE WHEN UPPER(ISNULL(@SortDir, '')) = 'ASC' THEN 'ASC' ELSE 'DESC' END;
+
+    SET @RoleName = NULLIF(LTRIM(RTRIM(ISNULL(@RoleName, ''))), '');
+    SET @Search   = NULLIF(LTRIM(RTRIM(ISNULL(@Search, ''))), '');
+
+    DECLARE @Like NVARCHAR(210) = NULL;
+
+    IF @Search IS NOT NULL
+        SET @Like = '%' +
+            REPLACE(REPLACE(REPLACE(REPLACE(@Search, '\', '\\'), '%', '\%'), '_', '\_'), '[', '\[')
+            + '%';
+
+    DECLARE @Total INT;
+
+    SELECT @Total = COUNT(*)
+    FROM dbo.Users u
+    INNER JOIN dbo.Roles r ON r.RoleId = u.RoleId
+    WHERE (@RoleName IS NULL OR r.RoleName = @RoleName)
+      AND (@IsActive IS NULL OR u.IsActive = @IsActive)
+      AND (   @Like IS NULL
+           OR u.Username LIKE @Like ESCAPE '\'
+           OR u.Email    LIKE @Like ESCAPE '\');
+
+    DECLARE @TotalPages INT =
+        CASE WHEN @Total = 0 THEN 0 ELSE (@Total + @PageSize - 1) / @PageSize END;
+
+    IF @TotalPages > 0 AND @PageNumber > @TotalPages
+        SET @PageNumber = @TotalPages;
+
+    -- Result set 1: paging info
+    SELECT
+        @Total      AS TotalCount,
+        @PageNumber AS PageNumber,
+        @PageSize   AS PageSize,
+        @TotalPages AS TotalPages;
+
+    -- Result set 2: rows (the password is never returned)
+    SELECT
+        u.UserId,
+        u.Username,
+        u.Email,
+        r.RoleName,
+        u.IsActive,
+        u.CreatedDate
+    FROM dbo.Users u
+    INNER JOIN dbo.Roles r ON r.RoleId = u.RoleId
+    WHERE (@RoleName IS NULL OR r.RoleName = @RoleName)
+      AND (@IsActive IS NULL OR u.IsActive = @IsActive)
+      AND (   @Like IS NULL
+           OR u.Username LIKE @Like ESCAPE '\'
+           OR u.Email    LIKE @Like ESCAPE '\')
+    ORDER BY
+        CASE WHEN @SortBy = 'Username' AND @SortDir = 'ASC'  THEN u.Username END ASC,
+        CASE WHEN @SortBy = 'Username' AND @SortDir = 'DESC' THEN u.Username END DESC,
+
+        CASE WHEN @SortBy = 'Email' AND @SortDir = 'ASC'  THEN u.Email END ASC,
+        CASE WHEN @SortBy = 'Email' AND @SortDir = 'DESC' THEN u.Email END DESC,
+
+        CASE WHEN @SortBy = 'RoleName' AND @SortDir = 'ASC'  THEN r.RoleName END ASC,
+        CASE WHEN @SortBy = 'RoleName' AND @SortDir = 'DESC' THEN r.RoleName END DESC,
+
+        CASE WHEN @SortBy = 'IsActive' AND @SortDir = 'ASC'  THEN u.IsActive END ASC,
+        CASE WHEN @SortBy = 'IsActive' AND @SortDir = 'DESC' THEN u.IsActive END DESC,
+
+        CASE WHEN @SortBy = 'CreatedDate' AND @SortDir = 'ASC'  THEN u.CreatedDate END ASC,
+        CASE WHEN @SortBy = 'CreatedDate' AND @SortDir = 'DESC' THEN u.CreatedDate END DESC,
+
+        -- Default order and tie-breaker (stable paging)
+        u.CreatedDate DESC,
+        u.UserId DESC
+    OFFSET (@PageNumber - 1) * @PageSize ROWS
+    FETCH NEXT @PageSize ROWS ONLY;
+END;
+GO
+
+--------------------------------------------------
+-- 2. Activate / deactivate a user
+--    Rules: not yourself, not an Admin account.
+--    A technician's Technicians row follows the user,
+--    so an inactive technician cannot be assigned.
+--------------------------------------------------
+CREATE OR ALTER PROCEDURE [dbo].[SSR_User_SetActive]
+(
+    @UserId       INT,
+    @IsActive     BIT,
+    @CallerUserId INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    DECLARE @RoleName NVARCHAR(50);
+
+    SELECT @RoleName = r.RoleName
+    FROM dbo.Users u
+    INNER JOIN dbo.Roles r ON r.RoleId = u.RoleId
+    WHERE u.UserId = @UserId;
+
+    IF @RoleName IS NULL
+    BEGIN
+        SELECT 'USER_NOT_FOUND' AS ErrorCode;
+        RETURN;
+    END;
+
+    IF @UserId = @CallerUserId
+    BEGIN
+        SELECT 'CANNOT_CHANGE_SELF' AS ErrorCode;
+        RETURN;
+    END;
+
+    IF @RoleName = 'Admin'
+    BEGIN
+        SELECT 'ADMIN_NOT_ALLOWED' AS ErrorCode;
+        RETURN;
+    END;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        UPDATE dbo.Users
+        SET IsActive    = @IsActive,
+            UpdatedDate = SYSUTCDATETIME()
+        WHERE UserId = @UserId;
+
+        IF @RoleName = 'Technician'
+        BEGIN
+            UPDATE dbo.Technicians
+            SET IsActive = @IsActive
+            WHERE UserId = @UserId;
+        END;
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH;
+
+    SELECT
+        u.UserId,
+        u.Username,
+        u.Email,
+        r.RoleName,
+        u.IsActive,
+        u.CreatedDate
+    FROM dbo.Users u
+    INNER JOIN dbo.Roles r ON r.RoleId = u.RoleId
+    WHERE u.UserId = @UserId;
+END;
+GO
