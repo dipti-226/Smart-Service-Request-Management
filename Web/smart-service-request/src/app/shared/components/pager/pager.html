@@ -1,0 +1,42 @@
+<div class="pager">
+
+  <div class="info">
+    Showing {{ from() }}–{{ to() }} of {{ totalCount() }}
+  </div>
+
+  <div class="controls">
+
+    <label class="size">
+      Rows
+      <select (change)="pageSizeChange.emit(+$any($event.target).value)">
+        @for (s of pageSizeOptions(); track s) {
+          <option [value]="s" [selected]="s === pageSize()">{{ s }}</option>
+        }
+      </select>
+    </label>
+
+    <button
+      type="button"
+      [disabled]="pageNumber() === 1"
+      (click)="pageChange.emit(pageNumber() - 1)">
+      Prev
+    </button>
+
+    @for (p of pages(); track p) {
+      <button
+        type="button"
+        [class.active]="p === pageNumber()"
+        (click)="pageChange.emit(p)">
+        {{ p }}
+      </button>
+    }
+
+    <button
+      type="button"
+      [disabled]="pageNumber() >= totalPages()"
+      (click)="pageChange.emit(pageNumber() + 1)">
+      Next
+    </button>
+
+  </div>
+</div>

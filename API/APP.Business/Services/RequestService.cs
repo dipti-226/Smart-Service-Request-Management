@@ -114,6 +114,75 @@ namespace APP.Business.Services
             };
         }
 
+        // Columns the list may be sorted by (anything else falls back to CreatedDate)
+        private static readonly HashSet<string> RequestSortColumns =
+            new(StringComparer.OrdinalIgnoreCase)
+            {
+                "RequestCode", "RequestType", "Priority", "Status", "CreatedDate"
+            };
+
+        // Paged / filtered / sorted list.
+        // createdByUserId = null -> all requests (Admin), value -> only that user's requests.
+        public async Task<ApiResponse<PagedResult<RequestResponseDto>>> GetRequestsPagedAsync(
+            RequestListQueryDto query,
+            int? createdByUserId = null)
+        {
+            string sortBy = !string.IsNullOrWhiteSpace(query.SortBy) &&
+                            RequestSortColumns.Contains(query.SortBy)
+                ? query.SortBy
+                : "CreatedDate";
+
+            string sortDir = string.Equals(query.SortDir, "ASC", StringComparison.OrdinalIgnoreCase)
+                ? "ASC"
+                : "DESC";
+
+            await using SqlConnection connection = new SqlConnection(_connectionString);
+            await using SqlCommand command = new SqlCommand("SSR_Request_GetPaged", connection);
+
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add("@Search", SqlDbType.NVarChar, 100).Value =
+                string.IsNullOrWhiteSpace(query.Search) ? DBNull.Value : query.Search.Trim();
+            command.Parameters.Add("@Status", SqlDbType.NVarChar, 30).Value =
+                string.IsNullOrWhiteSpace(query.Status) ? DBNull.Value : query.Status;
+            command.Parameters.Add("@Priority", SqlDbType.NVarChar, 20).Value =
+                string.IsNullOrWhiteSpace(query.Priority) ? DBNull.Value : query.Priority;
+            command.Parameters.Add("@CreatedByUserId", SqlDbType.Int).Value =
+                (object?)createdByUserId ?? DBNull.Value;
+            command.Parameters.Add("@SortBy", SqlDbType.NVarChar, 30).Value = sortBy;
+            command.Parameters.Add("@SortDir", SqlDbType.NVarChar, 4).Value = sortDir;
+            command.Parameters.Add("@PageNumber", SqlDbType.Int).Value = query.PageNumber;
+            command.Parameters.Add("@PageSize", SqlDbType.Int).Value = query.PageSize;
+
+            await connection.OpenAsync();
+            await using SqlDataReader reader = await command.ExecuteReaderAsync();
+
+            var result = new PagedResult<RequestResponseDto>();
+
+            // Result set 1: paging info
+            if (await reader.ReadAsync())
+            {
+                result.TotalCount = Convert.ToInt32(reader["TotalCount"]);
+                result.PageNumber = Convert.ToInt32(reader["PageNumber"]);
+                result.PageSize = Convert.ToInt32(reader["PageSize"]);
+                result.TotalPages = Convert.ToInt32(reader["TotalPages"]);
+            }
+
+            // Result set 2: rows
+            await reader.NextResultAsync();
+
+            while (await reader.ReadAsync())
+            {
+                result.Items.Add(MapRequest(reader));
+            }
+
+            return new ApiResponse<PagedResult<RequestResponseDto>>
+            {
+                Success = true,
+                Message = "Requests retrieved successfully.",
+                Data = result
+            };
+        }
         public async Task<ApiResponse<RequestResponseDto>> GetRequestByIdAsync(int requestId)
         {
             await using SqlConnection connection = new SqlConnection(_connectionString);

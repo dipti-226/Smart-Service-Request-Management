@@ -4,39 +4,72 @@
     <h3>Service Requests</h3>
   </div>
 
-  @if (isLoading()) {
+  <app-list-filter-bar
+    placeholder="Search by code, type or description"
+    [statuses]="statuses"
+    [priorities]="priorities"
+    (changed)="onFiltersChanged($event)">
+  </app-list-filter-bar>
 
-    <div class="state-message">
-      Loading requests...
-    </div>
-
-  } @else if (errorMessage()) {
+  @if (errorMessage()) {
 
     <div class="state-message error">
       {{ errorMessage() }}
     </div>
 
+  } @else if (isLoading() && requests().length === 0) {
+
+    <div class="state-message">
+      Loading requests...
+    </div>
+
   } @else if (requests().length === 0) {
 
     <div class="state-message">
-      No service requests found.
+      @if (state.hasFilters()) {
+        No requests match your filters.
+      } @else {
+        No service requests found.
+      }
     </div>
 
   } @else {
 
-    <div class="table-wrapper">
+    <div class="table-wrapper" [class.reloading]="isLoading()">
 
       <table>
 
         <thead>
           <tr>
             <th>Sr. No.</th>
-            <th>Request ID</th>
-            <th>Request Type</th>
+
+            <th class="sortable" [attr.aria-sort]="state.ariaSort('RequestCode')"
+                (click)="onSort('RequestCode')">
+              Request ID {{ state.sortIcon('RequestCode') }}
+            </th>
+
+            <th class="sortable" [attr.aria-sort]="state.ariaSort('RequestType')"
+                (click)="onSort('RequestType')">
+              Request Type {{ state.sortIcon('RequestType') }}
+            </th>
+
             <th>Description</th>
-            <th>Priority</th>
-            <th>Status</th>
-            <th>Created Date</th>
+
+            <th class="sortable" [attr.aria-sort]="state.ariaSort('Priority')"
+                (click)="onSort('Priority')">
+              Priority {{ state.sortIcon('Priority') }}
+            </th>
+
+            <th class="sortable" [attr.aria-sort]="state.ariaSort('Status')"
+                (click)="onSort('Status')">
+              Status {{ state.sortIcon('Status') }}
+            </th>
+
+            <th class="sortable" [attr.aria-sort]="state.ariaSort('CreatedDate')"
+                (click)="onSort('CreatedDate')">
+              Created Date {{ state.sortIcon('CreatedDate') }}
+            </th>
+
             <th>Action</th>
           </tr>
         </thead>
@@ -51,7 +84,7 @@
 
             <tr>
 
-              <td>{{ i + 1 }}</td>
+              <td>{{ state.startIndex() + i + 1 }}</td>
 
               <td>
                 {{ request.requestCode }}
@@ -119,6 +152,17 @@
 
     </div>
 
+  }
+
+  @if (state.totalCount() > 0) {
+    <app-pager
+      [pageNumber]="state.pageNumber()"
+      [pageSize]="state.pageSize()"
+      [totalCount]="state.totalCount()"
+      [totalPages]="state.totalPages()"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)">
+    </app-pager>
   }
 
 </div>

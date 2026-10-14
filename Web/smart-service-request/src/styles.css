@@ -28,3 +28,8 @@ select,
 textarea {
   font: inherit;
 }
+
+/* Sortable table headers and list reloading (Step 2) */
+th.sortable { cursor: pointer; user-select: none; }
+th.sortable:hover { color: #111827; }
+.reloading { opacity: .55; pointer-events: none; transition: opacity .15s; }

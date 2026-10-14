@@ -1,0 +1,33 @@
+<div class="filter-bar">
+
+  <input
+    type="search"
+    class="search"
+    maxlength="100"
+    [placeholder]="placeholder()"
+    [value]="search()"
+    (input)="onSearchInput($any($event.target).value)" />
+
+  @if (statuses().length > 0) {
+    <select (change)="onStatusChange($any($event.target).value)">
+      <option value="" [selected]="status() === ''">All statuses</option>
+      @for (s of statuses(); track s) {
+        <option [value]="s" [selected]="status() === s">{{ s }}</option>
+      }
+    </select>
+  }
+
+  @if (priorities().length > 0) {
+    <select (change)="onPriorityChange($any($event.target).value)">
+      <option value="" [selected]="priority() === ''">All priorities</option>
+      @for (p of priorities(); track p) {
+        <option [value]="p" [selected]="priority() === p">{{ p }}</option>
+      }
+    </select>
+  }
+
+  @if (hasFilters()) {
+    <button type="button" class="clear" (click)="clear()">Clear</button>
+  }
+
+</div>

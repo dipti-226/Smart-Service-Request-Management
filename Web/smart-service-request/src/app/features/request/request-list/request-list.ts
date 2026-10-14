@@ -1,14 +1,31 @@
-import { Component, inject, OnInit, Output, EventEmitter, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  EventEmitter,
+  OnInit,
+  Output,
+  inject,
+  signal
+} from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 
 import { RequestService } from '../../../core/services/request.service';
 import { Request } from '../../../core/models/request.model';
+import {
+  ListFilters,
+  REQUEST_PRIORITIES,
+  REQUEST_STATUSES
+} from '../../../core/models/paged.model';
+import { PagedListState } from '../../../core/utils/paged-list-state';
+import { ListFilterBarComponent } from '../../../shared/components/list-filter-bar/list-filter-bar';
+import { PagerComponent } from '../../../shared/components/pager/pager';
 
 @Component({
   selector: 'app-request-list',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, ListFilterBarComponent, PagerComponent],
   templateUrl: './request-list.html',
   styleUrl: './request-list.css'
 })
@@ -16,8 +33,15 @@ export class RequestListComponent implements OnInit {
 
   private readonly requestService = inject(RequestService);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   @Output() requestsChanged = new EventEmitter<void>();
+
+  readonly statuses = REQUEST_STATUSES;
+  readonly priorities = REQUEST_PRIORITIES;
+
+  // Filter / sort / page values (default order is the same as before: newest first)
+  readonly state = new PagedListState('CreatedDate', 'DESC');
 
   // Signals so the table re-renders as soon as data changes,
   // regardless of async timing (this app runs zoneless).
@@ -27,43 +51,71 @@ export class RequestListComponent implements OnInit {
   errorMessage = signal('');
   deletingId = signal<number | null>(null);
 
+  private loadSubscription?: Subscription;
+
   ngOnInit(): void {
+    this.destroyRef.onDestroy(() => this.loadSubscription?.unsubscribe());
     this.loadRequests();
   }
 
   loadRequests(): void {
 
+    // Cancel the previous call, so an old slow response cannot overwrite a newer one
+    this.loadSubscription?.unsubscribe();
+
     this.isLoading.set(true);
     this.errorMessage.set('');
 
-    this.requestService.getAllRequests().subscribe({
+    this.loadSubscription = this.requestService
+      .getRequestsPaged(this.state.toQuery())
+      .subscribe({
 
-      next: response => {
+        next: response => {
 
-        this.isLoading.set(false);
+          this.isLoading.set(false);
 
-        if (!response.success) {
+          if (!response.success || !response.data) {
+            this.errorMessage.set(
+              response.message || 'Unable to load requests.'
+            );
+            return;
+          }
+
+          this.requests.set(response.data.items);
+          this.state.applyResult(response.data);
+        },
+
+        error: error => {
+
+          this.isLoading.set(false);
+
+          console.error(error);
+
           this.errorMessage.set(
-            response.message || 'Unable to load requests.'
+            error?.error?.message || 'Unable to load requests.'
           );
-          return;
         }
+      });
+  }
 
-        this.requests.set(response.data ?? []);
-      },
+  onFiltersChanged(filters: ListFilters): void {
+    this.state.applyFilters(filters);
+    this.loadRequests();
+  }
 
-      error: error => {
+  onSort(column: string): void {
+    this.state.toggleSort(column);
+    this.loadRequests();
+  }
 
-        this.isLoading.set(false);
+  onPageChange(page: number): void {
+    this.state.goToPage(page);
+    this.loadRequests();
+  }
 
-        console.error(error);
-
-        this.errorMessage.set(
-          error?.error?.message || 'Unable to load requests.'
-        );
-      }
-
-    });
+  onPageSizeChange(size: number): void {
+    this.state.setPageSize(size);
+    this.loadRequests();
   }
 
   editRequest(request: Request): void {
@@ -96,9 +148,8 @@ export class RequestListComponent implements OnInit {
           return;
         }
 
-        this.requests.update(
-          current => current.filter(r => r.requestId !== request.requestId)
-        );
+        // Reload the current page (the API moves back if the page became empty)
+        this.loadRequests();
 
         this.requestsChanged.emit();
       },

@@ -85,18 +85,52 @@
         </div>
       </div>
 
-      @if (requests().length > 0) {
+      <app-list-filter-bar
+        placeholder="Search by code, type or description"
+        [statuses]="statuses"
+        [priorities]="priorities"
+        (changed)="onFiltersChanged($event)">
+      </app-list-filter-bar>
 
-        <div class="table-container">
+      @if (listError()) {
+
+        <div class="error-state">
+          <p>{{ listError() }}</p>
+        </div>
+
+      } @else if (listLoading() && requests().length === 0) {
+
+        <div class="loading-state">
+          <p>Loading...</p>
+        </div>
+
+      } @else if (requests().length > 0) {
+
+        <div class="table-container" [class.reloading]="listLoading()">
           <table class="request-table">
 
             <thead>
               <tr>
-                <th>Request Code</th>
-                <th>Type</th>
-                <th>Priority</th>
-                <th>Status</th>
-                <th>Created Date</th>
+                <th class="sortable" [attr.aria-sort]="state.ariaSort('RequestCode')"
+                    (click)="onSort('RequestCode')">
+                  Request Code {{ state.sortIcon('RequestCode') }}
+                </th>
+                <th class="sortable" [attr.aria-sort]="state.ariaSort('RequestType')"
+                    (click)="onSort('RequestType')">
+                  Type {{ state.sortIcon('RequestType') }}
+                </th>
+                <th class="sortable" [attr.aria-sort]="state.ariaSort('Priority')"
+                    (click)="onSort('Priority')">
+                  Priority {{ state.sortIcon('Priority') }}
+                </th>
+                <th class="sortable" [attr.aria-sort]="state.ariaSort('Status')"
+                    (click)="onSort('Status')">
+                  Status {{ state.sortIcon('Status') }}
+                </th>
+                <th class="sortable" [attr.aria-sort]="state.ariaSort('CreatedDate')"
+                    (click)="onSort('CreatedDate')">
+                  Created Date {{ state.sortIcon('CreatedDate') }}
+                </th>
                 <th>Manage</th>
               </tr>
             </thead>
@@ -132,9 +166,24 @@
       } @else {
 
         <div class="empty-state">
-          <p>No service requests found.</p>
+          @if (state.hasFilters()) {
+            <p>No requests match your filters.</p>
+          } @else {
+            <p>No service requests found.</p>
+          }
         </div>
 
+      }
+
+      @if (state.totalCount() > 0) {
+        <app-pager
+          [pageNumber]="state.pageNumber()"
+          [pageSize]="state.pageSize()"
+          [totalCount]="state.totalCount()"
+          [totalPages]="state.totalPages()"
+          (pageChange)="onPageChange($event)"
+          (pageSizeChange)="onPageSizeChange($event)">
+        </app-pager>
       }
 
     }

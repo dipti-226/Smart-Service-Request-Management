@@ -1,10 +1,12 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
 import { Request, CreateRequest,UpdateRequest,AdvancedRequest,Technician,UpdateRequestStatus,AssignTechnician} from '../models/request.model';import { Dashboard } from '../models/dashboard.model';
+
+import { ListQuery, PagedResult } from '../models/paged.model';
 
 @Injectable({
   providedIn: 'root'
@@ -34,6 +36,43 @@ export class RequestService {
     return this.http.get<ApiResponse<Request[]>>(
       `${this.apiUrl}/my`
     );
+  }
+
+    getRequestsPaged(query: ListQuery): Observable<ApiResponse<PagedResult<Request>>> {
+    return this.http.get<ApiResponse<PagedResult<Request>>>(
+      `${this.apiUrl}/paged`,
+      { params: this.buildListParams(query) }
+    );
+  }
+
+  getMyRequestsPaged(query: ListQuery): Observable<ApiResponse<PagedResult<Request>>> {
+    return this.http.get<ApiResponse<PagedResult<Request>>>(
+      `${this.apiUrl}/my/paged`,
+      { params: this.buildListParams(query) }
+    );
+  }
+
+  // Empty filters are not sent
+  private buildListParams(query: ListQuery): HttpParams {
+    let params = new HttpParams()
+      .set('pageNumber', query.pageNumber)
+      .set('pageSize', query.pageSize)
+      .set('sortBy', query.sortBy)
+      .set('sortDir', query.sortDir);
+
+    if (query.search) {
+      params = params.set('search', query.search);
+    }
+
+    if (query.status) {
+      params = params.set('status', query.status);
+    }
+
+    if (query.priority) {
+      params = params.set('priority', query.priority);
+    }
+
+    return params;
   }
   
   getRequestById(id: number): Observable<ApiResponse<Request>> {

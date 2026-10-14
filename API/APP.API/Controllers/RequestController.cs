@@ -2,7 +2,6 @@
 using APP.Common.Models;
 using APP.Models.DTOs.Requests;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace APP.API.Controllers
@@ -64,6 +63,43 @@ namespace APP.API.Controllers
 
             var response =
                 await _requestService.GetMyRequestsAsync(userId.Value);
+
+            return Ok(response);
+        }
+
+        // GET: api/Request/paged?search=&status=&priority=&sortBy=&sortDir=&pageNumber=&pageSize=
+        // All requests, paged (Admin)
+        [HttpGet("paged")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ApiResponse<PagedResult<RequestResponseDto>>>>
+            GetRequestsPaged([FromQuery] RequestListQueryDto query)
+        {
+            var response =
+                await _requestService.GetRequestsPagedAsync(query);
+
+            return Ok(response);
+        }
+
+        // GET: api/Request/my/paged?...
+        // Requests created by the logged-in user, paged
+        [HttpGet("my/paged")]
+        [Authorize(Roles = "Admin,Employee")]
+        public async Task<ActionResult<ApiResponse<PagedResult<RequestResponseDto>>>>
+            GetMyRequestsPaged([FromQuery] RequestListQueryDto query)
+        {
+            int? userId = GetCurrentUserId();
+
+            if (userId == null)
+            {
+                return Unauthorized(new ApiResponse<PagedResult<RequestResponseDto>>
+                {
+                    Success = false,
+                    Message = "Invalid user."
+                });
+            }
+
+            var response =
+                await _requestService.GetRequestsPagedAsync(query, userId.Value);
 
             return Ok(response);
         }

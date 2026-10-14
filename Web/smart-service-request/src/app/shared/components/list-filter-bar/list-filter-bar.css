@@ -1,0 +1,35 @@
+.filter-bar {
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 10px; 
+    align-items: center; 
+    padding: 14px 16px; 
+    border-bottom: 1px solid #f0f1f3; 
+}
+.search { 
+    flex: 1 1 240px; 
+    min-width: 200px; 
+    padding: 9px 12px; 
+    border: 1px solid #d1d5db; 
+    border-radius: 8px; 
+    font-size: 14px; 
+}
+select { 
+    padding: 9px 10px; 
+    border: 1px solid #d1d5db; 
+    border-radius: 8px; 
+    font-size: 14px; 
+    background: #fff; 
+}
+.clear { 
+    padding: 9px 14px; 
+    border: 1px solid #d1d5db; 
+    border-radius: 8px; 
+    background: #fff; 
+    color: #374151; 
+    font-size: 14px; 
+    cursor: pointer; 
+}
+.clear:hover { 
+    background: #f3f4f6; 
+}
