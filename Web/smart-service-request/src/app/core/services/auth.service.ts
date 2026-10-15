@@ -79,7 +79,12 @@ export class AuthService {
     return this.hasRole(['Employee']);
   }
 
+    isTechnician(): boolean {
+    return this.hasRole(['Technician']);
+  }
+
   // First page for each role after login
+    // First page for each role after login
   getHomeRoute(): string {
     if (this.isAdmin()) {
       return '/dashboard';
@@ -87,6 +92,10 @@ export class AuthService {
 
     if (this.isEmployee()) {
       return '/my-requests';
+    }
+
+    if (this.isTechnician()) {
+      return '/assigned-requests';
     }
 
     return '/no-access';

@@ -77,8 +77,7 @@ namespace APP.Business.Services
             };
         }
 
-        public async Task<ApiResponse<bool>> RegisterEmployeeAsync(
-    RegisterRequestDto dto)
+        public async Task<ApiResponse<bool>> RegisterEmployeeAsync(RegisterRequestDto dto)
         {
             await using SqlConnection connection = new SqlConnection(_connectionString);
             await using SqlCommand command = new SqlCommand("SSR_User_RegisterEmployee", connection);

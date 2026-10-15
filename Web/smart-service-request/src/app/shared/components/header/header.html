@@ -31,9 +31,14 @@
       <a routerLink="/my-requests" routerLinkActive="active">
         My Requests
       </a>
-
       <a routerLink="/request/new" routerLinkActive="active">
         Create Request
+      </a>
+      }
+
+      @if (isTechnician) {
+      <a routerLink="/assigned-requests" routerLinkActive="active">
+        My Assigned Requests
       </a>
       }
     </nav>

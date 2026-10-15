@@ -1,0 +1,55 @@
+<div class="detail-card">
+
+  <div class="detail-header">
+    <div>
+      <h2>{{ request().requestCode }}</h2>
+      <p class="type">{{ request().requestType }}</p>
+    </div>
+
+    <div class="badges">
+      <span
+        class="priority"
+        [class.high]="request().priority === 'High'"
+        [class.critical]="request().priority === 'Critical'">
+        {{ request().priority }}
+      </span>
+
+      <span class="status">{{ request().status }}</span>
+    </div>
+  </div>
+
+  <div class="detail-grid">
+
+    <div class="detail-item">
+      <span class="label">Technician</span>
+      <span class="value">{{ request().technicianName || 'Not Assigned' }}</span>
+    </div>
+
+    <div class="detail-item">
+      <span class="label">Created Date</span>
+      <span class="value">{{ request().createdDate | date:'dd-MM-yyyy HH:mm' }}</span>
+    </div>
+
+    <div class="detail-item">
+      <span class="label">Last Updated</span>
+      <span class="value">
+        @if (request().updatedDate) {
+          {{ request().updatedDate | date:'dd-MM-yyyy HH:mm' }}
+        } @else {
+          —
+        }
+      </span>
+    </div>
+
+  </div>
+
+  <div class="description-block">
+    <span class="label">Description</span>
+    <p class="description">{{ request().requestDescription }}</p>
+  </div>
+
+  <div class="detail-sections">
+    <ng-content></ng-content>
+  </div>
+
+</div>

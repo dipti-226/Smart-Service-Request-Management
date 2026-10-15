@@ -14,14 +14,11 @@ namespace APP.Business.Services
         public AdvancedRequestService(IConfiguration configuration)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection")
-                ?? throw new InvalidOperationException(
-                    "DefaultConnection is not configured."
-                );
+                ?? throw new InvalidOperationException("DefaultConnection is not configured.");
         }
         // Get Request Details
 
-        public async Task<ApiResponse<AdvancedRequestDto>> GetRequestDetailsAsync(
-            int requestId)
+        public async Task<ApiResponse<AdvancedRequestDto>> GetRequestDetailsAsync(int requestId)
         {
             await using SqlConnection connection = new SqlConnection(_connectionString);
             await using SqlCommand command = new SqlCommand("SSR_AdvancedRequest_GetById", connection);
@@ -50,6 +47,38 @@ namespace APP.Business.Services
             };
         }
 
+        // One request, only if it is assigned to the logged-in technician.
+        // "Not found" is returned for missing AND not-assigned requests.
+        public async Task<ApiResponse<AdvancedRequestDto>> GetAssignedRequestDetailsAsync(int requestId,int technicianUserId)
+        {
+            await using SqlConnection connection = new SqlConnection(_connectionString);
+            await using SqlCommand command = new SqlCommand("SSR_Request_GetAssignedById", connection);
+
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add("@RequestId", SqlDbType.Int).Value = requestId;
+            command.Parameters.Add("@TechnicianUserId", SqlDbType.Int).Value = technicianUserId;
+
+            await connection.OpenAsync();
+            await using SqlDataReader reader = await command.ExecuteReaderAsync();
+
+            if (!await reader.ReadAsync())
+            {
+                return new ApiResponse<AdvancedRequestDto>
+                {
+                    Success = false,
+                    Message = "Request not found.",
+                    Data = null
+                };
+            }
+
+            return new ApiResponse<AdvancedRequestDto>
+            {
+                Success = true,
+                Message = "Request details retrieved successfully.",
+                Data = MapRequest(reader)
+            };
+        }
         // Get Technicians
 
         public async Task<ApiResponse<List<TechnicianDto>>>GetTechniciansAsync()
@@ -168,18 +197,14 @@ namespace APP.Business.Services
             };
         }
 
-        public async Task<ApiResponse<List<string>>> GetAllowedStatusesAsync(
-    int requestId,
-    int? callerUserId,
-    string callerRole)
+        public async Task<ApiResponse<List<string>>> GetAllowedStatusesAsync(int requestId,int? callerUserId,string callerRole)
         {
             await using SqlConnection connection = new SqlConnection(_connectionString);
             await using SqlCommand command = new SqlCommand("SSR_Request_GetAllowedStatuses", connection);
             command.CommandType = CommandType.StoredProcedure;
 
             command.Parameters.Add("@RequestId", SqlDbType.Int).Value = requestId;
-            command.Parameters.Add("@CallerUserId", SqlDbType.Int).Value =
-                (object?)callerUserId ?? DBNull.Value;
+            command.Parameters.Add("@CallerUserId", SqlDbType.Int).Value = (object?)callerUserId ?? DBNull.Value;
             command.Parameters.Add("@CallerRole", SqlDbType.NVarChar, 50).Value = callerRole;
 
             await connection.OpenAsync();

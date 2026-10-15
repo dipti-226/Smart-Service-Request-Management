@@ -19,6 +19,8 @@ export class RequestService {
 
   private readonly advancedApiUrl = `${environment.apiUrl}/AdvancedRequest`;
 
+  private readonly technicianApiUrl = `${environment.apiUrl}/Technician`;
+
   createRequest(request: CreateRequest): Observable<ApiResponse<Request>> {
     return this.http.post<ApiResponse<Request>>(
       this.apiUrl,
@@ -49,6 +51,21 @@ export class RequestService {
     return this.http.get<ApiResponse<PagedResult<Request>>>(
       `${this.apiUrl}/my/paged`,
       { params: this.buildListParams(query) }
+    );
+  }
+
+    // Requests assigned to the logged-in technician
+  getAssignedRequestsPaged(query: ListQuery): Observable<ApiResponse<PagedResult<Request>>> {
+    return this.http.get<ApiResponse<PagedResult<Request>>>(
+      `${this.technicianApiUrl}/requests/paged`,
+      { params: this.buildListParams(query) }
+    );
+  }
+
+  // One assigned request (404 if it is not assigned to this technician)
+  getAssignedRequestById(id: number): Observable<ApiResponse<AdvancedRequest>> {
+    return this.http.get<ApiResponse<AdvancedRequest>>(
+      `${this.technicianApiUrl}/requests/${id}`
     );
   }
 

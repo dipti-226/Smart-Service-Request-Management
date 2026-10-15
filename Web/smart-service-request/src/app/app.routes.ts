@@ -90,6 +90,24 @@ export const routes: Routes = [
       import('./features/user/technician-form/technician-form')
         .then(m => m.TechnicianFormComponent)
   },
+
+    {
+    path: 'assigned-requests',
+    canActivate: [roleGuard],
+    data: { roles: ['Technician'] },
+    loadComponent: () =>
+      import('./features/technician/assigned-requests/assigned-requests')
+        .then(m => m.AssignedRequestsComponent)
+  },
+  {
+    path: 'assigned-requests/:id',
+    canActivate: [roleGuard],
+    data: { roles: ['Technician'] },
+    loadComponent: () =>
+      import('./features/technician/assigned-request-details/assigned-request-details')
+        .then(m => m.AssignedRequestDetailsComponent)
+  },
+  
   {
     path: 'no-access',
     canActivate: [authGuard],

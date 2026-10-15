@@ -30,6 +30,10 @@ export class HeaderComponent {
   get isEmployee(): boolean {
     return this.authService.isEmployee();
   }
+
+    get isTechnician(): boolean {
+    return this.authService.isTechnician();
+  }
   
   logout(): void {
     this.authService.logout();
