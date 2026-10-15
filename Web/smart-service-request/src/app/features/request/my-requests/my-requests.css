@@ -1,104 +1,141 @@
-.page { 
-    max-width: 1100px; 
-    margin: 0 auto; 
-    padding: 24px; 
+.page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px;
 }
-.page-header { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    margin-bottom: 20px; 
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
 }
-.page-header h1 { 
-    margin: 0; 
-    font-size: 24px; 
-    color: #111827; 
+
+.page-header h1 {
+    margin: 0;
+    font-size: 24px;
+    color: #111827;
 }
-.page-header p { 
-    margin: 4px 0 0; 
-    color: #6b7280; 
+
+.page-header p {
+    margin: 4px 0 0;
+    color: #6b7280;
 }
-.primary-btn { 
-    background: #2563eb; 
-    color: #fff; 
-    padding: 10px 16px; 
-    border-radius: 8px; 
-    text-decoration: none; 
-    font-weight: 600; 
-    font-size: 14px; 
+
+.primary-btn {
+    background: #2563eb;
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
 }
-.primary-btn:hover { 
-    background: #1d4ed8; 
+
+.primary-btn:hover {
+    background: #1d4ed8;
 }
-.table-card { 
-    background: #fff; 
-    border-radius: 12px; 
-    border: 1px solid #eef0f3; 
-    box-shadow: 0 1px 3px rgba(0,0,0,.06); 
-    overflow: hidden; 
+
+.table-card {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #eef0f3;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
+    overflow: hidden;
 }
-.table-wrapper { 
-    overflow-x: auto; 
+
+.table-wrapper {
+    overflow-x: auto;
 }
-table { 
-    width: 100%; 
-    border-collapse: collapse; 
-    min-width: 800px; 
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
 }
-th, td { 
-    padding: 14px 16px; 
-    text-align: left; 
-    border-bottom: 1px solid #f0f1f3; 
+
+th,
+td {
+    padding: 14px 16px;
+    text-align: left;
+    border-bottom: 1px solid #f0f1f3;
 }
-th { 
-    background: #f9fafb; 
-    font-size: 12px; 
-    text-transform: uppercase; 
-    letter-spacing: .4px; 
-    color: #6b7280; 
-    white-space: nowrap; 
+
+th {
+    background: #f9fafb;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    color: #6b7280;
+    white-space: nowrap;
 }
-td { 
-    font-size: 14px; 
-    color: #1f2937; 
+
+td {
+    font-size: 14px;
+    color: #1f2937;
 }
-tbody tr:last-child td { 
-    border-bottom: none; 
+
+tbody tr:last-child td {
+    border-bottom: none;
 }
-.description { 
-    max-width: 280px; 
-    white-space: nowrap; 
-    overflow: hidden; 
-    text-overflow: ellipsis; 
+
+.description {
+    max-width: 280px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
-.priority, .status { 
-    display: inline-block; 
-    padding: 4px 10px; 
-    border-radius: 999px; 
-    font-size: 12px; 
-    font-weight: 600; 
+
+.priority,
+.status {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
 }
-.priority { 
-    background: #f3f4f6; 
-    color: #374151; 
+
+.priority {
+    background: #f3f4f6;
+    color: #374151;
 }
-.priority.high { 
-    background: #fef3c7; 
-    color: #92400e; 
+
+.priority.high {
+    background: #fef3c7;
+    color: #92400e;
 }
-.priority.critical { 
-    background: #fee2e2; 
-    color: #991b1b; 
+
+.priority.critical {
+    background: #fee2e2;
+    color: #991b1b;
 }
-.status { 
-    background: #dbeafe; 
-    color: #1e40af; 
+
+.status {
+    background: #dbeafe;
+    color: #1e40af;
 }
-.state-message { 
-    padding: 32px; 
-    text-align: center; 
-    color: #6b7280; 
+
+.state-message {
+    padding: 32px;
+    text-align: center;
+    color: #6b7280;
 }
-.state-message.error { 
-    color: #b91c1c; 
+
+.state-message.error {
+    color: #b91c1c;
+}
+
+.view-btn {
+    display: inline-block;
+    padding: 6px 14px;
+    border: 1px solid #2563eb;
+    border-radius: 6px;
+    color: #2563eb;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.view-btn:hover {
+    background: #eff6ff;
 }

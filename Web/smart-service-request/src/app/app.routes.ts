@@ -108,6 +108,23 @@ export const routes: Routes = [
         .then(m => m.AssignedRequestDetailsComponent)
   },
   
+    {
+    path: 'my-requests/:id',
+    canActivate: [roleGuard],
+    data: { roles: ['Employee'] },
+    loadComponent: () =>
+      import('./features/employee/my-request-details/my-request-details')
+        .then(m => m.MyRequestDetailsComponent)
+  },
+  {
+    path: 'my-requests/:id/edit',
+    canActivate: [roleGuard],
+    data: { roles: ['Employee'] },
+    loadComponent: () =>
+      import('./features/employee/my-request-edit/my-request-edit')
+        .then(m => m.MyRequestEditComponent)
+  },
+  
   {
     path: 'no-access',
     canActivate: [authGuard],

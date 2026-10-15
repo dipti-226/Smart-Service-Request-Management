@@ -1,0 +1,71 @@
+<div class="page">
+
+  <a routerLink="/my-requests" class="back-link">← Back to My Requests</a>
+
+  @if (isLoading()) {
+
+    <div class="state-message">Loading request...</div>
+
+  } @else if (errorMessage()) {
+
+    <div class="state-message error">{{ errorMessage() }}</div>
+
+  } @else {
+
+    @if (request(); as req) {
+
+      <app-request-detail-view [request]="req">
+
+        <section class="actions-section">
+
+          <h3>Actions</h3>
+
+          @if (actionSuccess()) {
+            <div class="success-banner">{{ actionSuccess() }}</div>
+          }
+
+          @if (actionError()) {
+            <div class="error-banner">{{ actionError() }}</div>
+          }
+
+          @if (isOpen()) {
+
+            <p class="hint">You can edit or cancel this request while it is Open.</p>
+
+            <div class="action-buttons">
+
+              <a class="edit-btn" [routerLink]="['/my-requests', req.requestId, 'edit']">
+                Edit Request
+              </a>
+
+              <button
+                type="button"
+                class="cancel-btn"
+                [disabled]="isCancelling()"
+                (click)="cancelRequest()">
+                @if (isCancelling()) {
+                  Cancelling...
+                } @else {
+                  Cancel Request
+                }
+              </button>
+
+            </div>
+
+          } @else {
+
+            <p class="hint">
+              This request cannot be edited or cancelled because its status is {{ req.status }}.
+            </p>
+
+          }
+
+        </section>
+
+      </app-request-detail-view>
+
+    }
+
+  }
+
+</div>

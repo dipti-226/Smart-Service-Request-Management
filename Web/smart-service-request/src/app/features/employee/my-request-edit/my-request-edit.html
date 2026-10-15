@@ -1,0 +1,116 @@
+<div class="page-container">
+
+  <a [routerLink]="backLink()" class="back-link">← Back</a>
+
+  @if (isLoading()) {
+
+    <div class="state-message">Loading request...</div>
+
+  } @else if (loadError()) {
+
+    <div class="state-message error">{{ loadError() }}</div>
+
+  } @else if (!isEditable()) {
+
+    <div class="state-message error">
+      Only requests in 'Open' status can be edited.
+      This request is '{{ request()?.status }}'.
+    </div>
+
+  } @else {
+
+    <div class="form-card">
+
+      <div class="form-header">
+        <h2>Edit Request {{ request()?.requestCode }}</h2>
+        <p>You can change the details while the request is Open.</p>
+      </div>
+
+      @if (successMessage()) {
+        <div class="alert success">{{ successMessage() }}</div>
+      }
+
+      @if (errorMessage()) {
+        <div class="alert error">{{ errorMessage() }}</div>
+      }
+
+      <form [formGroup]="requestForm" (ngSubmit)="submitRequest()" novalidate>
+
+        <div class="form-group">
+
+          <label for="requestType">Request Type</label>
+
+          <select id="requestType" formControlName="requestType">
+            <option value="">Select request type</option>
+            @for (type of requestTypes(); track type) {
+              <option [value]="type">{{ type }}</option>
+            }
+          </select>
+
+          @if (requestForm.controls.requestType.touched && requestForm.controls.requestType.invalid) {
+            <small class="validation-error">Request type is required.</small>
+          }
+
+        </div>
+
+        <div class="form-group">
+
+          <label for="requestDescription">Request Description</label>
+
+          <textarea
+            id="requestDescription"
+            rows="6"
+            maxlength="1000"
+            placeholder="Describe your problem..."
+            formControlName="requestDescription"></textarea>
+
+          @if (requestForm.controls.requestDescription.touched && requestForm.controls.requestDescription.invalid) {
+            <small class="validation-error">
+              @if (requestForm.controls.requestDescription.hasError('maxlength')) {
+                Description cannot be more than 1000 characters.
+              } @else {
+                Request description is required.
+              }
+            </small>
+          }
+
+        </div>
+
+        <div class="form-group">
+
+          <label for="priority">Priority</label>
+
+          <select id="priority" formControlName="priority">
+            <option value="">Select priority</option>
+            @for (priority of priorities; track priority) {
+              <option [value]="priority">{{ priority }}</option>
+            }
+          </select>
+
+          @if (requestForm.controls.priority.touched && requestForm.controls.priority.invalid) {
+            <small class="validation-error">Priority is required.</small>
+          }
+
+        </div>
+
+        <div class="form-actions">
+
+          <a [routerLink]="backLink()" class="btn secondary">Cancel</a>
+
+          <button type="submit" class="btn primary" [disabled]="isSubmitting() || isSaved()">
+            @if (isSubmitting()) {
+              Saving...
+            } @else {
+              Save Changes
+            }
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+
+  }
+
+</div>

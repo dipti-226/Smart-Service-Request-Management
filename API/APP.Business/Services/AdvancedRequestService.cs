@@ -4,6 +4,7 @@ using APP.Models.DTOs.Technicians;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using System.Data;
+using APP.Models.DTOs.Requests;
 
 namespace APP.Business.Services
 {
@@ -79,8 +80,132 @@ namespace APP.Business.Services
                 Data = MapRequest(reader)
             };
         }
-        // Get Technicians
 
+        // One request, only if the logged-in employee created it.
+        // "Not found" is returned for missing AND not-own requests.
+        public async Task<ApiResponse<AdvancedRequestDto>> GetOwnRequestDetailsAsync(
+            int requestId,
+            int callerUserId)
+        {
+            await using SqlConnection connection = new SqlConnection(_connectionString);
+            await using SqlCommand command = new SqlCommand("SSR_Request_GetOwnById", connection);
+
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add("@RequestId", SqlDbType.Int).Value = requestId;
+            command.Parameters.Add("@CallerUserId", SqlDbType.Int).Value = callerUserId;
+
+            await connection.OpenAsync();
+            await using SqlDataReader reader = await command.ExecuteReaderAsync();
+
+            if (!await reader.ReadAsync())
+            {
+                return new ApiResponse<AdvancedRequestDto>
+                {
+                    Success = false,
+                    Message = "Request not found.",
+                    ErrorCode = "NOT_FOUND",
+                    Data = null
+                };
+            }
+
+            return new ApiResponse<AdvancedRequestDto>
+            {
+                Success = true,
+                Message = "Request details retrieved successfully.",
+                Data = MapRequest(reader)
+            };
+        }
+
+        // Edit an own request (type, description, priority) while it is Open
+        public async Task<ApiResponse<AdvancedRequestDto>> UpdateOwnRequestAsync(
+            int requestId,
+            UpdateOwnRequestDto dto,
+            int callerUserId)
+        {
+            await using SqlConnection connection = new SqlConnection(_connectionString);
+            await using SqlCommand command = new SqlCommand("SSR_Request_UpdateOwn", connection);
+
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add("@RequestId", SqlDbType.Int).Value = requestId;
+            command.Parameters.Add("@CallerUserId", SqlDbType.Int).Value = callerUserId;
+            command.Parameters.Add("@RequestType", SqlDbType.NVarChar, 100).Value = dto.RequestType.Trim();
+            command.Parameters.Add("@RequestDescription", SqlDbType.NVarChar, 1000).Value = dto.RequestDescription.Trim();
+            command.Parameters.Add("@Priority", SqlDbType.NVarChar, 20).Value = dto.Priority;
+
+            await connection.OpenAsync();
+            await using SqlDataReader reader = await command.ExecuteReaderAsync();
+
+            if (!await reader.ReadAsync())
+            {
+                return new ApiResponse<AdvancedRequestDto>
+                {
+                    Success = false,
+                    Message = "Request not found.",
+                    ErrorCode = "NOT_FOUND",
+                    Data = null
+                };
+            }
+
+            // The SP returned only an error row
+            if (HasColumn(reader, "ErrorCode"))
+            {
+                string currentStatus = HasColumn(reader, "CurrentStatus")
+                    ? reader["CurrentStatus"]?.ToString() ?? string.Empty
+                    : string.Empty;
+
+                return new ApiResponse<AdvancedRequestDto>
+                {
+                    Success = false,
+                    Message = $"Only requests in 'Open' status can be edited. This request is '{currentStatus}'.",
+                    ErrorCode = "NOT_OPEN",
+                    Data = null
+                };
+            }
+
+            return new ApiResponse<AdvancedRequestDto>
+            {
+                Success = true,
+                Message = "Request updated successfully.",
+                Data = MapRequest(reader)
+            };
+        }
+
+        // Cancel an own request while it is Open.
+        // Uses the normal status update (Employee role), so the transition rules
+        // and the status history are applied exactly as for every other status change.
+        public async Task<ApiResponse<AdvancedRequestDto>> CancelOwnRequestAsync(
+            int requestId,
+            int callerUserId)
+        {
+            var result = await UpdateRequestStatusAsync(
+                requestId,
+                new UpdateRequestStatusDto { Status = "Cancelled" },
+                callerUserId,
+                "Employee");
+
+            if (result.Success)
+            {
+                result.Message = "Request cancelled successfully.";
+                return result;
+            }
+
+            if (result.ErrorCode == "INVALID_TRANSITION")
+            {
+                result.Message = "Only requests in 'Open' status can be cancelled.";
+                result.ErrorCode = "NOT_OPEN";
+            }
+            else
+            {
+                // Not the owner, or the request does not exist: same answer for both
+                result.Message = "Request not found.";
+                result.ErrorCode = "NOT_FOUND";
+            }
+
+            return result;
+        }
+        // Get Technicians
         public async Task<ApiResponse<List<TechnicianDto>>>GetTechniciansAsync()
         {
             await using SqlConnection connection = new SqlConnection(_connectionString);

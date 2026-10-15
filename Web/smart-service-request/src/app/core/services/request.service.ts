@@ -21,6 +21,8 @@ export class RequestService {
 
   private readonly technicianApiUrl = `${environment.apiUrl}/Technician`;
 
+  private readonly employeeApiUrl = `${environment.apiUrl}/Employee`;
+
   createRequest(request: CreateRequest): Observable<ApiResponse<Request>> {
     return this.http.post<ApiResponse<Request>>(
       this.apiUrl,
@@ -66,6 +68,29 @@ export class RequestService {
   getAssignedRequestById(id: number): Observable<ApiResponse<AdvancedRequest>> {
     return this.http.get<ApiResponse<AdvancedRequest>>(
       `${this.technicianApiUrl}/requests/${id}`
+    );
+  }
+
+    // One own request (404 if it was not created by this employee)
+  getOwnRequestById(id: number): Observable<ApiResponse<AdvancedRequest>> {
+    return this.http.get<ApiResponse<AdvancedRequest>>(
+      `${this.employeeApiUrl}/requests/${id}`
+    );
+  }
+
+  // Edit own request (only while Open)
+  updateOwnRequest(id: number, request: CreateRequest): Observable<ApiResponse<AdvancedRequest>> {
+    return this.http.put<ApiResponse<AdvancedRequest>>(
+      `${this.employeeApiUrl}/requests/${id}`,
+      request
+    );
+  }
+
+  // Cancel own request (only while Open)
+  cancelOwnRequest(id: number): Observable<ApiResponse<AdvancedRequest>> {
+    return this.http.put<ApiResponse<AdvancedRequest>>(
+      `${this.employeeApiUrl}/requests/${id}/cancel`,
+      {}
     );
   }
 

@@ -71,3 +71,8 @@ export interface UpdateRequestStatus {
 export interface AssignTechnician {
   technicianId: number;
 }
+
+// Same list as the Create Request form
+export const REQUEST_TYPES: string[] = [
+  'Computer', 'Network', 'Software', 'Hardware', 'Other'
+];
