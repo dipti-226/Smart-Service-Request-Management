@@ -4,16 +4,13 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 
 import {Request,AdvancedRequest} from '../../../core/models/request.model';
-import {
-  ListFilters,
-  REQUEST_PRIORITIES,
-  REQUEST_STATUSES
-} from '../../../core/models/paged.model';
+import {ListFilters,REQUEST_PRIORITIES,REQUEST_STATUSES} from '../../../core/models/paged.model';
 import { RequestService } from '../../../core/services/request.service';
 import { PagedListState } from '../../../core/utils/paged-list-state';
 import { RequestActionPanelComponent } from '../request-action-panel/request-action-panel';
 import { ListFilterBarComponent } from '../../../shared/components/list-filter-bar/list-filter-bar';
 import { PagerComponent } from '../../../shared/components/pager/pager';
+import { RequestCommentsComponent } from '../../../shared/components/request-comments/request-comments';
 
 @Component({
   selector: 'app-request-management',
@@ -22,7 +19,8 @@ import { PagerComponent } from '../../../shared/components/pager/pager';
     DatePipe,
     RequestActionPanelComponent,
     ListFilterBarComponent,
-    PagerComponent
+    PagerComponent,
+    RequestCommentsComponent
   ],
   templateUrl: './request-management.html',
   styleUrl: './request-management.css'

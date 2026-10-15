@@ -1,0 +1,165 @@
+:host {
+    display: block;
+}
+
+.comments h3 {
+    margin: 0 0 12px;
+    font-size: 16px;
+    color: #111827;
+}
+
+.count {
+    font-weight: 400;
+    color: #6b7280;
+}
+
+.muted {
+    margin: 0 0 16px;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.error-banner {
+    margin-bottom: 12px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    background: #fee2e2;
+    color: #991b1b;
+    font-size: 14px;
+}
+
+.comment-list {
+    list-style: none;
+    margin: 0 0 16px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.comment {
+    padding: 12px 14px;
+    border: 1px solid #eef0f3;
+    border-radius: 10px;
+    background: #f9fafb;
+}
+
+.comment.own {
+    background: #eff6ff;
+    border-color: #dbeafe;
+}
+
+.comment-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 13px;
+}
+
+.author {
+    font-weight: 600;
+    color: #111827;
+}
+
+.you {
+    margin-left: 2px;
+    font-weight: 400;
+    color: #6b7280;
+}
+
+.role {
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.role.admin {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.role.technician {
+    background: #ede9fe;
+    color: #5b21b6;
+}
+
+.role.employee {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.time {
+    margin-left: auto;
+    color: #6b7280;
+    font-size: 12px;
+}
+
+.comment-text {
+    margin: 0;
+    color: #1f2937;
+    font-size: 14px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.add-comment textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+}
+
+.add-comment textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+}
+
+.add-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.counter {
+    color: #6b7280;
+    font-size: 12px;
+}
+
+.field-error {
+    color: #dc2626;
+    font-size: 12.5px;
+}
+
+.post-btn {
+    margin-left: auto;
+    padding: 9px 18px;
+    border: none;
+    border-radius: 8px;
+    background: #2563eb;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.post-btn:hover:not(:disabled) {
+    background: #1d4ed8;
+}
+
+.post-btn:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}

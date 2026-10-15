@@ -1,79 +1,76 @@
 <div class="page">
 
-  <a routerLink="/assigned-requests" class="back-link">← Back to My Assigned Requests</a>
+    <a routerLink="/assigned-requests" class="back-link">← Back to My Assigned Requests</a>
 
-  @if (isLoading()) {
+    @if (isLoading()) {
 
     <div class="state-message">Loading request...</div>
 
-  } @else if (errorMessage()) {
+    } @else if (errorMessage()) {
 
     <div class="state-message error">{{ errorMessage() }}</div>
 
-  } @else {
+    } @else {
 
     @if (request(); as req) {
 
-      <app-request-detail-view [request]="req">
+    <app-request-detail-view [request]="req">
 
         <section class="status-section">
 
-          <h3>Update Status</h3>
+            <h3>Update Status</h3>
 
-          @if (actionSuccess()) {
+            @if (actionSuccess()) {
             <div class="success-banner">{{ actionSuccess() }}</div>
-          }
+            }
 
-          @if (actionError()) {
+            @if (actionError()) {
             <div class="error-banner">{{ actionError() }}</div>
-          }
+            }
 
-          @if (allowedStatuses().length === 0) {
+            @if (allowedStatuses().length === 0) {
 
             <p class="no-options">
-              No further status changes are available for this request.
+                No further status changes are available for this request.
             </p>
 
-          } @else {
+            } @else {
 
             <div class="status-form">
 
-              <select
-                aria-label="New status"
-                [disabled]="isUpdating()"
-                (change)="onStatusSelected($any($event.target).value)">
+                <select aria-label="New status" [disabled]="isUpdating()"
+                    (change)="onStatusSelected($any($event.target).value)">
 
-                <option value="" [selected]="selectedStatus() === ''">Select new status</option>
+                    <option value="" [selected]="selectedStatus() === ''">Select new status</option>
 
-                @for (status of allowedStatuses(); track status) {
-                  <option [value]="status" [selected]="selectedStatus() === status">
-                    {{ status }}
-                  </option>
-                }
+                    @for (status of allowedStatuses(); track status) {
+                    <option [value]="status" [selected]="selectedStatus() === status">
+                        {{ status }}
+                    </option>
+                    }
 
-              </select>
+                </select>
 
-              <button
-                type="button"
-                [disabled]="!selectedStatus() || isUpdating()"
-                (click)="updateStatus()">
-                @if (isUpdating()) {
-                  Updating...
-                } @else {
-                  Update Status
-                }
-              </button>
+                <button type="button" [disabled]="!selectedStatus() || isUpdating()" (click)="updateStatus()">
+                    @if (isUpdating()) {
+                    Updating...
+                    } @else {
+                    Update Status
+                    }
+                </button>
 
             </div>
 
-          }
+            }
 
         </section>
-
-      </app-request-detail-view>
+        <div class="comments-wrapper">
+            <app-request-comments [requestId]="req.requestId"></app-request-comments>
+        </div>
+    </app-request-detail-view>
 
     }
 
-  }
+    }
 
 </div>

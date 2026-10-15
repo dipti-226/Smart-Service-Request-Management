@@ -100,3 +100,8 @@
     opacity: .6;
     cursor: not-allowed;
 }
+
+.comments-wrapper {
+    border-top: 1px solid #f0f1f3;
+    padding-top: 20px;
+}

@@ -4,11 +4,12 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { RequestService } from '../../../core/services/request.service';
 import { AdvancedRequest } from '../../../core/models/request.model';
 import { RequestDetailViewComponent } from '../../../shared/components/request-detail-view/request-detail-view';
+import { RequestCommentsComponent } from '../../../shared/components/request-comments/request-comments';
 
 @Component({
   selector: 'app-my-request-details',
   standalone: true,
-  imports: [RouterLink, RequestDetailViewComponent],
+  imports: [RouterLink, RequestDetailViewComponent, RequestCommentsComponent],
   templateUrl: './my-request-details.html',
   styleUrl: './my-request-details.css'
 })
