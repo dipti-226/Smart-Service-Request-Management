@@ -3,6 +3,8 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth.service';
+import { VALIDATION } from '../../../core/validation/validation-rules';
+import { getFieldError, requiredText } from '../../../core/validation/validators';
 
 @Component({
   selector: 'app-login',
@@ -17,12 +19,22 @@ export class LoginComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
+  readonly fieldError = getFieldError;
+
   isSubmitting = signal(false);
   errorMessage = signal('');
 
+  // Login only checks that both values are filled (and not too long),
+  // so every existing account can still sign in.
   loginForm = this.fb.nonNullable.group({
-    username: ['', Validators.required],
-    password: ['', Validators.required]
+    username: [
+      '',
+      [requiredText, Validators.maxLength(VALIDATION.username.max)]
+    ],
+    password: [
+      '',
+      [Validators.required, Validators.maxLength(VALIDATION.password.max)]
+    ]
   });
 
   submitLogin(): void {
@@ -36,30 +48,30 @@ export class LoginComponent {
 
     this.isSubmitting.set(true);
 
-    this.authService.login(this.loginForm.getRawValue()).subscribe({
+    const value = this.loginForm.getRawValue();
+
+    this.authService.login({
+      username: value.username.trim(),
+      password: value.password
+    }).subscribe({
 
       next: response => {
 
         this.isSubmitting.set(false);
 
         if (!response.success || !response.data) {
-          this.errorMessage.set(
-            response.message || 'Invalid username or password.'
-          );
+          this.errorMessage.set(response.message || 'Invalid username or password.');
           return;
         }
 
-        this.router.navigate([this.authService.getHomeRoute()]);      },
+        this.router.navigate([this.authService.getHomeRoute()]);
+      },
 
       error: error => {
 
         this.isSubmitting.set(false);
-
         console.error(error);
-
-        this.errorMessage.set(
-          error?.error?.message || 'Unable to login. Please try again.'
-        );
+        this.errorMessage.set(error?.error?.message || 'Unable to login. Please try again.');
       }
     });
   }

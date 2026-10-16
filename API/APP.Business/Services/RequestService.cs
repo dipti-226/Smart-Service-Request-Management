@@ -24,8 +24,8 @@ namespace APP.Business.Services
                 await using SqlCommand command = new SqlCommand("SSR_Request_Create", connection);
 
                 command.CommandType = CommandType.StoredProcedure;
-                command.Parameters.AddWithValue("@RequestType", dto.RequestType);
-                command.Parameters.AddWithValue("@RequestDescription", dto.RequestDescription);
+                command.Parameters.AddWithValue("@RequestType", dto.RequestType.Trim());
+                command.Parameters.AddWithValue("@RequestDescription", dto.RequestDescription.Trim());
                 command.Parameters.AddWithValue("@Priority", dto.Priority);
                 command.Parameters.Add("@CreatedByUserId", SqlDbType.Int).Value = (object?)createdByUserId ?? DBNull.Value;
 

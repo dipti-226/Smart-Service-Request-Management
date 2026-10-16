@@ -3,12 +3,33 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using APP.Common.Models;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Controllers
-builder.Services.AddControllers();
+// Controllers
+builder.Services.AddControllers().ConfigureApiBehaviorOptions(options =>
+    {
+        // Validation errors use the same { success, message } shape as every other API error
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            string message = context.ModelState.Values
+                .SelectMany(entry => entry.Errors)
+                .Select(error => error.ErrorMessage)
+                .FirstOrDefault(text => !string.IsNullOrWhiteSpace(text))
+                ?? "Invalid request data.";
 
+            return new BadRequestObjectResult(new ApiResponse<object>
+            {
+                Success = false,
+                Message = message,
+                ErrorCode = "VALIDATION_ERROR",
+                Data = null
+            });
+        };
+    });
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>

@@ -1,107 +1,80 @@
 <section class="comments">
 
-  <h3>
-    Comments
-    @if (!isLoading() && !loadError()) {
-      <span class="count">({{ comments().length }})</span>
-    }
-  </h3>
+    <h3>
+        Comments
+        @if (!isLoading() && !loadError()) {
+        <span class="count">({{ comments().length }})</span>
+        }
+    </h3>
 
-  @if (isLoading()) {
-
+    @if (isLoading()) {
     <p class="muted">Loading comments...</p>
-
-  } @else if (loadError()) {
-
+    } @else if (loadError()) {
     <div class="error-banner">{{ loadError() }}</div>
-
-  } @else {
-
+    } @else {
     @if (comments().length === 0) {
-
-      <p class="muted">No comments yet. Start the conversation below.</p>
-
+    <p class="muted">No comments yet. Start the conversation below.</p>
     } @else {
 
-      <ul class="comment-list">
+    <ul class="comment-list">
         @for (comment of comments(); track comment.commentId) {
-          <li class="comment" [class.own]="isOwn(comment)">
+        <li class="comment" [class.own]="isOwn(comment)">
 
             <div class="comment-header">
 
-              <span class="author">
-                {{ comment.username }}
-                @if (isOwn(comment)) {
-                  <span class="you">(you)</span>
-                }
-              </span>
+                <span class="author">
+                    {{ comment.username }}
+                    @if (isOwn(comment)) {
+                    <span class="you">(you)</span>
+                    }
+                </span>
 
-              <span
-                class="role"
-                [class.admin]="comment.roleName === 'Admin'"
-                [class.technician]="comment.roleName === 'Technician'"
-                [class.employee]="comment.roleName === 'Employee'">
-                {{ comment.roleName }}
-              </span>
+                <span class="role" [class.admin]="comment.roleName === 'Admin'"
+                    [class.technician]="comment.roleName === 'Technician'"
+                    [class.employee]="comment.roleName === 'Employee'">
+                    {{ comment.roleName }}
+                </span>
 
-              <span class="time">
-                {{ comment.createdDate | date:'dd-MM-yyyy HH:mm' }}
-              </span>
+                <span class="time">
+                    {{ comment.createdDate | date:'dd-MM-yyyy HH:mm' }}
+                </span>
 
             </div>
 
             <p class="comment-text">{{ comment.commentText }}</p>
 
-          </li>
+        </li>
         }
-      </ul>
+    </ul>
 
     }
 
     <div class="add-comment">
 
-      @if (postError()) {
+        @if (postError()) {
         <div class="error-banner">{{ postError() }}</div>
-      }
-
-      <textarea
-        aria-label="Add a comment"
-        rows="3"
-        [maxLength]="maxLength"
-        placeholder="Write a comment..."
-        [formControl]="commentControl"
-        (input)="charCount.set($any($event.target).value.length)"></textarea>
-
-      <div class="add-footer">
-
-        <span class="counter">{{ charCount() }} / {{ maxLength }}</span>
-
-        @if (commentControl.touched && commentControl.invalid) {
-          <span class="field-error">
-            @if (commentControl.hasError('maxlength')) {
-              Comment cannot be more than 1000 characters.
-            } @else {
-              Comment cannot be empty.
-            }
-          </span>
         }
 
-        <button
-          type="button"
-          class="post-btn"
-          [disabled]="isPosting()"
-          (click)="postComment()">
-          @if (isPosting()) {
-            Posting...
-          } @else {
-            Add Comment
-          }
-        </button>
+        <textarea aria-label="Add a comment" rows="3" [maxLength]="maxLength" placeholder="Write a comment..."
+            [formControl]="commentControl" (input)="charCount.set($any($event.target).value.length)"></textarea>
 
-      </div>
+        <div class="add-footer">
+
+            <span class="counter">{{ charCount() }} / {{ maxLength }}</span>
+
+            @if (commentControl.touched && commentControl.invalid) {
+            <span class="field-error">{{ fieldError(commentControl, 'comment') }}</span>
+            }
+
+            <button type="button" class="post-btn" [disabled]="isPosting()" (click)="postComment()">
+                @if (isPosting()) {Posting...}
+                @else {Add Comment}
+            </button>
+
+        </div>
 
     </div>
 
-  }
+    }
 
 </section>

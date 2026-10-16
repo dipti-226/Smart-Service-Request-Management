@@ -1,27 +1,24 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using APP.Models.Validation;
 
 namespace APP.Models.DTOs.Requests
 {
     public class UpdateRequestDto
     {
-        [Required]
-        [StringLength(100)]
+        [Required(ErrorMessage = ValidationRules.RequestTypeRequired)]
+        [MaxLength(ValidationRules.RequestTypeMax, ErrorMessage = ValidationRules.RequestTypeTooLong)]
         public string RequestType { get; set; } = string.Empty;
 
-        [Required]
-        [StringLength(1000)]
+        [Required(ErrorMessage = ValidationRules.DescriptionRequired)]
+        [MaxLength(ValidationRules.DescriptionMax, ErrorMessage = ValidationRules.DescriptionTooLong)]
         public string RequestDescription { get; set; } = string.Empty;
 
-        [Required]
-        [RegularExpression(
-            "^(Low|Medium|High|Critical)$",
-            ErrorMessage = "Priority must be Low, Medium, High or Critical.")]
+        [Required(ErrorMessage = ValidationRules.PriorityRequired)]
+        [RegularExpression(ValidationRules.PriorityPattern, ErrorMessage = ValidationRules.PriorityInvalid)]
         public string Priority { get; set; } = string.Empty;
 
-        [Required]
-        [RegularExpression(
-    "^(Open|In Progress|On Hold|Resolved|Closed|Cancelled)$",
-    ErrorMessage = "Status must be Open, In Progress, On Hold, Resolved, Closed or Cancelled.")]
+        [Required(ErrorMessage = ValidationRules.StatusRequired)]
+        [RegularExpression(ValidationRules.StatusPattern, ErrorMessage = ValidationRules.StatusInvalid)]
         public string Status { get; set; } = string.Empty;
     }
 }

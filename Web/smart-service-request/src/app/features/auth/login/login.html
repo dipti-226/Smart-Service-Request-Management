@@ -8,25 +8,22 @@
     </div>
 
     @if (errorMessage()) {
-    <div class="alert error">
-      {{ errorMessage() }}
-    </div>
+      <div class="alert error">
+        {{ errorMessage() }}
+      </div>
     }
 
-    <form [formGroup]="loginForm" (ngSubmit)="submitLogin()">
+    <form [formGroup]="loginForm" (ngSubmit)="submitLogin()" novalidate>
 
       <div class="form-group">
         <label for="username">Username</label>
 
         <input id="username" type="text" formControlName="username" autocomplete="username" />
 
-        @if (
-        loginForm.controls.username.touched &&
-        loginForm.controls.username.invalid
-        ) {
-        <small class="validation-error">
-          Username is required.
-        </small>
+        @if (loginForm.controls.username.touched && loginForm.controls.username.invalid) {
+          <small class="validation-error">
+            {{ fieldError(loginForm.controls.username, 'username') }}
+          </small>
         }
       </div>
 
@@ -35,13 +32,10 @@
 
         <input id="password" type="password" formControlName="password" autocomplete="current-password" />
 
-        @if (
-        loginForm.controls.password.touched &&
-        loginForm.controls.password.invalid
-        ) {
-        <small class="validation-error">
-          Password is required.
-        </small>
+        @if (loginForm.controls.password.touched && loginForm.controls.password.invalid) {
+          <small class="validation-error">
+            {{ fieldError(loginForm.controls.password, 'password') }}
+          </small>
         }
       </div>
 
@@ -49,9 +43,9 @@
         <button type="submit" class="btn primary" [disabled]="isSubmitting()">
 
           @if (isSubmitting()) {
-          Signing in...
+            Signing in...
           } @else {
-          Sign In
+            Sign In
           }
 
         </button>

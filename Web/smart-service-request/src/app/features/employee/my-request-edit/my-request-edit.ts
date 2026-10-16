@@ -3,11 +3,10 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { RequestService } from '../../../core/services/request.service';
-import {
-  AdvancedRequest,
-  REQUEST_TYPES
-} from '../../../core/models/request.model';
+import {AdvancedRequest,REQUEST_TYPES} from '../../../core/models/request.model';
 import { REQUEST_PRIORITIES } from '../../../core/models/paged.model';
+import { VALIDATION } from '../../../core/validation/validation-rules';
+import { getFieldError, requiredText } from '../../../core/validation/validators';
 
 @Component({
   selector: 'app-my-request-edit',
@@ -24,6 +23,7 @@ export class MyRequestEditComponent implements OnInit {
   private readonly requestService = inject(RequestService);
 
   readonly priorities = REQUEST_PRIORITIES;
+  readonly fieldError = getFieldError;
 
   request = signal<AdvancedRequest | null>(null);
 
@@ -48,12 +48,9 @@ export class MyRequestEditComponent implements OnInit {
     return current ? ['/my-requests', current.requestId] : ['/my-requests'];
   });
 
-  requestForm = this.fb.nonNullable.group({
-    requestType: ['', [Validators.required, Validators.maxLength(100)]],
-    requestDescription: [
-      '',
-      [Validators.required, Validators.maxLength(1000), Validators.pattern(/\S/)]
-    ],
+   requestForm = this.fb.nonNullable.group({
+    requestType: ['', [Validators.required, Validators.maxLength(VALIDATION.requestType.max)]],
+    requestDescription: ['', [requiredText, Validators.maxLength(VALIDATION.description.max)]],
     priority: ['', Validators.required]
   });
 
