@@ -70,10 +70,18 @@ builder.Services.AddScoped<AdvancedRequestService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<CommentService>();
 
-// JWT — issuing/validating tokens only. No [Authorize] applied to any endpoint yet.
+
+ // JWT signing and validation configuration.
 var jwtSection = builder.Configuration.GetSection("Jwt");
-var jwtKey = jwtSection["Key"]
-    ?? throw new InvalidOperationException("Jwt:Key is not configured.");
+var jwtKey = jwtSection["Key"];
+
+if (string.IsNullOrWhiteSpace(jwtKey) ||
+    System.Text.Encoding.UTF8.GetByteCount(jwtKey) < 32)
+{
+    throw new InvalidOperationException(
+        "Jwt:Key is missing or shorter than 32 bytes. Configure it using User Secrets locally or an environment variable when hosted.");
+}
+
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -121,7 +129,7 @@ app.UseHttpsRedirection();
 // CORS
 app.UseCors("AngularPolicy");
 
-// Authentication & Authorization (no [Authorize] attributes yet — this just wires the pipeline)
+// Authentication & Authorization (no [Authorize] attributes yet ï¿½ this just wires the pipeline)
 app.UseAuthentication();
 app.UseAuthorization();
 

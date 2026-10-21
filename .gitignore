@@ -24,3 +24,10 @@
 # OS
 .DS_Store
 Thumbs.db
+
+# Local environment variables and secrets
+.env
+.env.*
+!.env.example
+secrets.json
+secrets.*.json
