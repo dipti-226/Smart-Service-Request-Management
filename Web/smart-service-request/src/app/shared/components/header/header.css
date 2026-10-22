@@ -30,17 +30,14 @@
 }
 
 .logo-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
+  flex-shrink: 0;
   width: 34px;
   height: 34px;
+  padding: 3px;
   border-radius: 8px;
-  background: #2563eb;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
+  background: #fff;
+  object-fit: contain;
 }
 
 .logo-text {
