@@ -1,47 +1,82 @@
+/* Same card look and full width as Request Details (was: max-width 800px, centered). */
 .request-action-panel {
-  max-width: 800px;
-  margin: 30px auto;
+  margin: 0;
   padding: 24px;
+  background: #fff;
+  border: 1px solid #eef0f3;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .request-action-panel h2 {
-  margin-bottom: 20px;
+  margin: 0 0 20px;
+  font-size: 20px;
 }
 
-.action-selector {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 24px;
+/* Drop the shared card's own frame so we don't get a card inside a card. */
+.request-action-panel ::ng-deep .request-card {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
-.action-selector label {
-  font-weight: 600;
-}
-
-.action-selector select {
-  width: 100%;
-  min-height: 42px;
-  padding: 8px 12px;
+.request-action-panel ::ng-deep .request-card-header {
   font-size: 16px;
-  border: 1px solid #aaa;
-  border-radius: 6px;
+  color: #374151;
 }
 
-.dynamic-component-container {
-  margin-top: 24px;
+/* Type, Priority, Status and Description already appear in Request Details above.
+   Only the last line (Technician) is unique here. */
+.request-action-panel [card-content] p:not(:last-child) {
+  display: none;
+}
+
+.request-action-panel [card-content] p {
+  margin: 0;
+}
+
+/* The three buttons do the same job as this dropdown, so only one control is shown. */
+.action-selector {
+  display: none;
+}
+
+/* The buttons live in one projected <div>, so lay them out here. */
+.request-action-panel [card-actions] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 button {
-  padding: 10px 16px;
-  border: 1px solid #999;
-  border-radius: 6px;
+  padding: 9px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
   background: #fff;
+  color: #374151;
+  font-weight: 500;
   cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 
 button:hover {
-  background: #f0f0f0;
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+/* Selected action (needs the optional template change below) */
+button.active,
+button[aria-pressed='true'] {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+button.active:hover,
+button[aria-pressed='true']:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
 }
 
 button:focus-visible,
@@ -50,14 +85,74 @@ select:focus-visible {
   outline-offset: 2px;
 }
 
-@media (max-width: 600px) {
+.success,
+.error,
+.loading {
+  margin-top: 16px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+}
 
+.success {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+}
+
+.error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.loading {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* The opened panel is inserted right after .dynamic-component-container, inside this wrapper,
+   so the wrapper's top-right corner is the opened panel's top-right corner. */
+.dynamic-action-wrapper {
+  position: relative;
+  margin-top: 24px;
+}
+
+.close-action {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #6b7280;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.close-action:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+@media (max-width: 600px) {
   .request-action-panel {
-    margin: 15px;
     padding: 16px;
   }
 
   .request-action-panel app-request-card {
     display: block;
+  }
+
+  .request-action-panel [card-actions] button {
+    flex: 1 1 100%;
   }
 }

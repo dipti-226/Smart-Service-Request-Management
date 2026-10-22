@@ -2,6 +2,12 @@
   padding: 24px;
 }
 
+/* Detail view only: one centered column so every card lines up. */
+.request-management-container:has(.request-details) {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -18,11 +24,36 @@
 }
 
 .back-button {
-  border: none;
-  background: none;
-  padding: 0;
-  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding: 6px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: #fff;
+  color: #374151;
   font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.back-button::before {
+  content: '←';
+  font-size: 16px;
+  line-height: 1;
+}
+
+.back-button:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+  color: #111827;
+}
+
+.back-button:focus-visible {
+  outline: 3px solid #1a73e8;
+  outline-offset: 2px;
 }
 
 .table-container {
@@ -64,18 +95,25 @@
   margin-bottom: 20px;
 }
 
+/* Request Details card: same look as the comments card below */
 .request-details {
   margin-bottom: 24px;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #eef0f3;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .request-details h2 {
-  margin-bottom: 16px;
+  margin: 0 0 20px;
+  font-size: 20px;
 }
 
 .details-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px 24px;
 }
 
 .detail-item {
@@ -89,16 +127,27 @@
 }
 
 .label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6b7280;
 }
 
 .value {
   font-size: 15px;
+  color: #111827;
+  overflow-wrap: anywhere;
 }
 
 .action-panel-container {
   margin-top: 24px;
+}
+
+@media (max-width: 900px) {
+  .details-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 768px) {

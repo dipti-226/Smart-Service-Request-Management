@@ -52,22 +52,28 @@
 
     <div card-actions>
 
-      <button
+            <button
         type="button"
+        [class.active]="selectedAction() === 'details'"
+        [attr.aria-pressed]="selectedAction() === 'details'"
         (click)="onActionChange('details')"
       >
         View Details
       </button>
 
-      <button
+            <button
         type="button"
+        [class.active]="selectedAction() === 'status'"
+        [attr.aria-pressed]="selectedAction() === 'status'"
         (click)="onActionChange('status')"
       >
         Update Status
       </button>
 
-      <button
+            <button
         type="button"
+        [class.active]="selectedAction() === 'technician'"
+        [attr.aria-pressed]="selectedAction() === 'technician'"
         (click)="onActionChange('technician')"
       >
         Technician Action
@@ -133,9 +139,24 @@
 
   </div>
 
-  <div
-    #dynamicComponent
-    class="dynamic-component-container"
-  ></div>
+    <div class="dynamic-action-wrapper">
+
+    @if (selectedAction()) {
+      <button
+        type="button"
+        class="close-action"
+        aria-label="Close"
+        (click)="onActionChange('')"
+      >
+        &times;
+      </button>
+    }
+
+    <div
+      #dynamicComponent
+      class="dynamic-component-container"
+    ></div>
+
+  </div>
 
 </section>
