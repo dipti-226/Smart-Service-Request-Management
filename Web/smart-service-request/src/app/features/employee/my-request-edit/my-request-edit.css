@@ -99,6 +99,7 @@
 
 .form-actions {
     display: flex;
+    flex-wrap: wrap;
     justify-content: flex-end;
     align-items: center;
     gap: 10px;
@@ -130,13 +131,34 @@
     background: #1d4ed8;
 }
 
+/* .secondary is used only by the Cancel link; it sits at the left edge */
 .secondary {
-    background: #f3f4f6;
-    color: #111827;
+    margin-right: auto;
+    padding: 10px 19px;
+    border: 1px solid #fecaca;
+    background: #fef2f2;
+    color: #b91c1c;
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease,
+        box-shadow .15s ease, transform .05s ease;
 }
 
 .secondary:hover {
-    background: #e5e7eb;
+    background: #dc2626;
+    border-color: #dc2626;
+    color: #ffffff;
+    box-shadow: 0 6px 14px rgba(220, 38, 38, .28);
+}
+
+.secondary:active {
+    background: #b91c1c;
+    border-color: #b91c1c;
+    box-shadow: none;
+    transform: translateY(1px);
+}
+
+.secondary:focus-visible {
+    outline: 3px solid rgba(220, 38, 38, .35);
+    outline-offset: 2px;
 }
 
 .alert {

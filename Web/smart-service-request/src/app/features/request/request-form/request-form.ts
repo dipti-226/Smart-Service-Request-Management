@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
+import { AuthService } from '../../../core/services/auth.service';
 import { RequestService } from '../../../core/services/request.service';
 import { REQUEST_TYPES } from '../../../core/models/request.model';
 import { REQUEST_PRIORITIES } from '../../../core/models/paged.model';
@@ -21,7 +22,7 @@ export class RequestFormComponent implements OnInit {
   private readonly requestService = inject(RequestService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-
+  private readonly authService = inject(AuthService);
   readonly fieldError = getFieldError;
   readonly priorities = REQUEST_PRIORITIES;
 
@@ -76,6 +77,11 @@ export class RequestFormComponent implements OnInit {
     });
   }
 
+    // Leave without saving: go to the user's own home page (the same page they land on after login).
+  cancel(): void {
+    this.router.navigate([this.authService.getHomeRoute()]);
+  }
+  
   loadRequest(id: number): void {
 
     this.isLoading.set(true);

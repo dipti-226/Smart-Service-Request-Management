@@ -33,3 +33,83 @@ textarea {
 th.sortable { cursor: pointer; user-select: none; }
 th.sortable:hover { color: #111827; }
 .reloading { opacity: .55; pointer-events: none; transition: opacity .15s; }
+
+
+
+/* ---------- Page titles (shared by every screen) ----------
+   Component stylesheets set their own title rules, so these selectors start with
+   "main.main-content" to take precedence without !important. Delete this block to undo. */
+
+/* List pages: Dashboard, My Requests, My Assigned Requests, Users, Request Management */
+main.main-content .page-header,
+main.main-content .dashboard-header {
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  margin-bottom: 28px;
+}
+
+main.main-content .page-header h1,
+main.main-content .dashboard-header h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: #0e1b3d;
+}
+
+/* Form pages: Create/Edit Service Request, Edit Request, Create Technician */
+main.main-content .page-container > .form-card > .form-header,
+main.main-content .page > .form-card > .form-header {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eef0f3;
+}
+
+main.main-content .page-container > .form-card > .form-header :is(h1, h2),
+main.main-content .page > .form-card > .form-header :is(h1, h2) {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: #0e1b3d;
+}
+
+/* Short brand accent above every title */
+main.main-content .page-header h1::before,
+main.main-content .dashboard-header h1::before,
+main.main-content .page-container > .form-card > .form-header :is(h1, h2)::before,
+main.main-content .page > .form-card > .form-header :is(h1, h2)::before {
+  content: '';
+  display: block;
+  width: 32px;
+  height: 4px;
+  margin-bottom: 12px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #3558ff, #6a4dff);
+}
+
+/* Subtitles */
+main.main-content .page-header p,
+main.main-content .dashboard-header p,
+main.main-content .page-container > .form-card > .form-header p,
+main.main-content .page > .form-card > .form-header p {
+  margin: 8px 0 0;
+  max-width: 62ch;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #5b667f;
+}
+
+@media (max-width: 600px) {
+  main.main-content .page-header h1,
+  main.main-content .dashboard-header h1 {
+    font-size: 24px;
+  }
+
+  main.main-content .page-container > .form-card > .form-header :is(h1, h2),
+  main.main-content .page > .form-card > .form-header :is(h1, h2) {
+    font-size: 22px;
+  }
+}

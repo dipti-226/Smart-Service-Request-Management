@@ -78,6 +78,7 @@
 
 .form-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 10px;
   margin-top: 8px;
@@ -114,6 +115,36 @@
 
 .secondary:hover:not(:disabled) {
   background: #e5e7eb;
+}
+
+/* Cancel sits at the left edge, apart from Reset and Submit */
+/* Cancel sits at the left edge, apart from Reset and Submit */
+.cancel {
+  margin-right: auto;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease,
+    box-shadow 0.15s ease, transform 0.05s ease, opacity 0.15s ease;
+}
+
+.cancel:hover:not(:disabled) {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+  box-shadow: 0 6px 14px rgba(220, 38, 38, 0.28);
+}
+
+.cancel:active:not(:disabled) {
+  background: #b91c1c;
+  border-color: #b91c1c;
+  box-shadow: none;
+  transform: translateY(1px);
+}
+
+.cancel:focus-visible {
+  outline: 3px solid rgba(220, 38, 38, 0.35);
+  outline-offset: 2px;
 }
 
 .alert {

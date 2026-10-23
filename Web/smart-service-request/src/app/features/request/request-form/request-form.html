@@ -4,20 +4,20 @@
 
     <div class="form-header">
       @if (isEditMode()) {
-        <h2>Edit Service Request</h2>
-        <p>Update the details of this request.</p>
+      <h2>Edit Service Request</h2>
+      <p>Update the details of this request.</p>
       } @else {
-        <h2>Create Service Request</h2>
-        <p>Report your problem by entering the details below.</p>
+      <h2>Create Service Request</h2>
+      <p>Report your problem by entering the details below.</p>
       }
     </div>
 
     @if (successMessage()) {
-      <div class="alert success">{{ successMessage() }}</div>
+    <div class="alert success">{{ successMessage() }}</div>
     }
 
     @if (errorMessage()) {
-      <div class="alert error">{{ errorMessage() }}</div>
+    <div class="alert error">{{ errorMessage() }}</div>
     }
 
     <form [formGroup]="requestForm" (ngSubmit)="submitRequest()" novalidate>
@@ -29,14 +29,14 @@
         <select id="requestType" formControlName="requestType">
           <option value="">Select request type</option>
           @for (type of requestTypes(); track type) {
-            <option [value]="type">{{ type }}</option>
+          <option [value]="type">{{ type }}</option>
           }
         </select>
 
         @if (requestForm.controls.requestType.touched && requestForm.controls.requestType.invalid) {
-          <small class="validation-error">
-            {{ fieldError(requestForm.controls.requestType, 'requestType') }}
-          </small>
+        <small class="validation-error">
+          {{ fieldError(requestForm.controls.requestType, 'requestType') }}
+        </small>
         }
 
       </div>
@@ -45,17 +45,13 @@
 
         <label for="requestDescription">Request Description</label>
 
-        <textarea
-          id="requestDescription"
-          rows="6"
-          maxlength="1000"
-          placeholder="Describe your problem..."
+        <textarea id="requestDescription" rows="6" maxlength="1000" placeholder="Describe your problem..."
           formControlName="requestDescription"></textarea>
 
         @if (requestForm.controls.requestDescription.touched && requestForm.controls.requestDescription.invalid) {
-          <small class="validation-error">
-            {{ fieldError(requestForm.controls.requestDescription, 'requestDescription') }}
-          </small>
+        <small class="validation-error">
+          {{ fieldError(requestForm.controls.requestDescription, 'requestDescription') }}
+        </small>
         }
 
       </div>
@@ -67,42 +63,46 @@
         <select id="priority" formControlName="priority">
           <option value="">Select priority</option>
           @for (priority of priorities; track priority) {
-            <option [value]="priority">{{ priority }}</option>
+          <option [value]="priority">{{ priority }}</option>
           }
         </select>
 
         @if (requestForm.controls.priority.touched && requestForm.controls.priority.invalid) {
-          <small class="validation-error">
-            {{ fieldError(requestForm.controls.priority, 'priority') }}
-          </small>
+        <small class="validation-error">
+          {{ fieldError(requestForm.controls.priority, 'priority') }}
+        </small>
         }
 
       </div>
 
       @if (isEditMode()) {
 
-        <div class="form-group">
+      <div class="form-group">
 
-          <label for="status">Status</label>
+        <label for="status">Status</label>
 
-          <select id="status" formControlName="status">
-            <option value="">Select status</option>
-            @for (statusOption of statusOptions(); track statusOption) {
-              <option [value]="statusOption">{{ statusOption }}</option>
-            }
-          </select>
-
-          @if (requestForm.controls.status.touched && requestForm.controls.status.invalid) {
-            <small class="validation-error">
-              {{ fieldError(requestForm.controls.status, 'status') }}
-            </small>
+        <select id="status" formControlName="status">
+          <option value="">Select status</option>
+          @for (statusOption of statusOptions(); track statusOption) {
+          <option [value]="statusOption">{{ statusOption }}</option>
           }
+        </select>
 
-        </div>
+        @if (requestForm.controls.status.touched && requestForm.controls.status.invalid) {
+        <small class="validation-error">
+          {{ fieldError(requestForm.controls.status, 'status') }}
+        </small>
+        }
+
+      </div>
 
       }
 
       <div class="form-actions">
+
+        <button type="button" class="btn cancel" [disabled]="isSubmitting()" (click)="cancel()">
+          Cancel
+        </button>
 
         <button type="button" class="btn secondary" (click)="requestForm.reset()">
           Reset
@@ -111,9 +111,9 @@
         <button type="submit" class="btn primary" [disabled]="isSubmitting()">
 
           @if (isSubmitting()) {
-            @if (isEditMode()) { Updating... } @else { Submitting... }
+          @if (isEditMode()) { Updating... } @else { Submitting... }
           } @else {
-            @if (isEditMode()) { Update Request } @else { Submit Request }
+          @if (isEditMode()) { Update Request } @else { Submit Request }
           }
 
         </button>

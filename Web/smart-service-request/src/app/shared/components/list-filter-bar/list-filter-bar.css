@@ -1,35 +1,108 @@
 .filter-bar {
-    display: flex; 
-    flex-wrap: wrap; 
-    gap: 10px; 
-    align-items: center; 
-    padding: 14px 16px; 
-    border-bottom: 1px solid #f0f1f3; 
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid #f0f1f3;
 }
-.search { 
-    flex: 1 1 240px; 
-    min-width: 200px; 
-    padding: 9px 12px; 
-    border: 1px solid #d1d5db; 
-    border-radius: 8px; 
-    font-size: 14px; 
+
+.search {
+  flex: 1 1 280px;
+  min-width: 200px;
+  height: 42px;
+  box-sizing: border-box;
+  padding: 0 14px 0 40px;
+  border: 1px solid #d7deea;
+  border-radius: 10px;
+  background: #f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%237b86a0' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='9' cy='9' r='5.5'/%3E%3Cpath d='M13.5 13.5 17 17'/%3E%3C/svg%3E") no-repeat 13px center / 18px 18px;
+  font-size: 14px;
+  color: #111827;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
-select { 
-    padding: 9px 10px; 
-    border: 1px solid #d1d5db; 
-    border-radius: 8px; 
-    font-size: 14px; 
-    background: #fff; 
+
+.search::placeholder {
+  color: #7b86a0;
 }
-.clear { 
-    padding: 9px 14px; 
-    border: 1px solid #d1d5db; 
-    border-radius: 8px; 
-    background: #fff; 
-    color: #374151; 
-    font-size: 14px; 
-    cursor: pointer; 
+
+.search:hover {
+  border-color: #b7c2d8;
 }
-.clear:hover { 
-    background: #f3f4f6; 
+
+.search:focus {
+  outline: none;
+  border-color: #2563eb;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+select {
+  height: 42px;
+  min-width: 150px;
+  box-sizing: border-box;
+  padding: 0 38px 0 14px;
+  border: 1px solid #d7deea;
+  border-radius: 10px;
+  background: #ffffff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%235b667f' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 7.5l5 5 5-5'/%3E%3C/svg%3E") no-repeat right 12px center / 16px 16px;
+  font-size: 14px;
+  color: #1f2937;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+select:hover {
+  border-color: #b7c2d8;
+}
+
+select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+/* A filter is active when its selected option has a value (not the "All ..." entry). */
+select:has(option:checked:not([value=''])) {
+  border-color: #2563eb;
+  background-color: #eff4ff;
+  color: #1e40af;
+  font-weight: 600;
+}
+
+.clear {
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: #2563eb;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.clear:hover {
+  background: #eff4ff;
+}
+
+.clear:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.35);
+  outline-offset: 2px;
+}
+
+@media (max-width: 560px) {
+  .filter-bar {
+    padding: 14px 16px;
+  }
+
+  .search {
+    flex-basis: 100%;
+  }
+
+  select {
+    flex: 1 1 140px;
+    min-width: 0;
+  }
 }

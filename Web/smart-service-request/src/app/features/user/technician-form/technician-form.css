@@ -75,23 +75,47 @@
 
 .form-actions {
     display: flex;
+    flex-wrap: wrap;
     justify-content: flex-end;
     align-items: center;
     gap: 12px;
     margin-top: 8px;
 }
-
+/* Cancel sits at the left edge, apart from Create Technician */
 .cancel-btn {
-    padding: 10px 16px;
-    border: 1px solid #d1d5db;
+    display: inline-flex;
+    align-items: center;
+    margin-right: auto;
+    padding: 9px 17px;
+    border: 1px solid #fecaca;
     border-radius: 8px;
-    color: #374151;
-    text-decoration: none;
+    background: #fef2f2;
+    color: #b91c1c;
     font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease,
+        box-shadow .15s ease, transform .05s ease;
 }
 
 .cancel-btn:hover {
-    background: #f3f4f6;
+    background: #dc2626;
+    border-color: #dc2626;
+    color: #ffffff;
+    box-shadow: 0 6px 14px rgba(220, 38, 38, .28);
+}
+
+.cancel-btn:active {
+    background: #b91c1c;
+    border-color: #b91c1c;
+    box-shadow: none;
+    transform: translateY(1px);
+}
+
+.cancel-btn:focus-visible {
+    outline: 3px solid rgba(220, 38, 38, .35);
+    outline-offset: 2px;
 }
 
 .submit-btn {
