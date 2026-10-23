@@ -1,62 +1,88 @@
+
 <div class="page-container">
 
-  <div class="form-card login-card">
+  <div class="auth-layout">
 
-    <div class="form-header">
-      <h2>Login</h2>
-      <p>Sign in to manage your service requests.</p>
-    </div>
+    <aside class="auth-hero">
+      <img class="auth-hero-logo" src="logo-mark.png" alt="" width="56" height="56">
 
-    @if (errorMessage()) {
-      <div class="alert error">
-        {{ errorMessage() }}
-      </div>
-    }
+      <p class="auth-hero-eyebrow">Service request portal</p>
+      <h1>Smart Service Request Management</h1>
+      <p class="auth-hero-text">
+        One place to raise service requests, follow their progress and get them resolved.
+      </p>
 
-    <form [formGroup]="loginForm" (ngSubmit)="submitLogin()" novalidate>
+      <ul class="auth-hero-points">
+        <li>Create and track your service requests</li>
+        <li>See the current status of every request</li>
+        <li>Requests assigned to the right technician</li>
+        <li>Add comments to keep everyone informed</li>
+      </ul>
+    </aside>
 
-      <div class="form-group">
-        <label for="username">Username</label>
+    <section class="auth-panel">
 
-        <input id="username" type="text" formControlName="username" autocomplete="username" />
+      <div class="form-card login-card">
 
-        @if (loginForm.controls.username.touched && loginForm.controls.username.invalid) {
-          <small class="validation-error">
-            {{ fieldError(loginForm.controls.username, 'username') }}
-          </small>
+        <div class="form-header">
+          <h2>Login</h2>
+          <p>Sign in to manage your service requests.</p>
+        </div>
+
+        @if (errorMessage()) {
+          <div class="alert error">
+            {{ errorMessage() }}
+          </div>
         }
+
+        <form [formGroup]="loginForm" (ngSubmit)="submitLogin()" novalidate>
+
+          <div class="form-group">
+            <label for="username">Username</label>
+
+            <input id="username" type="text" formControlName="username" autocomplete="username" />
+
+            @if (loginForm.controls.username.touched && loginForm.controls.username.invalid) {
+              <small class="validation-error">
+                {{ fieldError(loginForm.controls.username, 'username') }}
+              </small>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+
+            <input id="password" type="password" formControlName="password" autocomplete="current-password" />
+
+            @if (loginForm.controls.password.touched && loginForm.controls.password.invalid) {
+              <small class="validation-error">
+                {{ fieldError(loginForm.controls.password, 'password') }}
+              </small>
+            }
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn primary" [disabled]="isSubmitting()">
+
+              @if (isSubmitting()) {
+                Signing in...
+              } @else {
+                Sign In
+              }
+
+            </button>
+          </div>
+
+        </form>
+
+        <div class="form-footer">
+          New user?
+          <a routerLink="/register">Create an account</a>
+        </div>
+
       </div>
 
-      <div class="form-group">
-        <label for="password">Password</label>
-
-        <input id="password" type="password" formControlName="password" autocomplete="current-password" />
-
-        @if (loginForm.controls.password.touched && loginForm.controls.password.invalid) {
-          <small class="validation-error">
-            {{ fieldError(loginForm.controls.password, 'password') }}
-          </small>
-        }
-      </div>
-
-      <div class="form-actions">
-        <button type="submit" class="btn primary" [disabled]="isSubmitting()">
-
-          @if (isSubmitting()) {
-            Signing in...
-          } @else {
-            Sign In
-          }
-
-        </button>
-      </div>
-
-    </form>
-
-    <div class="form-footer">
-      New user?
-      <a routerLink="/register">Create an account</a>
-    </div>
+    </section>
 
   </div>
 

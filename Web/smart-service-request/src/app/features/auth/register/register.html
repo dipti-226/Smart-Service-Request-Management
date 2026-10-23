@@ -1,103 +1,152 @@
 <div class="page-container">
 
-  <div class="form-card register-card">
+  <div class="auth-layout">
 
-    <div class="form-header">
-      <h2>Create Account</h2>
-      <p>Register to create and track your service requests.</p>
-    </div>
+    <aside class="auth-hero">
 
-    @if (errorMessage()) {
-      <div class="alert error">
-        {{ errorMessage() }}
+      <div class="auth-hero-copy">
+        <h1>Create an account. Track every request.</h1>
+        <p class="auth-hero-text">
+          Registered users can raise service requests, see their status and add comments.
+        </p>
       </div>
-    }
 
-    @if (successMessage()) {
-      <div class="alert success">
-        {{ successMessage() }}
+      <div class="auth-hero-demo">
+
+        <article class="ticket" aria-hidden="true">
+
+          <header class="ticket-head">
+            <span class="ticket-code">SR-000042</span>
+            <span class="ticket-priority">High</span>
+          </header>
+
+          <p class="ticket-title">Laptop will not connect to office Wi-Fi</p>
+          <p class="ticket-meta">Computer</p>
+
+          <ol class="ticket-track">
+            <li class="is-done">Open</li>
+            <li class="is-done">In Progress</li>
+            <li class="is-current">Resolved</li>
+            <li>Closed</li>
+          </ol>
+
+          <footer class="ticket-foot">
+            <span class="ticket-avatar">T</span>
+            Assigned to a technician
+          </footer>
+
+        </article>
+
+        <p class="auth-hero-caption">An example request, from Open to Resolved.</p>
+
       </div>
-    }
 
-    <form [formGroup]="registerForm" (ngSubmit)="submitRegister()" novalidate>
+    </aside>
 
-      <div class="form-group">
-        <label for="username">Username</label>
+    <section class="auth-panel">
 
-        <input id="username" type="text" formControlName="username" autocomplete="username" />
+      <div class="form-card register-card">
 
-        @if (registerForm.controls.username.touched && registerForm.controls.username.invalid) {
-          <small class="validation-error">
-            {{ fieldError(registerForm.controls.username, 'username') }}
-          </small>
+        <nav class="auth-switch" aria-label="Sign in or create an account">
+          <a routerLink="/login">Sign in</a>
+          <a routerLink="/register" class="is-active" aria-current="page">Create account</a>
+        </nav>
+
+        <div class="form-header">
+          <h2>Create Account</h2>
+          <p>Register to create and track your service requests.</p>
+        </div>
+
+        @if (errorMessage()) {
+          <div class="alert error" role="alert">
+            {{ errorMessage() }}
+          </div>
         }
-      </div>
 
-      <div class="form-group">
-        <label for="email">Email</label>
-
-        <input id="email" type="email" formControlName="email" autocomplete="email" />
-
-        @if (registerForm.controls.email.touched && registerForm.controls.email.invalid) {
-          <small class="validation-error">
-            {{ fieldError(registerForm.controls.email, 'email') }}
-          </small>
+        @if (successMessage()) {
+          <div class="alert success" role="status">
+            {{ successMessage() }}
+          </div>
         }
-      </div>
 
-      <div class="form-group">
-        <label for="password">Password</label>
+        <form [formGroup]="registerForm" (ngSubmit)="submitRegister()" novalidate>
 
-        <input id="password" type="password" formControlName="password" autocomplete="new-password" />
+          <div class="form-group">
+            <label for="username">Username</label>
 
-        @if (registerForm.controls.password.touched && registerForm.controls.password.invalid) {
-          <small class="validation-error">
-            {{ fieldError(registerForm.controls.password, 'password') }}
-          </small>
-        }
-      </div>
+            <input id="username" type="text" formControlName="username" autocomplete="username" />
 
-      <div class="form-group">
-        <label for="confirmPassword">Confirm Password</label>
-
-        <input id="confirmPassword" type="password" formControlName="confirmPassword" autocomplete="new-password" />
-
-        @if (
-          registerForm.controls.confirmPassword.touched &&
-          (registerForm.controls.confirmPassword.hasError('required') ||
-            registerForm.hasError('passwordMismatch'))
-        ) {
-          <small class="validation-error">
-            @if (registerForm.controls.confirmPassword.hasError('required')) {
-              {{ fieldError(registerForm.controls.confirmPassword, 'confirmPassword') }}
-            } @else {
-              {{ passwordMismatchMessage }}
+            @if (registerForm.controls.username.touched && registerForm.controls.username.invalid) {
+              <small class="validation-error">
+                {{ fieldError(registerForm.controls.username, 'username') }}
+              </small>
             }
-          </small>
-        }
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email</label>
+
+            <input id="email" type="email" formControlName="email" autocomplete="email" />
+
+            @if (registerForm.controls.email.touched && registerForm.controls.email.invalid) {
+              <small class="validation-error">
+                {{ fieldError(registerForm.controls.email, 'email') }}
+              </small>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+
+            <input id="password" type="password" formControlName="password" autocomplete="new-password" />
+
+            @if (registerForm.controls.password.touched && registerForm.controls.password.invalid) {
+              <small class="validation-error">
+                {{ fieldError(registerForm.controls.password, 'password') }}
+              </small>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="confirmPassword">Confirm Password</label>
+
+            <input id="confirmPassword" type="password" formControlName="confirmPassword" autocomplete="new-password" />
+
+            @if (
+              registerForm.controls.confirmPassword.touched &&
+              (registerForm.controls.confirmPassword.hasError('required') ||
+                registerForm.hasError('passwordMismatch'))
+            ) {
+              <small class="validation-error">
+                @if (registerForm.controls.confirmPassword.hasError('required')) {
+                  {{ fieldError(registerForm.controls.confirmPassword, 'confirmPassword') }}
+                } @else {
+                  {{ passwordMismatchMessage }}
+                }
+              </small>
+            }
+          </div>
+
+          <div class="form-actions">
+            <button
+              type="submit"
+              class="btn primary"
+              [disabled]="isSubmitting() || !!successMessage()">
+
+              @if (isSubmitting()) {
+                Creating account...
+              } @else {
+                Register
+              }
+
+            </button>
+          </div>
+
+        </form>
+
       </div>
 
-      <div class="form-actions">
-        <button
-          type="submit"
-          class="btn primary"
-          [disabled]="isSubmitting() || !!successMessage()">
-
-          @if (isSubmitting()) {
-            Creating account...
-          } @else {
-            Register
-          }
-
-        </button>
-      </div>
-
-    </form>
-
-    <div class="form-footer">
-      Already have an account?
-      <a routerLink="/login">Sign in</a>
-    </div>
+    </section>
 
   </div>
 
