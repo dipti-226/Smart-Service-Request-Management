@@ -1,9 +1,6 @@
 @let req = currentRequest();
 
-<section
-  class="request-action-panel"
-  aria-labelledby="request-action-title"
->
+<section class="request-action-panel" aria-labelledby="request-action-title">
 
   <h2 id="request-action-title">
     Request Actions
@@ -24,12 +21,12 @@
 
       <p>
         <strong>Priority:</strong>
-        {{ req.priority }}
+        <span class="priority" [attr.data-priority]="req.priority">{{ req.priority }}</span>
       </p>
 
       <p>
         <strong>Status:</strong>
-        {{ req.status }}
+        <span class="status" [attr.data-status]="req.status">{{ req.status }}</span>
       </p>
 
       <p>
@@ -41,9 +38,9 @@
         <strong>Technician:</strong>
 
         @if (req.technicianName) {
-          {{ req.technicianName }}
+        {{ req.technicianName }}
         } @else {
-          Not Assigned
+        Not Assigned
         }
 
       </p>
@@ -52,30 +49,18 @@
 
     <div card-actions>
 
-            <button
-        type="button"
-        [class.active]="selectedAction() === 'details'"
-        [attr.aria-pressed]="selectedAction() === 'details'"
-        (click)="onActionChange('details')"
-      >
+      <button type="button" [class.active]="selectedAction() === 'details'"
+        [attr.aria-pressed]="selectedAction() === 'details'" (click)="onActionChange('details')">
         View Details
       </button>
 
-            <button
-        type="button"
-        [class.active]="selectedAction() === 'status'"
-        [attr.aria-pressed]="selectedAction() === 'status'"
-        (click)="onActionChange('status')"
-      >
+      <button type="button" [class.active]="selectedAction() === 'status'"
+        [attr.aria-pressed]="selectedAction() === 'status'" (click)="onActionChange('status')">
         Update Status
       </button>
 
-            <button
-        type="button"
-        [class.active]="selectedAction() === 'technician'"
-        [attr.aria-pressed]="selectedAction() === 'technician'"
-        (click)="onActionChange('technician')"
-      >
+      <button type="button" [class.active]="selectedAction() === 'technician'"
+        [attr.aria-pressed]="selectedAction() === 'technician'" (click)="onActionChange('technician')">
         Technician Action
       </button>
 
@@ -85,25 +70,25 @@
 
   @if (actionSuccess()) {
 
-    <div class="success">
-      {{ actionSuccess() }}
-    </div>
+  <div class="success">
+    {{ actionSuccess() }}
+  </div>
 
   }
 
   @if (actionError()) {
 
-    <div class="error">
-      {{ actionError() }}
-    </div>
+  <div class="error">
+    {{ actionError() }}
+  </div>
 
   }
 
   @if (loadingTechnicians()) {
 
-    <div class="loading">
-      Loading technicians...
-    </div>
+  <div class="loading">
+    Loading technicians...
+  </div>
 
   }
 
@@ -113,11 +98,7 @@
       Select Action
     </label>
 
-    <select
-      id="action"
-      [value]="selectedAction()"
-      (change)="onActionChange($any($event.target).value)"
-    >
+    <select id="action" [value]="selectedAction()" (change)="onActionChange($any($event.target).value)">
 
       <option value="">
         Select Action
@@ -139,23 +120,15 @@
 
   </div>
 
-    <div class="dynamic-action-wrapper">
+  <div class="dynamic-action-wrapper">
 
     @if (selectedAction()) {
-      <button
-        type="button"
-        class="close-action"
-        aria-label="Close"
-        (click)="onActionChange('')"
-      >
-        &times;
-      </button>
+    <button type="button" class="close-action" aria-label="Close" (click)="onActionChange('')">
+      &times;
+    </button>
     }
 
-    <div
-      #dynamicComponent
-      class="dynamic-component-container"
-    ></div>
+    <div #dynamicComponent class="dynamic-component-container"></div>
 
   </div>
 

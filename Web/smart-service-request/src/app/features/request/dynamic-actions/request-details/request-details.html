@@ -4,43 +4,43 @@
 
   @if (request) {
 
-    <div class="detail-row">
-      <strong>Request ID:</strong>
-      <span>{{ request.requestId }}</span>
-    </div>
+  <div class="detail-row">
+    <strong>Request ID:</strong>
+    <span>{{ request.requestId }}</span>
+  </div>
 
-    <div class="detail-row">
-      <strong>Request Code:</strong>
-      <span>{{ request.requestCode }}</span>
-    </div>
+  <div class="detail-row">
+    <strong>Request Code:</strong>
+    <span>{{ request.requestCode }}</span>
+  </div>
 
-    <div class="detail-row">
-      <strong>Request Type:</strong>
-      <span>{{ request.requestType }}</span>
-    </div>
+  <div class="detail-row">
+    <strong>Request Type:</strong>
+    <span>{{ request.requestType }}</span>
+  </div>
 
-    <div class="detail-row">
-      <strong>Description:</strong>
-      <span>{{ request.requestDescription }}</span>
-    </div>
+  <div class="detail-row">
+    <strong>Description:</strong>
+    <span>{{ request.requestDescription }}</span>
+  </div>
 
-    <div class="detail-row">
-      <strong>Priority:</strong>
-      <span>{{ request.priority }}</span>
-    </div>
+  <div class="detail-row">
+    <strong>Priority:</strong>
+    <span class="priority" [attr.data-priority]="request.priority">{{ request.priority }}</span>
+  </div>
 
-    <div class="detail-row">
-      <strong>Status:</strong>
-      <span>{{ request.status }}</span>
-    </div>
+  <div class="detail-row">
+    <strong>Status:</strong>
+    <span class="status" [attr.data-status]="request.status">{{ request.status }}</span>
+  </div>
 
-    <div class="detail-row">
-      <strong>Technician:</strong>
+  <div class="detail-row">
+    <strong>Technician:</strong>
 
-      <span>
-        {{ request.technicianName || 'Not Assigned' }}
-      </span>
-    </div>
+    <span>
+      {{ request.technicianName || 'Not Assigned' }}
+    </span>
+  </div>
 
   }
 

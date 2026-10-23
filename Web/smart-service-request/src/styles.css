@@ -30,9 +30,20 @@ textarea {
 }
 
 /* Sortable table headers and list reloading (Step 2) */
-th.sortable { cursor: pointer; user-select: none; }
-th.sortable:hover { color: #111827; }
-.reloading { opacity: .55; pointer-events: none; transition: opacity .15s; }
+th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+th.sortable:hover {
+  color: #111827;
+}
+
+.reloading {
+  opacity: .55;
+  pointer-events: none;
+  transition: opacity .15s;
+}
 
 
 
@@ -59,15 +70,15 @@ main.main-content .dashboard-header h1 {
 }
 
 /* Form pages: Create/Edit Service Request, Edit Request, Create Technician */
-main.main-content .page-container > .form-card > .form-header,
-main.main-content .page > .form-card > .form-header {
+main.main-content .page-container>.form-card>.form-header,
+main.main-content .page>.form-card>.form-header {
   margin-bottom: 24px;
   padding-bottom: 20px;
   border-bottom: 1px solid #eef0f3;
 }
 
-main.main-content .page-container > .form-card > .form-header :is(h1, h2),
-main.main-content .page > .form-card > .form-header :is(h1, h2) {
+main.main-content .page-container>.form-card>.form-header :is(h1, h2),
+main.main-content .page>.form-card>.form-header :is(h1, h2) {
   margin: 0;
   font-size: 24px;
   font-weight: 700;
@@ -79,8 +90,8 @@ main.main-content .page > .form-card > .form-header :is(h1, h2) {
 /* Short brand accent above every title */
 main.main-content .page-header h1::before,
 main.main-content .dashboard-header h1::before,
-main.main-content .page-container > .form-card > .form-header :is(h1, h2)::before,
-main.main-content .page > .form-card > .form-header :is(h1, h2)::before {
+main.main-content .page-container>.form-card>.form-header :is(h1, h2)::before,
+main.main-content .page>.form-card>.form-header :is(h1, h2)::before {
   content: '';
   display: block;
   width: 32px;
@@ -93,8 +104,8 @@ main.main-content .page > .form-card > .form-header :is(h1, h2)::before {
 /* Subtitles */
 main.main-content .page-header p,
 main.main-content .dashboard-header p,
-main.main-content .page-container > .form-card > .form-header p,
-main.main-content .page > .form-card > .form-header p {
+main.main-content .page-container>.form-card>.form-header p,
+main.main-content .page>.form-card>.form-header p {
   margin: 8px 0 0;
   max-width: 62ch;
   font-size: 15px;
@@ -103,13 +114,118 @@ main.main-content .page > .form-card > .form-header p {
 }
 
 @media (max-width: 600px) {
+
   main.main-content .page-header h1,
   main.main-content .dashboard-header h1 {
     font-size: 24px;
   }
 
-  main.main-content .page-container > .form-card > .form-header :is(h1, h2),
-  main.main-content .page > .form-card > .form-header :is(h1, h2) {
+  main.main-content .page-container>.form-card>.form-header :is(h1, h2),
+  main.main-content .page>.form-card>.form-header :is(h1, h2) {
     font-size: 22px;
   }
+}
+
+
+/* ---------- Status & priority badges (shared by every screen) ----------
+   Status colours match the dashboard card dots. Templates only add
+   data-status / data-priority attributes; no logic is involved.
+   Delete this block (and the data- attributes) to undo. */
+
+main.main-content :is(.status, .priority) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+main.main-content :is(.status, .priority)::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dot, currentColor);
+  flex: none;
+}
+
+/* Status: same colours as the dashboard dots */
+main.main-content .status[data-status='Open'] {
+  --dot: #f59e0b;
+  background: #fffbeb;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+main.main-content .status[data-status='In Progress'] {
+  --dot: #7c3aed;
+  background: #f5f3ff;
+  color: #5b21b6;
+  border-color: #ddd6fe;
+}
+
+main.main-content .status[data-status='On Hold'] {
+  --dot: #f97316;
+  background: #fff7ed;
+  color: #9a3412;
+  border-color: #fed7aa;
+}
+
+main.main-content .status[data-status='Resolved'] {
+  --dot: #16a34a;
+  background: #f0fdf4;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+
+main.main-content .status[data-status='Closed'] {
+  --dot: #0f766e;
+  background: #f0fdfa;
+  color: #115e59;
+  border-color: #99f6e4;
+}
+
+main.main-content .status[data-status='Cancelled'] {
+  --dot: #dc2626;
+  background: #fef2f2;
+  color: #991b1b;
+  border-color: #fecaca;
+}
+
+/* Priority: all four levels */
+main.main-content .priority[data-priority='Low'] {
+  --dot: #94a3b8;
+  background: #f1f5f9;
+  color: #475569;
+  border-color: #e2e8f0;
+}
+
+main.main-content .priority[data-priority='Medium'] {
+  --dot: #2563eb;
+  background: #eff6ff;
+  color: #1e40af;
+  border-color: #bfdbfe;
+}
+
+main.main-content .priority[data-priority='High'] {
+  --dot: #ea580c;
+  background: #fff7ed;
+  color: #9a3412;
+  border-color: #fed7aa;
+}
+
+main.main-content .priority[data-priority='Critical'] {
+  --dot: #dc2626;
+  background: #fef2f2;
+  color: #991b1b;
+  border-color: #fecaca;
+}
+
+main.main-content :is(.detail-row, p)> :is(.status, .priority) {
+  vertical-align: middle;
 }

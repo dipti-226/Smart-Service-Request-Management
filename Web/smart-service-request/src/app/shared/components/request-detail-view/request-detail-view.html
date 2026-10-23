@@ -7,14 +7,11 @@
     </div>
 
     <div class="badges">
-      <span
-        class="priority"
-        [class.high]="request().priority === 'High'"
+      <span class="priority" [attr.data-priority]="request().priority" [class.high]="request().priority === 'High'"
         [class.critical]="request().priority === 'Critical'">
         {{ request().priority }}
       </span>
-
-      <span class="status">{{ request().status }}</span>
+      <span class="status" [attr.data-status]="request().status">{{ request().status }}</span>
     </div>
   </div>
 
@@ -34,9 +31,9 @@
       <span class="label">Last Updated</span>
       <span class="value">
         @if (request().updatedDate) {
-          {{ request().updatedDate | date:'dd-MM-yyyy HH:mm' }}
+        {{ request().updatedDate | date:'dd-MM-yyyy HH:mm' }}
         } @else {
-          —
+        —
         }
       </span>
     </div>

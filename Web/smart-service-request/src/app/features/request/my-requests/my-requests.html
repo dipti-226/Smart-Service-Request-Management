@@ -68,12 +68,12 @@
             <td>{{ request.requestType }}</td>
             <td class="description">{{ request.requestDescription }}</td>
             <td>
-              <span class="priority" [class.high]="request.priority === 'High'"
+              <span class="priority" [attr.data-priority]="request.priority" [class.high]="request.priority === 'High'"
                 [class.critical]="request.priority === 'Critical'">
                 {{ request.priority }}
               </span>
             </td>
-            <td><span class="status">{{ request.status }}</span></td>
+            <td><span class="status" [attr.data-status]="request.status">{{ request.status }}</span></td>
             <td>{{ request.createdDate | date:'dd-MM-yyyy HH:mm' }}</td>
             <td>
               <a class="view-btn" [routerLink]="['/my-requests', request.requestId]">

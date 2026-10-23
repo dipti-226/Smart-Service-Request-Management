@@ -4,31 +4,31 @@
 
   @if (request) {
 
-    <p>
-      <strong>Request:</strong>
-      {{ request.requestCode }}
-    </p>
+  <p>
+    <strong>Request:</strong>
+    {{ request.requestCode }}
+  </p>
 
-    <p>
-      <strong>Request Type:</strong>
-      {{ request.requestType }}
-    </p>
+  <p>
+    <strong>Request Type:</strong>
+    {{ request.requestType }}
+  </p>
 
-    <p>
-      <strong>Status:</strong>
-      {{ request.status }}
-    </p>
+  <p>
+    <strong>Status:</strong>
+    <span class="status" [attr.data-status]="request.status">{{ request.status }}</span>
+  </p>
 
-    <p>
-      <strong>Current Technician:</strong>
+  <p>
+    <strong>Current Technician:</strong>
 
-      @if (request.technicianName) {
-        {{ request.technicianName }}
-      } @else {
-        Not Assigned
-      }
+    @if (request.technicianName) {
+    {{ request.technicianName }}
+    } @else {
+    Not Assigned
+    }
 
-    </p>
+  </p>
   }
 
   <div class="technician-form">
@@ -37,10 +37,7 @@
       Select Technician
     </label>
 
-    <select
-      id="technician"
-      [(ngModel)]="selectedTechnicianId"
-    >
+    <select id="technician" [(ngModel)]="selectedTechnicianId">
 
       <option [ngValue]="null">
         Select Technician
@@ -48,21 +45,15 @@
 
       @for (technician of technicians; track technician.technicianId) {
 
-        <option
-          [ngValue]="technician.technicianId"
-        >
-          {{ technician.technicianName }}
-        </option>
+      <option [ngValue]="technician.technicianId">
+        {{ technician.technicianName }}
+      </option>
 
       }
 
     </select>
 
-    <button
-      type="button"
-      (click)="assignTechnician()"
-      [disabled]="!selectedTechnicianId"
-    >
+    <button type="button" (click)="assignTechnician()" [disabled]="!selectedTechnicianId">
       Assign Technician
     </button>
 

@@ -4,20 +4,20 @@
 
   @if (request) {
 
-    <p>
-      <strong>Request:</strong>
-      {{ request.requestCode }}
-    </p>
+  <p>
+    <strong>Request:</strong>
+    {{ request.requestCode }}
+  </p>
 
-    <p>
-      <strong>Request Type:</strong>
-      {{ request.requestType }}
-    </p>
+  <p>
+    <strong>Request Type:</strong>
+    {{ request.requestType }}
+  </p>
 
-    <p>
-      <strong>Current Status:</strong>
-      {{ request.status }}
-    </p>
+  <p>
+    <strong>Current Status:</strong>
+    <span class="status" [attr.data-status]="request.status">{{ request.status }}</span>
+  </p>
 
   }
 
@@ -27,38 +27,30 @@
       New Status
     </label>
 
-    <select
-      id="status"
-      [(ngModel)]="selectedStatus"
-      [disabled]="allowedStatuses.length === 0"
-    >
+    <select id="status" [(ngModel)]="selectedStatus" [disabled]="allowedStatuses.length === 0">
 
       <option value="">
         Select Status
       </option>
 
       @for (status of allowedStatuses; track status) {
-        <option [value]="status">
-          {{ status }}
-        </option>
+      <option [value]="status">
+        {{ status }}
+      </option>
       }
 
     </select>
 
-    <button
-      type="button"
-      (click)="updateStatus()"
-      [disabled]="!selectedStatus"
-    >
+    <button type="button" (click)="updateStatus()" [disabled]="!selectedStatus">
       Update Status
     </button>
 
   </div>
 
   @if (allowedStatuses.length === 0) {
-    <p class="no-options">
-      No further status changes are available for this request.
-    </p>
+  <p class="no-options">
+    No further status changes are available for this request.
+  </p>
   }
 
 </div>
