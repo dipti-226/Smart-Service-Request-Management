@@ -22,15 +22,31 @@
 
     } @else if (isLoading() && requests().length === 0) {
 
-      <div class="state-message">Loading your assigned requests...</div>
+      <div class="skeleton-list" role="status" aria-live="polite" aria-label="Loading your assigned requests">
+        @for (row of [1, 2, 3, 4, 5]; track row) {
+          <div class="skeleton-row">
+            <span class="skeleton-line sm"></span>
+            <span class="skeleton-line"></span>
+            <span class="skeleton-line"></span>
+            <span class="skeleton-line lg"></span>
+            <span class="skeleton-line sm"></span>
+            <span class="skeleton-line"></span>
+            <span class="skeleton-line sm"></span>
+          </div>
+        }
+        <span class="visually-hidden">Loading your assigned requests</span>
+      </div>
 
     } @else if (requests().length === 0) {
 
-      <div class="state-message">
+      <div class="empty-box">
+        <span class="empty-box-icon" aria-hidden="true"></span>
         @if (state.hasFilters()) {
-          No requests match your filters.
+          <p class="empty-box-title">No requests match your filters.</p>
+          <p class="empty-box-hint">Try a different search or clear the filters.</p>
         } @else {
-          No requests are assigned to you yet.
+          <p class="empty-box-title">Nothing assigned to you yet.</p>
+          <p class="empty-box-hint">New assignments will show up here.</p>
         }
       </div>
 
@@ -83,12 +99,13 @@
                 <td>
                   <span
                     class="priority"
+                    [attr.data-priority]="request.priority"
                     [class.high]="request.priority === 'High'"
                     [class.critical]="request.priority === 'Critical'">
                     {{ request.priority }}
                   </span>
                 </td>
-                <td><span class="status">{{ request.status }}</span></td>
+                <td><span class="status" [attr.data-status]="request.status">{{ request.status }}</span></td>
                 <td>{{ request.createdDate | date:'dd-MM-yyyy HH:mm' }}</td>
                 <td>
                   <a class="view-btn" [routerLink]="['/assigned-requests', request.requestId]">

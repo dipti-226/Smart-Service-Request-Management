@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 
 import {Request,AdvancedRequest} from '../../../core/models/request.model';
@@ -16,6 +16,7 @@ import { RequestCommentsComponent } from '../../../shared/components/request-com
   selector: 'app-request-management',
   standalone: true,
   imports: [
+    RouterLink,
     DatePipe,
     RequestActionPanelComponent,
     ListFilterBarComponent,

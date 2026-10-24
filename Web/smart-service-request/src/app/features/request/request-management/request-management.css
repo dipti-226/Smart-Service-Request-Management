@@ -55,7 +55,19 @@
   outline: 3px solid #1a73e8;
   outline-offset: 2px;
 }
+/* Align the filter bar with the page title.
+   The shared filter bar has 24px side padding (right for cards, where it sits inside a box).
+   On this page it sits directly on the page background, so remove the side padding here only.
+   Scoped to this component's <app-list-filter-bar>, so other screens are unaffected. */
+app-list-filter-bar ::ng-deep .filter-bar {
+  padding-left: 0;
+  padding-right: 0;
+}
 
+.request-table th:first-child,
+.request-table td:first-child {
+  padding-left: 0;
+}
 .table-container {
   width: 100%;
   overflow-x: auto;

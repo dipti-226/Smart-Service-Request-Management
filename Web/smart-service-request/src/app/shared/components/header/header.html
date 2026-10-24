@@ -2,12 +2,13 @@
   <div class="header-container">
 
     <div class="logo">
-      <img class="logo-mark" src="logo-mark.png" alt="" width="34" height="34">      <span class="logo-text">Smart Service Request</span>
+      <img class="logo-mark" src="logo-mark.png" alt="" width="34" height="34">
+      <span class="logo-text">Smart Service Request</span>
     </div>
 
     @if (isLoggedIn) {
 
-    <nav>
+    <nav aria-label="Main navigation">
       @if (isAdmin) {
       <a routerLink="/dashboard" routerLinkActive="active">
         Dashboard
@@ -43,7 +44,14 @@
     </nav>
 
     <div class="admin-area">
-      <span class="admin-badge">{{ adminName }}</span>
+      <div class="user-chip">
+        <span class="user-avatar" aria-hidden="true">{{ adminName?.charAt(0) }}</span>
+        <span class="user-meta">
+          <span class="user-name">{{ adminName }}</span>
+          <span class="user-role">{{ userRole }}</span>
+        </span>
+      </div>
+
       <button type="button" class="logout-btn" (click)="logout()">
         Logout
       </button>

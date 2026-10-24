@@ -229,3 +229,140 @@ main.main-content .priority[data-priority='Critical'] {
 main.main-content :is(.detail-row, p)> :is(.status, .priority) {
   vertical-align: middle;
 }
+
+
+/* ---------- Loading skeleton & empty states (shared by every list screen) ---------- */
+
+.skeleton-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 16px;
+  border-bottom: 1px solid #f0f1f3;
+}
+
+.skeleton-row:last-child {
+  border-bottom: none;
+}
+
+.skeleton-line {
+  flex: 1;
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #eef1f5 25%, #f8fafc 50%, #eef1f5 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.3s ease-in-out infinite;
+}
+
+.skeleton-line.sm {
+  flex: 0.5;
+}
+
+.skeleton-line.lg {
+  flex: 2;
+}
+
+@keyframes skeleton-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-line {
+    animation: none;
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.empty-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 44px 20px;
+  text-align: center;
+}
+
+.empty-box-icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 4px;
+  border-radius: 50%;
+  background: #eff6ff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 13l2.5-7h11L20 13v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-5z'/%3E%3Cpath d='M4 13h4.5l1 2h5l1-2H20'/%3E%3C/svg%3E") no-repeat center / 24px 24px;
+}
+
+.empty-box-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.empty-box-hint {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.empty-box-btn {
+  margin-top: 8px;
+  padding: 8px 18px;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.empty-box-btn:hover {
+  background: #dbeafe;
+  border-color: #bfdbfe;
+  box-shadow: inset 3px 0 0 #2563eb;
+}
+
+.empty-box-btn:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+/* ---------- Sticky table headers (all list tables) ----------
+   Tables scroll inside their own area on desktop so the heading row stays visible.
+   Skipped on phones. */
+@media (min-width: 641px) {
+  main.main-content :is(.table-wrapper, .table-container) {
+    max-height: 70vh;
+    overflow: auto;
+  }
+
+  main.main-content :is(.table-wrapper, .table-container) thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #f9fafb;
+    box-shadow: 0 1px 0 #e5e7eb;
+  }
+}

@@ -1,23 +1,10 @@
-import {
-  Component,
-  DestroyRef,
-  EventEmitter,
-  OnInit,
-  Output,
-  inject,
-  signal
-} from '@angular/core';
+import {Component,DestroyRef,EventEmitter,OnInit, Output,inject,signal} from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Router, RouterLink } from '@angular/router';import { Subscription } from 'rxjs';
 
 import { RequestService } from '../../../core/services/request.service';
 import { Request } from '../../../core/models/request.model';
-import {
-  ListFilters,
-  REQUEST_PRIORITIES,
-  REQUEST_STATUSES
-} from '../../../core/models/paged.model';
+import {ListFilters,REQUEST_PRIORITIES,REQUEST_STATUSES} from '../../../core/models/paged.model';
 import { PagedListState } from '../../../core/utils/paged-list-state';
 import { ListFilterBarComponent } from '../../../shared/components/list-filter-bar/list-filter-bar';
 import { PagerComponent } from '../../../shared/components/pager/pager';
@@ -25,7 +12,7 @@ import { PagerComponent } from '../../../shared/components/pager/pager';
 @Component({
   selector: 'app-request-list',
   standalone: true,
-  imports: [DatePipe, ListFilterBarComponent, PagerComponent],
+  imports: [RouterLink, DatePipe, ListFilterBarComponent, PagerComponent],
   templateUrl: './request-list.html',
   styleUrl: './request-list.css'
 })

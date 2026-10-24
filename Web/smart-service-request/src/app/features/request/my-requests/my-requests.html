@@ -2,96 +2,133 @@
 
   <div class="page-header">
     <div>
-      <h1>My Requests</h1>
-      <p>Requests created by you.</p>
+      <h1>My Assigned Requests</h1>
+      <p>Requests assigned to you.</p>
     </div>
-
-    <a routerLink="/request/new" class="primary-btn">+ Create Request</a>
   </div>
 
   <div class="table-card">
 
-    <app-list-filter-bar placeholder="Search by code, type or description" [statuses]="statuses"
-      [priorities]="priorities" (changed)="onFiltersChanged($event)">
+    <app-list-filter-bar
+      placeholder="Search by code, type or description"
+      [statuses]="statuses"
+      [priorities]="priorities"
+      (changed)="onFiltersChanged($event)">
     </app-list-filter-bar>
 
     @if (errorMessage()) {
 
-    <div class="state-message error">{{ errorMessage() }}</div>
+      <div class="state-message error">{{ errorMessage() }}</div>
 
     } @else if (isLoading() && requests().length === 0) {
 
-    <div class="state-message">Loading your requests...</div>
+      <div class="skeleton-list" role="status" aria-live="polite" aria-label="Loading your assigned requests">
+        @for (row of [1, 2, 3, 4, 5]; track row) {
+          <div class="skeleton-row">
+            <span class="skeleton-line sm"></span>
+            <span class="skeleton-line"></span>
+            <span class="skeleton-line"></span>
+            <span class="skeleton-line lg"></span>
+            <span class="skeleton-line sm"></span>
+            <span class="skeleton-line"></span>
+            <span class="skeleton-line sm"></span>
+          </div>
+        }
+        <span class="visually-hidden">Loading your assigned requests</span>
+      </div>
 
     } @else if (requests().length === 0) {
 
-    <div class="state-message">
-      @if (state.hasFilters()) {
-      No requests match your filters.
-      } @else {
-      You have not created any requests yet.
-      }
-    </div>
+      <div class="empty-box">
+        <span class="empty-box-icon" aria-hidden="true"></span>
+        @if (state.hasFilters()) {
+          <p class="empty-box-title">No requests match your filters.</p>
+          <p class="empty-box-hint">Try a different search or clear the filters.</p>
+        } @else {
+          <p class="empty-box-title">Nothing assigned to you yet.</p>
+          <p class="empty-box-hint">New assignments will show up here.</p>
+        }
+      </div>
 
     } @else {
 
-    <div class="table-wrapper" [class.reloading]="isLoading()">
-      <table>
-        <thead>
-          <tr>
-            <th>Sr. No.</th>
-            <th class="sortable" [attr.aria-sort]="state.ariaSort('RequestCode')" (click)="onSort('RequestCode')">
-              Request ID {{ state.sortIcon('RequestCode') }}
-            </th>
-            <th class="sortable" [attr.aria-sort]="state.ariaSort('RequestType')" (click)="onSort('RequestType')">
-              Request Type {{ state.sortIcon('RequestType') }}
-            </th>
-            <th>Description</th>
-            <th class="sortable" [attr.aria-sort]="state.ariaSort('Priority')" (click)="onSort('Priority')">
-              Priority {{ state.sortIcon('Priority') }}
-            </th>
-            <th class="sortable" [attr.aria-sort]="state.ariaSort('Status')" (click)="onSort('Status')">
-              Status {{ state.sortIcon('Status') }}
-            </th>
-            <th class="sortable" [attr.aria-sort]="state.ariaSort('CreatedDate')" (click)="onSort('CreatedDate')">
-              Created Date {{ state.sortIcon('CreatedDate') }}
-            </th>
-            <th>Action</th>
-          </tr>
-        </thead>
+      <div class="table-wrapper" [class.reloading]="isLoading()">
+        <table>
+          <thead>
+            <tr>
+              <th>Sr. No.</th>
 
-        <tbody>
-          @for (request of requests(); track request.requestId; let i = $index) {
-          <tr>
-            <td>{{ state.startIndex() + i + 1 }}</td>
-            <td>{{ request.requestCode }}</td>
-            <td>{{ request.requestType }}</td>
-            <td class="description">{{ request.requestDescription }}</td>
-            <td>
-              <span class="priority" [attr.data-priority]="request.priority" [class.high]="request.priority === 'High'"
-                [class.critical]="request.priority === 'Critical'">
-                {{ request.priority }}
-              </span>
-            </td>
-            <td><span class="status" [attr.data-status]="request.status">{{ request.status }}</span></td>
-            <td>{{ request.createdDate | date:'dd-MM-yyyy HH:mm' }}</td>
-            <td>
-              <a class="view-btn" [routerLink]="['/my-requests', request.requestId]">
-                View
-              </a>
-            </td>
-          </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+              <th class="sortable" [attr.aria-sort]="state.ariaSort('RequestCode')"
+                  (click)="onSort('RequestCode')">
+                Request ID {{ state.sortIcon('RequestCode') }}
+              </th>
+
+              <th class="sortable" [attr.aria-sort]="state.ariaSort('RequestType')"
+                  (click)="onSort('RequestType')">
+                Request Type {{ state.sortIcon('RequestType') }}
+              </th>
+
+              <th>Description</th>
+
+              <th class="sortable" [attr.aria-sort]="state.ariaSort('Priority')"
+                  (click)="onSort('Priority')">
+                Priority {{ state.sortIcon('Priority') }}
+              </th>
+
+              <th class="sortable" [attr.aria-sort]="state.ariaSort('Status')"
+                  (click)="onSort('Status')">
+                Status {{ state.sortIcon('Status') }}
+              </th>
+
+              <th class="sortable" [attr.aria-sort]="state.ariaSort('CreatedDate')"
+                  (click)="onSort('CreatedDate')">
+                Created Date {{ state.sortIcon('CreatedDate') }}
+              </th>
+
+              <th>Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (request of requests(); track request.requestId; let i = $index) {
+              <tr>
+                <td>{{ state.startIndex() + i + 1 }}</td>
+                <td>{{ request.requestCode }}</td>
+                <td>{{ request.requestType }}</td>
+                <td class="description" [attr.title]="request.requestDescription">{{ request.requestDescription }}</td>
+                <td>
+                  <span
+                    class="priority"
+                    [attr.data-priority]="request.priority"
+                    [class.high]="request.priority === 'High'"
+                    [class.critical]="request.priority === 'Critical'">
+                    {{ request.priority }}
+                  </span>
+                </td>
+                <td><span class="status" [attr.data-status]="request.status">{{ request.status }}</span></td>
+                <td>{{ request.createdDate | date:'dd MMM yyyy, HH:mm' }}</td>
+                <td>
+                  <a class="view-btn" [routerLink]="['/assigned-requests', request.requestId]">
+                    View
+                  </a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
 
     }
 
     @if (state.totalCount() > 0) {
-    <app-pager [pageNumber]="state.pageNumber()" [pageSize]="state.pageSize()" [totalCount]="state.totalCount()"
-      [totalPages]="state.totalPages()" (pageChange)="onPageChange($event)" (pageSizeChange)="onPageSizeChange($event)">
-    </app-pager>
+      <app-pager
+        [pageNumber]="state.pageNumber()"
+        [pageSize]="state.pageSize()"
+        [totalCount]="state.totalCount()"
+        [totalPages]="state.totalPages()"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)">
+      </app-pager>
     }
 
   </div>

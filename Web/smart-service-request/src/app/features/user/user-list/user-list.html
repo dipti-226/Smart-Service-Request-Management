@@ -30,15 +30,30 @@
 
     } @else if (isLoading() && users().length === 0) {
 
-      <div class="state-message">Loading users...</div>
+      <div class="skeleton-list" role="status" aria-live="polite" aria-label="Loading users">
+        @for (row of [1, 2, 3, 4, 5]; track row) {
+          <div class="skeleton-row">
+            <span class="skeleton-line sm"></span>
+            <span class="skeleton-line"></span>
+            <span class="skeleton-line"></span>
+            <span class="skeleton-line lg"></span>
+            <span class="skeleton-line sm"></span>
+            <span class="skeleton-line"></span>
+          </div>
+        }
+        <span class="visually-hidden">Loading users</span>
+      </div>
 
     } @else if (users().length === 0) {
 
-      <div class="state-message">
+      <div class="empty-box">
+        <span class="empty-box-icon" aria-hidden="true"></span>
         @if (state.hasFilters()) {
-          No users match your filters.
+          <p class="empty-box-title">No users match your filters.</p>
+          <p class="empty-box-hint">Try a different search or clear the filters.</p>
         } @else {
-          No users found.
+          <p class="empty-box-title">No users yet.</p>
+          <a routerLink="/users/technician/new" class="empty-box-btn">Create a technician</a>
         }
       </div>
 
@@ -105,7 +120,7 @@
                   </span>
                 </td>
 
-                <td>{{ user.createdDate | date:'dd-MM-yyyy HH:mm' }}</td>
+                <td>{{ user.createdDate | date:'dd MMM yyyy, HH:mm' }}</td>
 
                 <td>
                   @if (canChange(user)) {

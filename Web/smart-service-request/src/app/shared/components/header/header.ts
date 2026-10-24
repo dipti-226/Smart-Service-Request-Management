@@ -23,7 +23,11 @@ export class HeaderComponent {
     return this.authService.getUsername();
   }
 
-    get isAdmin(): boolean {
+  get userRole(): string | null {
+    return this.authService.getRole();
+  }
+
+  get isAdmin(): boolean {
     return this.authService.isAdmin();
   }
 
@@ -31,10 +35,10 @@ export class HeaderComponent {
     return this.authService.isEmployee();
   }
 
-    get isTechnician(): boolean {
+  get isTechnician(): boolean {
     return this.authService.isTechnician();
   }
-  
+
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/login']);

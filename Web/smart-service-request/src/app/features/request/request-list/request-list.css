@@ -105,30 +105,50 @@ td {
 
 .edit-button,
 .delete-button {
-  border: none;
-  color: white;
-  padding: 7px 14px;
+  padding: 6px 14px;
+  border: 1px solid transparent;
   border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
-  font-weight: 500;
-  transition: background-color 0.15s ease, opacity 0.15s ease;
+  font-weight: 600;
+  transition: background-color 0.15s ease, border-color 0.15s ease,
+    box-shadow 0.15s ease, opacity 0.15s ease;
 }
 
+/* Soft tinted resting state */
 .edit-button {
-  background: #2563eb;
-}
-
-.edit-button:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #dbeafe;
 }
 
 .delete-button {
-  background: #dc2626;
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fee2e2;
+}
+
+/* Hover: slightly deeper tint + highlighted left edge (inset shadow, so no layout shift) */
+.edit-button:hover:not(:disabled) {
+  background: #dbeafe;
+  border-color: #bfdbfe;
+  box-shadow: inset 3px 0 0 #2563eb;
 }
 
 .delete-button:hover:not(:disabled) {
-  background: #b91c1c;
+  background: #fee2e2;
+  border-color: #fecaca;
+  box-shadow: inset 3px 0 0 #dc2626;
+}
+
+.edit-button:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+.delete-button:focus-visible {
+  outline: 2px solid #fca5a5;
+  outline-offset: 2px;
 }
 
 .edit-button:disabled,
