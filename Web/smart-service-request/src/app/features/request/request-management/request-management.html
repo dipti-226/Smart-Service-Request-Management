@@ -154,19 +154,19 @@
         @for (requestItem of requests(); track requestItem.requestId) {
         <tr>
 
-          <td>{{ requestItem.requestCode }}</td>
-          <td>{{ requestItem.requestType }}</td>
-          <td>
+          <td data-label="Request Code">{{ requestItem.requestCode }}</td>
+          <td data-label="Type">{{ requestItem.requestType }}</td>
+          <td data-label="Priority">
             <span class="priority" [attr.data-priority]="requestItem.priority">{{ requestItem.priority }}</span>
           </td>
-          <td>
+          <td data-label="Status">
             <span class="status" [attr.data-status]="requestItem.status">{{ requestItem.status }}</span>
           </td>
-          <td>
+          <td data-label="Created">
             {{ requestItem.createdDate | date:'dd MMM yyyy, HH:mm' }}
           </td>
 
-          <td>
+          <td data-label="Manage">
             <button type="button" class="manage-button" (click)="manageRequest(requestItem.requestId)">
               Manage
             </button>
@@ -199,9 +199,6 @@
     [totalPages]="state.totalPages()" (pageChange)="onPageChange($event)" (pageSizeChange)="onPageSizeChange($event)">
   </app-pager>
   }
-
   }
-
   }
-
 </div>

@@ -108,21 +108,21 @@
 
             <tr>
 
-              <td>{{ state.startIndex() + i + 1 }}</td>
+              <td data-label="Sr. No.">{{ state.startIndex() + i + 1 }}</td>
 
-              <td>
+              <td data-label="Request ID">
                 {{ request.requestCode }}
               </td>
 
-              <td>
+              <td data-label="Type">
                 {{ request.requestType }}
               </td>
 
-              <td class="description" [attr.title]="request.requestDescription">
+              <td data-label="Description" class="description" [attr.title]="request.requestDescription">
                 {{ request.requestDescription }}
               </td>
 
-              <td>
+              <td data-label="Priority">
                 <span
                   class="priority"
                   [attr.data-priority]="request.priority"
@@ -132,17 +132,17 @@
                 </span>
               </td>
 
-              <td>
+              <td data-label="Status">
                 <span class="status" [attr.data-status]="request.status">
                   {{ request.status }}
                 </span>
               </td>
 
-              <td>
+              <td data-label="Created">
                 {{ request.createdDate | date:'dd MMM yyyy, HH:mm' }}
               </td>
 
-              <td>
+              <td data-label="Action">
                 <div class="action-buttons">
 
                   <button

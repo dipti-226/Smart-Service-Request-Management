@@ -89,19 +89,19 @@
         <tbody>
           @for (request of requests(); track request.requestId; let i = $index) {
           <tr>
-            <td>{{ state.startIndex() + i + 1 }}</td>
-            <td>{{ request.requestCode }}</td>
-            <td>{{ request.requestType }}</td>
-            <td class="description" [attr.title]="request.requestDescription">{{ request.requestDescription }}</td>
-            <td>
+            <td data-label="Sr. No.">{{ state.startIndex() + i + 1 }}</td>
+            <td data-label="Request ID">{{ request.requestCode }}</td>
+            <td data-label="Type">{{ request.requestType }}</td>
+            <td data-label="Description" class="description" [attr.title]="request.requestDescription">{{ request.requestDescription }}</td>
+            <td data-label="Priority">
               <span class="priority" [attr.data-priority]="request.priority" [class.high]="request.priority === 'High'"
                 [class.critical]="request.priority === 'Critical'">
                 {{ request.priority }}
               </span>
             </td>
-            <td><span class="status" [attr.data-status]="request.status">{{ request.status }}</span></td>
-            <td>{{ request.createdDate | date:'dd MMM yyyy, HH:mm' }}</td>
-            <td>
+            <td data-label="Status"><span class="status" [attr.data-status]="request.status">{{ request.status }}</span></td>
+            <td data-label="Created">{{ request.createdDate | date:'dd MMM yyyy, HH:mm' }}</td>
+            <td data-label="Action">
               <a class="view-btn" [routerLink]="['/my-requests', request.requestId]">
                 View
               </a>

@@ -107,32 +107,32 @@
           <tbody>
             @for (user of users(); track user.userId; let i = $index) {
               <tr>
-                <td>{{ state.startIndex() + i + 1 }}</td>
+                <td data-label="Sr. No.">{{ state.startIndex() + i + 1 }}</td>
 
-                <td>
+                <td data-label="Username">
                   {{ user.username }}
                   @if (isSelf(user)) {
                     <span class="you">(you)</span>
                   }
                 </td>
 
-                <td>{{ user.email }}</td>
+                <td data-label="Email">{{ user.email }}</td>
 
-                <td>
+                <td data-label="Role">
                   <span class="role" [class.technician]="user.roleName === 'Technician'">
                     {{ user.roleName }}
                   </span>
                 </td>
 
-                <td>
+                <td data-label="Status">
                   <span class="active-badge" [class.inactive]="!user.isActive">
                     {{ user.isActive ? 'Active' : 'Inactive' }}
                   </span>
                 </td>
 
-                <td>{{ user.createdDate | date:'dd MMM yyyy, HH:mm' }}</td>
+                <td data-label="Created">{{ user.createdDate | date:'dd MMM yyyy, HH:mm' }}</td>
 
-                <td>
+                <td data-label="Action">
                   @if (canChange(user)) {
                     <button
                       type="button"

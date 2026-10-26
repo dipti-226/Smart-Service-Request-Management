@@ -367,11 +367,119 @@ main.main-content :is(.detail-row, p)> :is(.status, .priority) {
   }
 }
 
-
-
 /* ---------- Keyboard focus for sortable column headers (all list tables) ----------
    The headers are focusable (Tab) and sort with Enter or Space; this shows where focus is. */
 main.main-content th.sortable:focus-visible {
   outline: 2px solid #2563eb;
   outline-offset: -2px;
+}
+
+
+
+/* ---------- Card layout on phones (all list tables) ----------
+   Under 640px each table row becomes a card. The text before each value comes from
+   the data-label attribute on the cell. Column headings are hidden here, so sorting is
+   a desktop feature. */
+@media (max-width: 640px) {
+
+  main.main-content .table-wrapper {
+    padding: 12px;
+  }
+
+  main.main-content :is(.table-wrapper, .table-container) {
+    max-height: none;
+    overflow: visible;
+  }
+
+  main.main-content :is(.table-wrapper, .table-container) table,
+  main.main-content :is(.table-wrapper, .table-container) tbody {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    border: 0;
+  }
+
+  main.main-content :is(.table-wrapper, .table-container) thead {
+    display: none;
+  }
+
+  main.main-content :is(.table-wrapper, .table-container) tbody tr {
+    display: block;
+    margin-bottom: 12px;
+    padding: 10px 16px 12px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  }
+
+  main.main-content :is(.table-wrapper, .table-container) tbody tr:last-child {
+    margin-bottom: 0;
+  }
+
+  main.main-content :is(.table-wrapper, .table-container) tbody td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    max-width: none;
+    padding: 7px 0;
+    border: 0;
+    text-align: right;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+  }
+
+  main.main-content :is(.table-wrapper, .table-container) tbody td[data-label]::before {
+    content: attr(data-label);
+    flex: none;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    text-align: left;
+    color: #6b7280;
+  }
+
+  /* The serial number means little on a card */
+  main.main-content :is(.table-wrapper, .table-container) tbody td[data-label='Sr. No.'] {
+    display: none;
+  }
+
+  /* Long text: label above, text below */
+  main.main-content :is(.table-wrapper, .table-container) tbody td.description {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    text-align: left;
+  }
+
+  /* Buttons: full-width row at the bottom of the card */
+  main.main-content :is(.table-wrapper, .table-container) tbody td:is([data-label='Action'], [data-label='Manage']) {
+    margin-top: 6px;
+    padding-top: 12px;
+    border-top: 1px solid #f0f1f3;
+  }
+
+  main.main-content :is(.table-wrapper, .table-container) tbody td:is([data-label='Action'], [data-label='Manage'])::before {
+    display: none;
+  }
+
+  main.main-content :is(.table-wrapper, .table-container) tbody td:is([data-label='Action'], [data-label='Manage']) > * {
+    flex: 1;
+    text-align: center;
+  }
+
+  main.main-content :is(.table-wrapper, .table-container) tbody td:is([data-label='Action'], [data-label='Manage']) .action-buttons > button {
+    flex: 1;
+    padding-top: 9px;
+    padding-bottom: 9px;
+  }
+
+  main.main-content :is(.table-wrapper, .table-container) tbody td:is([data-label='Action'], [data-label='Manage']) > :is(a, button) {
+    padding-top: 9px;
+    padding-bottom: 9px;
+  }
 }
