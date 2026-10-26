@@ -1,10 +1,6 @@
 import { Routes } from '@angular/router';
 
-import {
-  authGuard,
-  roleGuard,
-  rootRedirectGuard
-} from './core/guards/auth.guard';
+import {authGuard,roleGuard,rootRedirectGuard} from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -15,18 +11,21 @@ export const routes: Routes = [
   },
   {
     path: 'login',
+    title: 'Login',
     loadComponent: () =>
       import('./features/auth/login/login')
         .then(m => m.LoginComponent)
   },
   {
     path: 'register',
+    title: 'Register',
     loadComponent: () =>
       import('./features/auth/register/register')
         .then(m => m.RegisterComponent)
   },
   {
     path: 'dashboard',
+    title: 'Dashboard',
     canActivate: [roleGuard],
     data: { roles: ['Admin'] },
     loadComponent: () =>
@@ -35,6 +34,7 @@ export const routes: Routes = [
   },
   {
     path: 'my-requests',
+    title: 'My Requests',
     canActivate: [roleGuard],
     data: { roles: ['Employee'] },
     loadComponent: () =>
@@ -43,6 +43,7 @@ export const routes: Routes = [
   },
   {
     path: 'request/new',
+    title: 'Create Request',
     canActivate: [roleGuard],
     data: { roles: ['Admin', 'Employee'] },
     loadComponent: () =>
@@ -51,6 +52,7 @@ export const routes: Routes = [
   },
   {
     path: 'request/edit/:id',
+    title: 'Edit Request',
     canActivate: [roleGuard],
     data: { roles: ['Admin'] },
     loadComponent: () =>
@@ -59,6 +61,7 @@ export const routes: Routes = [
   },
   {
     path: 'request-management',
+    title: 'Request Management',
     canActivate: [roleGuard],
     data: { roles: ['Admin'] },
     loadComponent: () =>
@@ -67,6 +70,7 @@ export const routes: Routes = [
   },
   {
     path: 'request-management/:id',
+    title: 'Manage Request',
     canActivate: [roleGuard],
     data: { roles: ['Admin'] },
     loadComponent: () =>
@@ -76,6 +80,7 @@ export const routes: Routes = [
 
   {
     path: 'users',
+    title: 'Users',
     canActivate: [roleGuard],
     data: { roles: ['Admin'] },
     loadComponent: () =>
@@ -84,6 +89,7 @@ export const routes: Routes = [
   },
   {
     path: 'users/technician/new',
+    title: 'Create Technician',
     canActivate: [roleGuard],
     data: { roles: ['Admin'] },
     loadComponent: () =>
@@ -93,6 +99,7 @@ export const routes: Routes = [
 
     {
     path: 'assigned-requests',
+    title: 'Assigned Requests',
     canActivate: [roleGuard],
     data: { roles: ['Technician'] },
     loadComponent: () =>
@@ -101,6 +108,7 @@ export const routes: Routes = [
   },
   {
     path: 'assigned-requests/:id',
+    title: 'Assigned Request',
     canActivate: [roleGuard],
     data: { roles: ['Technician'] },
     loadComponent: () =>
@@ -110,6 +118,7 @@ export const routes: Routes = [
   
     {
     path: 'my-requests/:id',
+    title: 'Request Details',
     canActivate: [roleGuard],
     data: { roles: ['Employee'] },
     loadComponent: () =>
@@ -118,6 +127,7 @@ export const routes: Routes = [
   },
   {
     path: 'my-requests/:id/edit',
+    title: 'Edit My Request',
     canActivate: [roleGuard],
     data: { roles: ['Employee'] },
     loadComponent: () =>
@@ -127,6 +137,7 @@ export const routes: Routes = [
   
   {
     path: 'no-access',
+    title: 'No Access',
     canActivate: [authGuard],
     loadComponent: () =>
       import('./features/no-access/no-access')
