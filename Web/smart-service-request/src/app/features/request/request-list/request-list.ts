@@ -1,8 +1,10 @@
-import {Component,DestroyRef,EventEmitter,OnInit, Output,inject,signal} from '@angular/core';
+import {Component,DestroyRef,EventEmitter,OnInit,Output,inject,signal} from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';import { Subscription } from 'rxjs';
+import { Router, RouterLink } from '@angular/router';
+import { Subscription } from 'rxjs';
 
 import { RequestService } from '../../../core/services/request.service';
+import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { Request } from '../../../core/models/request.model';
 import {ListFilters,REQUEST_PRIORITIES,REQUEST_STATUSES} from '../../../core/models/paged.model';
 import { PagedListState } from '../../../core/utils/paged-list-state';
@@ -20,6 +22,7 @@ export class RequestListComponent implements OnInit {
 
   private readonly requestService = inject(RequestService);
   private readonly router = inject(Router);
+  private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly destroyRef = inject(DestroyRef);
 
   @Output() requestsChanged = new EventEmitter<void>();
@@ -109,11 +112,14 @@ export class RequestListComponent implements OnInit {
     this.router.navigate(['/request/edit', request.requestId]);
   }
 
-  deleteRequest(request: Request): void {
+  async deleteRequest(request: Request): Promise<void> {
 
-    const confirmed = confirm(
-      `Are you sure you want to delete request ${request.requestCode}?`
-    );
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Delete request',
+      message: `Are you sure you want to delete request ${request.requestCode}?`,
+      confirmText: 'Delete',
+      danger: true
+    });
 
     if (!confirmed) {
       return;

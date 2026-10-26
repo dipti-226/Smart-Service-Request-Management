@@ -5,12 +5,9 @@ import { Subscription } from 'rxjs';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { UserService } from '../../../core/services/user.service';
+import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { ListFilters } from '../../../core/models/paged.model';
-import {
-  USER_ROLES,
-  USER_STATUSES,
-  UserListItem
-} from '../../../core/models/user.model';
+import {USER_ROLES,USER_STATUSES,UserListItem} from '../../../core/models/user.model';
 import { PagedListState } from '../../../core/utils/paged-list-state';
 import { ListFilterBarComponent } from '../../../shared/components/list-filter-bar/list-filter-bar';
 import { PagerComponent } from '../../../shared/components/pager/pager';
@@ -26,6 +23,7 @@ export class UserListComponent implements OnInit {
 
   private readonly userService = inject(UserService);
   private readonly authService = inject(AuthService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly destroyRef = inject(DestroyRef);
 
   // "statuses" = Active / Inactive, "roles" is shown in the second dropdown
@@ -120,7 +118,7 @@ export class UserListComponent implements OnInit {
     return user.roleName !== 'Admin' && !this.isSelf(user);
   }
 
-  toggleActive(user: UserListItem): void {
+  async toggleActive(user: UserListItem): Promise<void> {
 
     const activate = !user.isActive;
 
@@ -130,9 +128,14 @@ export class UserListComponent implements OnInit {
         ? ' They will not be able to log in.'
         : '';
 
-    const confirmed = confirm(
-      `${activate ? 'Activate' : 'Deactivate'} user ${user.username}?${warning}`
-    );
+    const verb = activate ? 'Activate' : 'Deactivate';
+
+    const confirmed = await this.confirmDialog.confirm({
+      title: `${verb} user`,
+      message: `${verb} user ${user.username}?${warning}`,
+      confirmText: verb,
+      danger: !activate
+    });
 
     if (!confirmed) {
       return;

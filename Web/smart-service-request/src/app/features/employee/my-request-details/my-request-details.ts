@@ -2,6 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { RequestService } from '../../../core/services/request.service';
+import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { AdvancedRequest } from '../../../core/models/request.model';
 import { RequestDetailViewComponent } from '../../../shared/components/request-detail-view/request-detail-view';
 import { RequestCommentsComponent } from '../../../shared/components/request-comments/request-comments';
@@ -17,6 +18,7 @@ export class MyRequestDetailsComponent implements OnInit {
 
   private readonly route = inject(ActivatedRoute);
   private readonly requestService = inject(RequestService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   request = signal<AdvancedRequest | null>(null);
 
@@ -76,7 +78,7 @@ export class MyRequestDetailsComponent implements OnInit {
     });
   }
 
-  cancelRequest(): void {
+  async cancelRequest(): Promise<void> {
 
     const current = this.request();
 
@@ -84,9 +86,13 @@ export class MyRequestDetailsComponent implements OnInit {
       return;
     }
 
-    const confirmed = confirm(
-      `Cancel request ${current.requestCode}? A cancelled request cannot be reopened.`
-    );
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Cancel request',
+      message: `Cancel request ${current.requestCode}? A cancelled request cannot be reopened.`,
+      confirmText: 'Yes, cancel request',
+      cancelText: 'Keep request',
+      danger: true
+    });
 
     if (!confirmed) {
       return;

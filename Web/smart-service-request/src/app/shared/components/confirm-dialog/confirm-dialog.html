@@ -1,0 +1,39 @@
+@if (dialog.options(); as opts) {
+
+  <div class="cd-backdrop" (click)="dialog.respond(false)" (keydown)="onKeydown($event)">
+
+    <div
+      class="cd-panel"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="cd-title"
+      aria-describedby="cd-message"
+      (click)="$event.stopPropagation()">
+
+      <span class="cd-icon" [class.danger]="opts.danger" aria-hidden="true"></span>
+
+      <h2 id="cd-title" class="cd-title">{{ opts.title }}</h2>
+      <p id="cd-message" class="cd-message">{{ opts.message }}</p>
+
+      <div class="cd-actions">
+
+        <button #cancelBtn type="button" class="cd-btn cd-cancel" (click)="dialog.respond(false)">
+          {{ opts.cancelText }}
+        </button>
+
+        <button
+          #confirmBtn
+          type="button"
+          class="cd-btn cd-confirm"
+          [class.danger]="opts.danger"
+          (click)="dialog.respond(true)">
+          {{ opts.confirmText }}
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+}
