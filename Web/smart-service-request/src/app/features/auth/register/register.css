@@ -440,3 +440,52 @@
     padding: 28px 24px 32px;
   }
 }
+
+
+/* ---------- Show / hide password ---------- */
+.password-field {
+  position: relative;
+}
+
+.form-group .password-field input {
+  padding-right: 48px;
+}
+
+/* Hide the browser's own reveal icon (Edge) so only one eye shows */
+.password-field input::-ms-reveal {
+  display: none;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.password-toggle:hover {
+  color: #111827;
+  background: #f3f4f6;
+}
+
+.password-toggle:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 0;
+}
+
+.password-toggle svg {
+  width: 20px;
+  height: 20px;
+}

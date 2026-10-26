@@ -1,6 +1,8 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { RequestService } from '../../../core/services/request.service';
@@ -48,6 +50,13 @@ export class RequestFormComponent implements OnInit {
     priority: ['', Validators.required],
     status: ['']
   });
+
+  // Live character count for the description (the limit is the same as the API's)
+  readonly descriptionMax = VALIDATION.description.max;
+  readonly descriptionLength = toSignal(
+    this.requestForm.controls.requestDescription.valueChanges.pipe(map(value => value.length)),
+    { initialValue: 0 }
+  );
 
   ngOnInit(): void {
 

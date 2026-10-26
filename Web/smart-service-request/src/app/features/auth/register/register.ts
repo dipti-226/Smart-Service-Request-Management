@@ -23,6 +23,8 @@ export class RegisterComponent {
   readonly passwordMismatchMessage = PASSWORD_MISMATCH_MESSAGE;
 
   isSubmitting = signal(false);
+  showPassword = signal(false);
+  showConfirmPassword = signal(false);
   errorMessage = signal('');
   successMessage = signal('');
 

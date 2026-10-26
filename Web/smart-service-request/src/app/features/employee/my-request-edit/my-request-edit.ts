@@ -1,6 +1,8 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
 
 import { RequestService } from '../../../core/services/request.service';
 import {AdvancedRequest,REQUEST_TYPES} from '../../../core/models/request.model';
@@ -53,6 +55,13 @@ export class MyRequestEditComponent implements OnInit {
     requestDescription: ['', [requiredText, Validators.maxLength(VALIDATION.description.max)]],
     priority: ['', Validators.required]
   });
+
+  // Live character count for the description (the limit is the same as the API's)
+  readonly descriptionMax = VALIDATION.description.max;
+  readonly descriptionLength = toSignal(
+    this.requestForm.controls.requestDescription.valueChanges.pipe(map(value => value.length)),
+    { initialValue: 0 }
+  );
 
   ngOnInit(): void {
 

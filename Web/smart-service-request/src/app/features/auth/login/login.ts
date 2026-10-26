@@ -22,6 +22,7 @@ export class LoginComponent {
   readonly fieldError = getFieldError;
 
   isSubmitting = signal(false);
+  showPassword = signal(false);
   errorMessage = signal('');
 
   // Login only checks that both values are filled (and not too long),

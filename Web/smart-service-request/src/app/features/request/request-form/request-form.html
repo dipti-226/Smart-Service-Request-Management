@@ -46,13 +46,22 @@
         <label for="requestDescription">Request Description</label>
 
         <textarea id="requestDescription" rows="6" maxlength="1000" placeholder="Describe your problem..."
-          formControlName="requestDescription"></textarea>
+          formControlName="requestDescription" aria-describedby="descriptionCounter"></textarea>
 
-        @if (requestForm.controls.requestDescription.touched && requestForm.controls.requestDescription.invalid) {
-        <small class="validation-error">
-          {{ fieldError(requestForm.controls.requestDescription, 'requestDescription') }}
-        </small>
-        }
+        <div class="field-footer">
+          <div>
+            @if (requestForm.controls.requestDescription.touched && requestForm.controls.requestDescription.invalid) {
+            <small class="validation-error">
+              {{ fieldError(requestForm.controls.requestDescription, 'requestDescription') }}
+            </small>
+            }
+          </div>
+
+          <span id="descriptionCounter" class="char-counter" [class.near-limit]="descriptionLength() >= descriptionMax * 0.9"
+            [class.at-limit]="descriptionLength() >= descriptionMax">
+            {{ descriptionLength() }} / {{ descriptionMax }}
+          </span>
+        </div>
 
       </div>
 
