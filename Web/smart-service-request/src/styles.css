@@ -366,3 +366,12 @@ main.main-content :is(.detail-row, p)> :is(.status, .priority) {
     box-shadow: 0 1px 0 #e5e7eb;
   }
 }
+
+
+
+/* ---------- Keyboard focus for sortable column headers (all list tables) ----------
+   The headers are focusable (Tab) and sort with Enter or Space; this shows where focus is. */
+main.main-content th.sortable:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: -2px;
+}

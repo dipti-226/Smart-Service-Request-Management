@@ -121,19 +121,29 @@
 
       <thead>
         <tr>
-          <th class="sortable" [attr.aria-sort]="state.ariaSort('RequestCode')" (click)="onSort('RequestCode')">
+          <th class="sortable" [attr.aria-sort]="state.ariaSort('RequestCode')" (click)="onSort('RequestCode')"
+            tabindex="0" (keydown.enter)="onSort('RequestCode')"
+            (keydown.space)="onSort('RequestCode'); $event.preventDefault()">
             Request Code {{ state.sortIcon('RequestCode') }}
           </th>
-          <th class="sortable" [attr.aria-sort]="state.ariaSort('RequestType')" (click)="onSort('RequestType')">
+          <th class="sortable" [attr.aria-sort]="state.ariaSort('RequestType')" (click)="onSort('RequestType')"
+            tabindex="0" (keydown.enter)="onSort('RequestType')"
+            (keydown.space)="onSort('RequestType'); $event.preventDefault()">
             Type {{ state.sortIcon('RequestType') }}
           </th>
-          <th class="sortable" [attr.aria-sort]="state.ariaSort('Priority')" (click)="onSort('Priority')">
+          <th class="sortable" [attr.aria-sort]="state.ariaSort('Priority')" (click)="onSort('Priority')"
+            tabindex="0" (keydown.enter)="onSort('Priority')"
+            (keydown.space)="onSort('Priority'); $event.preventDefault()">
             Priority {{ state.sortIcon('Priority') }}
           </th>
-          <th class="sortable" [attr.aria-sort]="state.ariaSort('Status')" (click)="onSort('Status')">
+          <th class="sortable" [attr.aria-sort]="state.ariaSort('Status')" (click)="onSort('Status')"
+            tabindex="0" (keydown.enter)="onSort('Status')"
+            (keydown.space)="onSort('Status'); $event.preventDefault()">
             Status {{ state.sortIcon('Status') }}
           </th>
-          <th class="sortable" [attr.aria-sort]="state.ariaSort('CreatedDate')" (click)="onSort('CreatedDate')">
+          <th class="sortable" [attr.aria-sort]="state.ariaSort('CreatedDate')" (click)="onSort('CreatedDate')"
+            tabindex="0" (keydown.enter)="onSort('CreatedDate')"
+            (keydown.space)="onSort('CreatedDate'); $event.preventDefault()">
             Created Date {{ state.sortIcon('CreatedDate') }}
           </th>
           <th>Manage</th>

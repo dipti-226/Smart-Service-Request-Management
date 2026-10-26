@@ -66,27 +66,37 @@
               <th>Sr. No.</th>
 
               <th class="sortable" [attr.aria-sort]="state.ariaSort('Username')"
-                  (click)="onSort('Username')">
+                  (click)="onSort('Username')" tabindex="0"
+                  (keydown.enter)="onSort('Username')"
+                  (keydown.space)="onSort('Username'); $event.preventDefault()">
                 Username {{ state.sortIcon('Username') }}
               </th>
 
               <th class="sortable" [attr.aria-sort]="state.ariaSort('Email')"
-                  (click)="onSort('Email')">
+                  (click)="onSort('Email')" tabindex="0"
+                  (keydown.enter)="onSort('Email')"
+                  (keydown.space)="onSort('Email'); $event.preventDefault()">
                 Email {{ state.sortIcon('Email') }}
               </th>
 
               <th class="sortable" [attr.aria-sort]="state.ariaSort('RoleName')"
-                  (click)="onSort('RoleName')">
+                  (click)="onSort('RoleName')" tabindex="0"
+                  (keydown.enter)="onSort('RoleName')"
+                  (keydown.space)="onSort('RoleName'); $event.preventDefault()">
                 Role {{ state.sortIcon('RoleName') }}
               </th>
 
               <th class="sortable" [attr.aria-sort]="state.ariaSort('IsActive')"
-                  (click)="onSort('IsActive')">
+                  (click)="onSort('IsActive')" tabindex="0"
+                  (keydown.enter)="onSort('IsActive')"
+                  (keydown.space)="onSort('IsActive'); $event.preventDefault()">
                 Status {{ state.sortIcon('IsActive') }}
               </th>
 
               <th class="sortable" [attr.aria-sort]="state.ariaSort('CreatedDate')"
-                  (click)="onSort('CreatedDate')">
+                  (click)="onSort('CreatedDate')" tabindex="0"
+                  (keydown.enter)="onSort('CreatedDate')"
+                  (keydown.space)="onSort('CreatedDate'); $event.preventDefault()">
                 Created Date {{ state.sortIcon('CreatedDate') }}
               </th>
 

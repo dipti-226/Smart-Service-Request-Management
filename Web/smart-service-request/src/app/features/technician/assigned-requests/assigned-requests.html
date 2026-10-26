@@ -59,29 +59,39 @@
               <th>Sr. No.</th>
 
               <th class="sortable" [attr.aria-sort]="state.ariaSort('RequestCode')"
-                  (click)="onSort('RequestCode')">
+                  (click)="onSort('RequestCode')" tabindex="0"
+                  (keydown.enter)="onSort('RequestCode')"
+                  (keydown.space)="onSort('RequestCode'); $event.preventDefault()">
                 Request ID {{ state.sortIcon('RequestCode') }}
               </th>
 
               <th class="sortable" [attr.aria-sort]="state.ariaSort('RequestType')"
-                  (click)="onSort('RequestType')">
+                  (click)="onSort('RequestType')" tabindex="0"
+                  (keydown.enter)="onSort('RequestType')"
+                  (keydown.space)="onSort('RequestType'); $event.preventDefault()">
                 Request Type {{ state.sortIcon('RequestType') }}
               </th>
 
               <th>Description</th>
 
               <th class="sortable" [attr.aria-sort]="state.ariaSort('Priority')"
-                  (click)="onSort('Priority')">
+                  (click)="onSort('Priority')" tabindex="0"
+                  (keydown.enter)="onSort('Priority')"
+                  (keydown.space)="onSort('Priority'); $event.preventDefault()">
                 Priority {{ state.sortIcon('Priority') }}
               </th>
 
               <th class="sortable" [attr.aria-sort]="state.ariaSort('Status')"
-                  (click)="onSort('Status')">
+                  (click)="onSort('Status')" tabindex="0"
+                  (keydown.enter)="onSort('Status')"
+                  (keydown.space)="onSort('Status'); $event.preventDefault()">
                 Status {{ state.sortIcon('Status') }}
               </th>
 
               <th class="sortable" [attr.aria-sort]="state.ariaSort('CreatedDate')"
-                  (click)="onSort('CreatedDate')">
+                  (click)="onSort('CreatedDate')" tabindex="0"
+                  (keydown.enter)="onSort('CreatedDate')"
+                  (keydown.space)="onSort('CreatedDate'); $event.preventDefault()">
                 Created Date {{ state.sortIcon('CreatedDate') }}
               </th>
 
@@ -95,7 +105,7 @@
                 <td>{{ state.startIndex() + i + 1 }}</td>
                 <td>{{ request.requestCode }}</td>
                 <td>{{ request.requestType }}</td>
-                <td class="description">{{ request.requestDescription }}</td>
+                <td class="description" [attr.title]="request.requestDescription">{{ request.requestDescription }}</td>
                 <td>
                   <span
                     class="priority"
@@ -106,7 +116,7 @@
                   </span>
                 </td>
                 <td><span class="status" [attr.data-status]="request.status">{{ request.status }}</span></td>
-                <td>{{ request.createdDate | date:'dd-MM-yyyy HH:mm' }}</td>
+                <td>{{ request.createdDate | date:'dd MMM yyyy, HH:mm' }}</td>
                 <td>
                   <a class="view-btn" [routerLink]="['/assigned-requests', request.requestId]">
                     View
