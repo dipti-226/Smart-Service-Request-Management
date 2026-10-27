@@ -1,0 +1,26 @@
+.open-age {
+  display: inline-block;
+  padding: 2px 9px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+/* Open for 3 days or more */
+.open-age.aging {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+/* Open for 7 days or more */
+.open-age.old {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}

@@ -12,6 +12,7 @@ import { ListFilterBarComponent } from '../../../shared/components/list-filter-b
 import { PagerComponent } from '../../../shared/components/pager/pager';
 import { RequestCommentsComponent } from '../../../shared/components/request-comments/request-comments';
 import { RequestTimelineComponent } from '../../../shared/components/request-timeline/request-timeline';
+import { OpenAgeComponent } from '../../../shared/components/open-age/open-age';
 
 @Component({
   selector: 'app-request-management',
@@ -23,6 +24,7 @@ import { RequestTimelineComponent } from '../../../shared/components/request-tim
     ListFilterBarComponent,
     PagerComponent,
     RequestTimelineComponent,
+    OpenAgeComponent,
     RequestCommentsComponent
   ],
   templateUrl: './request-management.html',

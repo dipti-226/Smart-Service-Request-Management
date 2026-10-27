@@ -133,8 +133,11 @@
               </td>
 
               <td data-label="Status">
-                <span class="status" [attr.data-status]="request.status">
-                  {{ request.status }}
+                <span class="status-cell">
+                  <span class="status" [attr.data-status]="request.status">
+                    {{ request.status }}
+                  </span>
+                  <app-open-age [status]="request.status" [createdDate]="request.createdDate" [compact]="true" />
                 </span>
               </td>
 

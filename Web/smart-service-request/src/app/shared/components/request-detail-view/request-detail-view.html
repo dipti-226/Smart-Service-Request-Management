@@ -16,6 +16,8 @@
       </span>
 
       <span class="status" [attr.data-status]="request().status">{{ request().status }}</span>
+
+      <app-open-age [status]="request().status" [createdDate]="request().createdDate" />
     </div>
   </div>
 

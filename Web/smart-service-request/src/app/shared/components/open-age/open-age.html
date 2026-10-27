@@ -1,0 +1,9 @@
+@if (days() !== null) {
+  <span
+    class="open-age"
+    [class.aging]="level() === 'aging'"
+    [class.old]="level() === 'old'"
+    [attr.title]="fullText()">
+    {{ label() }}
+  </span>
+}

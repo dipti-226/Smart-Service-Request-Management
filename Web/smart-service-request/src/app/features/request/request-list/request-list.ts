@@ -10,11 +10,12 @@ import {ListFilters,REQUEST_PRIORITIES,REQUEST_STATUSES} from '../../../core/mod
 import { PagedListState } from '../../../core/utils/paged-list-state';
 import { ListFilterBarComponent } from '../../../shared/components/list-filter-bar/list-filter-bar';
 import { PagerComponent } from '../../../shared/components/pager/pager';
+import { OpenAgeComponent } from '../../../shared/components/open-age/open-age';
 
 @Component({
   selector: 'app-request-list',
   standalone: true,
-  imports: [RouterLink, DatePipe, ListFilterBarComponent, PagerComponent],
+  imports: [RouterLink, DatePipe, ListFilterBarComponent, PagerComponent, OpenAgeComponent],
   templateUrl: './request-list.html',
   styleUrl: './request-list.css'
 })

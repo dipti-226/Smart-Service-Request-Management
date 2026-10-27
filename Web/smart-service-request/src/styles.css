@@ -483,3 +483,12 @@ main.main-content th.sortable:focus-visible {
     padding-bottom: 9px;
   }
 }
+
+/* ---------- Status badge + "open for N days" chip (list tables) ---------- */
+main.main-content .status-cell {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}

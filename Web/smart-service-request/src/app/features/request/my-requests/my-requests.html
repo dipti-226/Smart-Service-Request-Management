@@ -99,7 +99,12 @@
                 {{ request.priority }}
               </span>
             </td>
-            <td data-label="Status"><span class="status" [attr.data-status]="request.status">{{ request.status }}</span></td>
+            <td data-label="Status">
+              <span class="status-cell">
+                <span class="status" [attr.data-status]="request.status">{{ request.status }}</span>
+                <app-open-age [status]="request.status" [createdDate]="request.createdDate" [compact]="true" />
+              </span>
+            </td>
             <td data-label="Created">{{ request.createdDate | date:'dd MMM yyyy, HH:mm' }}</td>
             <td data-label="Action">
               <a class="view-btn" [routerLink]="['/my-requests', request.requestId]">

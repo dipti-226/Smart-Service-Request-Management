@@ -53,6 +53,7 @@
         <span class="label">Status</span>
         <span class="value">
           <span class="status" [attr.data-status]="req.status">{{ req.status }}</span>
+          <app-open-age [status]="req.status" [createdDate]="req.createdDate" />
         </span>
       </div>
 
@@ -162,7 +163,10 @@
             <span class="priority" [attr.data-priority]="requestItem.priority">{{ requestItem.priority }}</span>
           </td>
           <td data-label="Status">
-            <span class="status" [attr.data-status]="requestItem.status">{{ requestItem.status }}</span>
+            <span class="status-cell">
+              <span class="status" [attr.data-status]="requestItem.status">{{ requestItem.status }}</span>
+              <app-open-age [status]="requestItem.status" [createdDate]="requestItem.createdDate" [compact]="true" />
+            </span>
           </td>
           <td data-label="Created">
             {{ requestItem.createdDate | date:'dd MMM yyyy, HH:mm' }}
