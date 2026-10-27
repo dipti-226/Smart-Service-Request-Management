@@ -96,6 +96,109 @@
 
   </div>
 
+  <div class="insights">
+
+    <section class="insight-card overview-card">
+
+      <h2>Status overview</h2>
+
+      <div class="overview-body">
+
+        @if (isLoading()) {
+
+        <div class="donut loading" aria-hidden="true"></div>
+
+        <div class="legend-skeleton" aria-hidden="true">
+          @for (row of [1, 2, 3, 4, 5, 6]; track row) {
+          <span class="skeleton-line"></span>
+          }
+        </div>
+
+        } @else if (!hasRequests()) {
+
+        <p class="insight-empty">No requests yet, so there is nothing to show.</p>
+
+        } @else {
+
+        <div class="donut" [style.background]="donutGradient()" role="img"
+          [attr.aria-label]="'Requests by status: ' + barDescription()">
+          <div class="donut-center">
+            <span class="donut-total">{{ totalRequests() }}</span>
+            <span class="donut-label">Total</span>
+          </div>
+        </div>
+
+        <ul class="status-legend">
+          @for (segment of segments(); track segment.status) {
+          <li [class.is-empty]="segment.count === 0">
+            <span class="legend-dot" [attr.data-status]="segment.status" aria-hidden="true"></span>
+            <span class="legend-label">{{ segment.status }}</span>
+            <span class="legend-count">{{ segment.count }}</span>
+            <span class="legend-percent">{{ segment.percent.toFixed(0) }}%</span>
+            <span class="legend-track" aria-hidden="true">
+              <span class="legend-fill" [attr.data-status]="segment.status" [style.width.%]="segment.percent"></span>
+            </span>
+          </li>
+          }
+        </ul>
+
+        }
+
+      </div>
+
+    </section>
+
+    <section class="insight-card">
+
+      <h2>Recent requests</h2>
+
+      @if (recentError()) {
+
+      <p class="insight-error">{{ recentError() }}</p>
+
+      } @else if (recentLoading() && recentRequests().length === 0) {
+
+      <div class="recent-skeleton" role="status" aria-label="Loading recent requests">
+        @for (row of [1, 2, 3, 4, 5]; track row) {
+        <span class="skeleton-line"></span>
+        }
+      </div>
+
+      } @else if (recentRequests().length === 0) {
+
+      <p class="insight-empty">No requests yet.</p>
+
+      } @else {
+
+      <ul class="recent-list">
+        @for (item of recentRequests(); track item.requestId) {
+        <li>
+          <a class="recent-item" [routerLink]="['/request-management', item.requestId]">
+
+            <span class="recent-main">
+              <span class="recent-code">{{ item.requestCode }}</span>
+              <span class="recent-type">{{ item.requestType }}</span>
+            </span>
+
+            <span class="recent-side">
+              <span class="status-cell">
+                <span class="status" [attr.data-status]="item.status">{{ item.status }}</span>
+                <app-open-age [status]="item.status" [createdDate]="item.createdDate" [compact]="true" />
+              </span>
+              <span class="recent-date">{{ item.createdDate | date:'dd MMM yyyy, HH:mm' }}</span>
+            </span>
+
+          </a>
+        </li>
+        }
+      </ul>
+
+      }
+
+    </section>
+
+  </div>
+
   <app-request-list (requestsChanged)="loadDashboard()"></app-request-list>
 
 </div>
