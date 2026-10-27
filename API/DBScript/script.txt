@@ -2272,3 +2272,71 @@ BEGIN
       AND t.UserId = @TechnicianUserId;
 END;
 GO
+
+
+==================================================
+Date: 26-Oct-2026
+Change: Status timeline - read-only procedure over RequestStatusHistory
+        (no table changes; the history rows are already written by the
+        create / update status / update request procedures)
+==================================================
+
+CREATE OR ALTER PROCEDURE [dbo].[SSR_Request_GetStatusHistory]
+(
+    @RequestId    INT,
+    @CallerUserId INT,
+    @CallerRole   NVARCHAR(50)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Same visibility as the request itself:
+    --   Admin      : any active request
+    --   Employee   : only requests they created
+    --   Technician : only requests assigned to them
+    -- Anything else returns one NOT_FOUND row (existence is not revealed).
+    IF NOT EXISTS
+    (
+        SELECT 1
+        FROM dbo.Requests r
+        WHERE r.RequestId = @RequestId
+          AND r.IsActive = 1
+          AND
+          (
+              @CallerRole = 'Admin'
+              OR (@CallerRole = 'Employee' AND r.CreatedByUserId = @CallerUserId)
+              OR (@CallerRole = 'Technician' AND EXISTS
+                  (
+                      SELECT 1
+                      FROM dbo.Technicians t
+                      WHERE t.TechnicianId = r.TechnicianId
+                        AND t.IsActive = 1
+                        AND t.UserId = @CallerUserId
+                  ))
+          )
+    )
+    BEGIN
+        SELECT 'NOT_FOUND' AS ErrorCode;
+        RETURN;
+    END;
+
+    -- Oldest first. Rows written by older procedures have no role saved,
+    -- so the role is taken from the user when it is missing.
+    SELECT
+        h.HistoryId,
+        h.RequestId,
+        h.OldStatus,
+        h.NewStatus,
+        h.ChangedByUserId,
+        u.Username                          AS ChangedByUsername,
+        ISNULL(h.ChangedByRole, ro.RoleName) AS ChangedByRole,
+        h.Remarks,
+        h.ChangedDate
+    FROM dbo.RequestStatusHistory h
+    LEFT JOIN dbo.Users u  ON u.UserId  = h.ChangedByUserId
+    LEFT JOIN dbo.Roles ro ON ro.RoleId = u.RoleId
+    WHERE h.RequestId = @RequestId
+    ORDER BY h.ChangedDate, h.HistoryId;
+END;
+GO

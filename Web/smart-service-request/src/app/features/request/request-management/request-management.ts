@@ -11,6 +11,7 @@ import { RequestActionPanelComponent } from '../request-action-panel/request-act
 import { ListFilterBarComponent } from '../../../shared/components/list-filter-bar/list-filter-bar';
 import { PagerComponent } from '../../../shared/components/pager/pager';
 import { RequestCommentsComponent } from '../../../shared/components/request-comments/request-comments';
+import { RequestTimelineComponent } from '../../../shared/components/request-timeline/request-timeline';
 
 @Component({
   selector: 'app-request-management',
@@ -21,6 +22,7 @@ import { RequestCommentsComponent } from '../../../shared/components/request-com
     RequestActionPanelComponent,
     ListFilterBarComponent,
     PagerComponent,
+    RequestTimelineComponent,
     RequestCommentsComponent
   ],
   templateUrl: './request-management.html',

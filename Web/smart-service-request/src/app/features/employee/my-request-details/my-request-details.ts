@@ -6,11 +6,12 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
 import { AdvancedRequest } from '../../../core/models/request.model';
 import { RequestDetailViewComponent } from '../../../shared/components/request-detail-view/request-detail-view';
 import { RequestCommentsComponent } from '../../../shared/components/request-comments/request-comments';
+import { RequestTimelineComponent } from '../../../shared/components/request-timeline/request-timeline';
 
 @Component({
   selector: 'app-my-request-details',
   standalone: true,
-  imports: [RouterLink, RequestDetailViewComponent, RequestCommentsComponent],
+  imports: [RouterLink, RequestDetailViewComponent, RequestTimelineComponent, RequestCommentsComponent],
   templateUrl: './my-request-details.html',
   styleUrl: './my-request-details.css'
 })

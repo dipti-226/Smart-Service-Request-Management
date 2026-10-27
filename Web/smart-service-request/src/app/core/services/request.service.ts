@@ -1,6 +1,6 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
@@ -22,6 +22,10 @@ export class RequestService {
   private readonly technicianApiUrl = `${environment.apiUrl}/Technician`;
 
   private readonly employeeApiUrl = `${environment.apiUrl}/Employee`;
+
+  // Goes up by one after every successful status change, so the status timeline
+  // on the open request page knows to load the new step.
+  readonly statusChanged = signal(0);
 
   createRequest(request: CreateRequest): Observable<ApiResponse<Request>> {
     return this.http.post<ApiResponse<Request>>(
@@ -91,7 +95,13 @@ export class RequestService {
     return this.http.put<ApiResponse<AdvancedRequest>>(
       `${this.employeeApiUrl}/requests/${id}/cancel`,
       {}
-    );
+    ).pipe(tap(response => this.notifyStatusChanged(response.success)));
+  }
+
+  private notifyStatusChanged(success: boolean): void {
+    if (success) {
+      this.statusChanged.update(count => count + 1);
+    }
   }
 
   // Empty filters are not sent
@@ -168,7 +178,7 @@ updateRequestStatus(
   return this.http.put<ApiResponse<AdvancedRequest>>(
     `${this.advancedApiUrl}/${id}/status`,
     request
-  );
+  ).pipe(tap(response => this.notifyStatusChanged(response.success)));
 }
 
 

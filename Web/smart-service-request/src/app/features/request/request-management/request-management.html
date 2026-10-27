@@ -76,6 +76,8 @@
     </app-request-action-panel>
   </div>
 
+  <app-request-timeline [requestId]="req.requestId"></app-request-timeline>
+
   <div class="comments-container">
     <app-request-comments [requestId]="req.requestId"></app-request-comments>
   </div>
@@ -199,6 +201,9 @@
     [totalPages]="state.totalPages()" (pageChange)="onPageChange($event)" (pageSizeChange)="onPageSizeChange($event)">
   </app-pager>
   }
+
   }
+
   }
+
 </div>

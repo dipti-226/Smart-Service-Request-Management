@@ -1,0 +1,64 @@
+<section class="timeline-card">
+
+  <h3>Status Timeline</h3>
+
+  @if (isLoading()) {
+
+    <p class="muted">Loading timeline...</p>
+
+  } @else if (loadError()) {
+
+    <div class="error-banner">{{ loadError() }}</div>
+
+  } @else if (entries().length === 0) {
+
+    <p class="muted">No status history yet.</p>
+
+  } @else {
+
+    <ol class="timeline">
+      @for (entry of entries(); track entry.historyId; let last = $last) {
+
+        <li class="timeline-item" [class.current]="last">
+
+          <span class="timeline-dot" [attr.data-status]="entry.newStatus" aria-hidden="true"></span>
+
+          <div class="timeline-body">
+
+            <div class="timeline-head">
+              <span class="status" [attr.data-status]="entry.newStatus">{{ entry.newStatus }}</span>
+
+              @if (entry.oldStatus) {
+                <span class="from">from {{ entry.oldStatus }}</span>
+              } @else {
+                <span class="from">Request created</span>
+              }
+
+              @if (last) {
+                <span class="now">Current</span>
+              }
+            </div>
+
+            <div class="timeline-meta">
+              {{ entry.changedDate | date:'dd MMM yyyy, HH:mm' }}
+              @if (entry.changedByUsername) {
+                <span class="by">
+                  by {{ entry.changedByUsername }}@if (entry.changedByRole) { ({{ entry.changedByRole }})}
+                </span>
+              }
+            </div>
+
+            @if (entry.oldStatus && entry.remarks) {
+              <p class="remarks">{{ entry.remarks }}</p>
+            }
+
+          </div>
+
+        </li>
+
+      }
+    </ol>
+
+  }
+
+</section>

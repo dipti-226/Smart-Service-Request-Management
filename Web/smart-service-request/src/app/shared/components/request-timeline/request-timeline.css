@@ -1,0 +1,131 @@
+:host {
+  display: block;
+  margin: 16px 0;
+}
+
+.timeline-card {
+  padding: 16px 20px 18px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.timeline-card h3 {
+  margin: 0 0 14px;
+  font-size: 16px;
+  color: #111827;
+}
+
+.muted {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.error-banner {
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 14px;
+}
+
+/* ---------- Timeline ---------- */
+
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.timeline-item {
+  position: relative;
+  display: flex;
+  gap: 14px;
+  padding-bottom: 18px;
+}
+
+.timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+/* Line joining one step to the next */
+.timeline-item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 18px;
+  bottom: -2px;
+  width: 2px;
+  background: #d1d5db;
+}
+
+.timeline-dot {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  border-radius: 50%;
+  background: #94a3b8;
+  box-shadow: 0 0 0 3px #f9fafb;
+}
+
+/* Same colours as the status badges and dashboard dots */
+.timeline-dot[data-status='Open']        { background: #f59e0b; }
+.timeline-dot[data-status='In Progress'] { background: #7c3aed; }
+.timeline-dot[data-status='On Hold']     { background: #f97316; }
+.timeline-dot[data-status='Resolved']    { background: #16a34a; }
+.timeline-dot[data-status='Closed']      { background: #0f766e; }
+.timeline-dot[data-status='Cancelled']   { background: #dc2626; }
+
+/* The latest step gets a ring */
+.timeline-item.current .timeline-dot {
+  box-shadow: 0 0 0 3px #f9fafb, 0 0 0 5px #bfdbfe;
+}
+
+.timeline-body {
+  min-width: 0;
+}
+
+.timeline-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.from {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.now {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  color: #1d4ed8;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.timeline-meta {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.remarks {
+  margin: 6px 0 0;
+  padding: 8px 12px;
+  border-left: 3px solid #d1d5db;
+  background: #ffffff;
+  border-radius: 0 8px 8px 0;
+  font-size: 14px;
+  color: #374151;
+  overflow-wrap: anywhere;
+}
