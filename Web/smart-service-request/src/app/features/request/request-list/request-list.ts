@@ -11,11 +11,12 @@ import { PagedListState } from '../../../core/utils/paged-list-state';
 import { ListFilterBarComponent } from '../../../shared/components/list-filter-bar/list-filter-bar';
 import { PagerComponent } from '../../../shared/components/pager/pager';
 import { OpenAgeComponent } from '../../../shared/components/open-age/open-age';
+import { ExportCsvButtonComponent } from '../../../shared/components/export-csv-button/export-csv-button';
 
 @Component({
   selector: 'app-request-list',
   standalone: true,
-  imports: [RouterLink, DatePipe, ListFilterBarComponent, PagerComponent, OpenAgeComponent],
+  imports: [RouterLink, DatePipe, ListFilterBarComponent, PagerComponent, OpenAgeComponent, ExportCsvButtonComponent],
   templateUrl: './request-list.html',
   styleUrl: './request-list.css'
 })

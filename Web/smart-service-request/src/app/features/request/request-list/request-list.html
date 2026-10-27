@@ -2,6 +2,8 @@
 
   <div class="table-header">
     <h3>Service Requests</h3>
+
+    <app-export-csv-button [state]="state" [disabled]="state.totalCount() === 0"></app-export-csv-button>
   </div>
 
   <app-list-filter-bar

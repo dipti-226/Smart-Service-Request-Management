@@ -89,6 +89,8 @@
       <h1>Request Management</h1>
       <p>View and manage service requests.</p>
     </div>
+
+    <app-export-csv-button [state]="state" [disabled]="state.totalCount() === 0"></app-export-csv-button>
   </div>
 
   <app-list-filter-bar placeholder="Search by code, type or description" [statuses]="statuses" [priorities]="priorities"

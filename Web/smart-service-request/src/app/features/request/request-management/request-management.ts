@@ -13,6 +13,7 @@ import { PagerComponent } from '../../../shared/components/pager/pager';
 import { RequestCommentsComponent } from '../../../shared/components/request-comments/request-comments';
 import { RequestTimelineComponent } from '../../../shared/components/request-timeline/request-timeline';
 import { OpenAgeComponent } from '../../../shared/components/open-age/open-age';
+import { ExportCsvButtonComponent } from '../../../shared/components/export-csv-button/export-csv-button';
 
 @Component({
   selector: 'app-request-management',
@@ -25,6 +26,7 @@ import { OpenAgeComponent } from '../../../shared/components/open-age/open-age';
     PagerComponent,
     RequestTimelineComponent,
     OpenAgeComponent,
+    ExportCsvButtonComponent,
     RequestCommentsComponent
   ],
   templateUrl: './request-management.html',

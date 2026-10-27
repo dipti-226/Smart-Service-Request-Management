@@ -13,10 +13,12 @@ namespace APP.API.Controllers
     public class RequestController : ControllerBase
     {
         private readonly RequestService _requestService;
+        private readonly RequestExportService _exportService;
 
-        public RequestController(RequestService requestService)
+        public RequestController(RequestService requestService, RequestExportService exportService)
         {
             _requestService = requestService;
+            _exportService = exportService;
         }
 
         // Reads the logged-in user id from the JWT "userId" claim
@@ -29,11 +31,9 @@ namespace APP.API.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Admin,Employee")]
-        public async Task<ActionResult<ApiResponse<RequestResponseDto>>>
-            CreateRequest(CreateRequestDto dto)
+        public async Task<ActionResult<ApiResponse<RequestResponseDto>>>CreateRequest(CreateRequestDto dto)
         {
-            var response =
-                await _requestService.CreateRequestAsync(dto, GetCurrentUserId());
+            var response = await _requestService.CreateRequestAsync(dto, GetCurrentUserId());
 
             if (!response.Success)
             {
@@ -47,8 +47,7 @@ namespace APP.API.Controllers
         // Requests created by the logged-in user
         [HttpGet("my")]
         [Authorize(Roles = "Admin,Employee")]
-        public async Task<ActionResult<ApiResponse<List<RequestResponseDto>>>>
-            GetMyRequests()
+        public async Task<ActionResult<ApiResponse<List<RequestResponseDto>>>>GetMyRequests()
         {
             int? userId = GetCurrentUserId();
 
@@ -61,8 +60,7 @@ namespace APP.API.Controllers
                 });
             }
 
-            var response =
-                await _requestService.GetMyRequestsAsync(userId.Value);
+            var response = await _requestService.GetMyRequestsAsync(userId.Value);
 
             return Ok(response);
         }
@@ -71,11 +69,9 @@ namespace APP.API.Controllers
         // All requests, paged (Admin)
         [HttpGet("paged")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResponse<PagedResult<RequestResponseDto>>>>
-            GetRequestsPaged([FromQuery] RequestListQueryDto query)
+        public async Task<ActionResult<ApiResponse<PagedResult<RequestResponseDto>>>>GetRequestsPaged([FromQuery] RequestListQueryDto query)
         {
-            var response =
-                await _requestService.GetRequestsPagedAsync(query);
+            var response = await _requestService.GetRequestsPagedAsync(query);
 
             return Ok(response);
         }
@@ -84,8 +80,7 @@ namespace APP.API.Controllers
         // Requests created by the logged-in user, paged
         [HttpGet("my/paged")]
         [Authorize(Roles = "Admin,Employee")]
-        public async Task<ActionResult<ApiResponse<PagedResult<RequestResponseDto>>>>
-            GetMyRequestsPaged([FromQuery] RequestListQueryDto query)
+        public async Task<ActionResult<ApiResponse<PagedResult<RequestResponseDto>>>>GetMyRequestsPaged([FromQuery] RequestListQueryDto query)
         {
             int? userId = GetCurrentUserId();
 
@@ -98,30 +93,25 @@ namespace APP.API.Controllers
                 });
             }
 
-            var response =
-                await _requestService.GetRequestsPagedAsync(query, userId.Value);
+            var response = await _requestService.GetRequestsPagedAsync(query, userId.Value);
 
             return Ok(response);
         }
 
         [HttpGet]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResponse<List<RequestResponseDto>>>>
-            GetAllRequests()
+        public async Task<ActionResult<ApiResponse<List<RequestResponseDto>>>>GetAllRequests()
         {
-            var response =
-                await _requestService.GetAllRequestsAsync();
+            var response = await _requestService.GetAllRequestsAsync();
 
             return Ok(response);
         }
 
         [HttpGet("{id:int}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResponse<RequestResponseDto>>>
-            GetRequestById(int id)
+        public async Task<ActionResult<ApiResponse<RequestResponseDto>>>GetRequestById(int id)
         {
-            var response =
-                await _requestService.GetRequestByIdAsync(id);
+            var response = await _requestService.GetRequestByIdAsync(id);
 
             if (!response.Success)
             {
@@ -131,24 +121,43 @@ namespace APP.API.Controllers
             return Ok(response);
         }
 
+        // GET: api/Request/export?search=&status=&priority=&sortBy=&sortDir=
+        // CSV file with every request that matches the filters (Admin)
+        [HttpGet("export")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ExportRequests([FromQuery] RequestListQueryDto query)
+        {
+            var result = await _exportService.BuildCsvAsync(query);
+
+            if (!result.Success || result.Data == null)
+            {
+                return BadRequest(new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = result.Message,
+                    Data = false
+                });
+            }
+
+            string fileName = $"service-requests-{DateTime.UtcNow:yyyyMMdd-HHmm}.csv";
+
+            return File(result.Data, "text/csv; charset=utf-8", fileName);
+        }
+
         [HttpGet("dashboard")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResponse<DashboardDto>>>
-            GetDashboard()
+        public async Task<ActionResult<ApiResponse<DashboardDto>>>GetDashboard()
         {
-            var response =
-                await _requestService.GetDashboardAsync();
+            var response = await _requestService.GetDashboardAsync();
 
             return Ok(response);
         }
 
         [HttpPut("{id:int}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResponse<RequestResponseDto>>>
-    UpdateRequest(int id, UpdateRequestDto dto)
+        public async Task<ActionResult<ApiResponse<RequestResponseDto>>>UpdateRequest(int id, UpdateRequestDto dto)
         {
-            var response =
-                await _requestService.UpdateRequestAsync(id, dto, GetCurrentUserId(), "Admin");
+            var response = await _requestService.UpdateRequestAsync(id, dto, GetCurrentUserId(), "Admin");
 
             if (!response.Success)
             {
@@ -158,6 +167,22 @@ namespace APP.API.Controllers
                     return BadRequest(response);
                 }
 
+                return NotFound(response);
+            }
+
+            return Ok(response);
+        }
+
+        // DELETE: api/Request/5
+        // Soft delete (the row stays in the database with IsActive = 0)
+        [HttpDelete("{id:int}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ApiResponse<bool>>>DeleteRequest(int id)
+        {
+            var response = await _requestService.SoftDeleteRequestAsync(id);
+
+            if (!response.Success)
+            {
                 return NotFound(response);
             }
 
