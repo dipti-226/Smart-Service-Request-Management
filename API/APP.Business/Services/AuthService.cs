@@ -15,6 +15,8 @@ namespace APP.Business.Services
         private readonly string _connectionString;
         private readonly IConfiguration _configuration;
         private readonly PasswordService _passwordService;
+        private readonly int _maxFailedAttempts;
+        private readonly int _lockoutMinutes;
 
         public AuthService(IConfiguration configuration, PasswordService passwordService)
         {
@@ -24,6 +26,9 @@ namespace APP.Business.Services
             _connectionString =
                 configuration.GetConnectionString("DefaultConnection")
                 ?? throw new InvalidOperationException("DefaultConnection is not configured.");
+
+            _maxFailedAttempts = ReadPositiveInt("AccountLockout:MaxFailedAttempts", 5);
+            _lockoutMinutes = ReadPositiveInt("AccountLockout:LockoutMinutes", 15);
         }
 
         public async Task<ApiResponse<LoginResponseDto>> LoginAsync(LoginRequestDto dto)
@@ -32,6 +37,8 @@ namespace APP.Business.Services
             string username;
             string storedPassword;
             string roleName;
+            int failedLoginCount;
+            DateTime? lockoutEndUtc = null;
 
             await using (SqlConnection connection = new SqlConnection(_connectionString))
             await using (SqlCommand command = new SqlCommand("SSR_User_GetByUsername", connection))
@@ -53,13 +60,39 @@ namespace APP.Business.Services
                 username = reader["Username"]?.ToString() ?? string.Empty;
                 storedPassword = reader["Password"]?.ToString() ?? string.Empty;
                 roleName = reader["RoleName"]?.ToString() ?? string.Empty;
+                failedLoginCount = Convert.ToInt32(reader["FailedLoginCount"]);
+
+                if (reader["LockoutEndUtc"] != DBNull.Value)
+                {
+                    lockoutEndUtc = Convert.ToDateTime(reader["LockoutEndUtc"]);
+                }
+            }
+
+            // Account is locked: do not even check the password
+            if (lockoutEndUtc.HasValue && lockoutEndUtc.Value > DateTime.UtcNow)
+            {
+                return LockedResponse(lockoutEndUtc.Value);
             }
 
             PasswordCheckResult check = _passwordService.Verify(storedPassword, dto.Password);
 
             if (check == PasswordCheckResult.Failed)
             {
+                DateTime? newLockoutEndUtc = await RecordFailedLoginAsync(userId);
+
+                // This wrong password was the one that triggered the lock
+                if (newLockoutEndUtc.HasValue && newLockoutEndUtc.Value > DateTime.UtcNow)
+                {
+                    return LockedResponse(newLockoutEndUtc.Value);
+                }
+
                 return InvalidLoginResponse();
+            }
+
+            // Correct password: clear old failures only when there is something to clear
+            if (failedLoginCount > 0 || lockoutEndUtc.HasValue)
+            {
+                await ResetFailedLoginAsync(userId);
             }
 
             if (check == PasswordCheckResult.ValidRehashNeeded)
@@ -90,6 +123,42 @@ namespace APP.Business.Services
             };
         }
 
+        private async Task<DateTime?> RecordFailedLoginAsync(int userId)
+        {
+            await using SqlConnection connection = new SqlConnection(_connectionString);
+            await using SqlCommand command = new SqlCommand("SSR_User_RecordFailedLogin", connection);
+
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add("@UserId", SqlDbType.Int).Value = userId;
+            command.Parameters.Add("@MaxAttempts", SqlDbType.Int).Value = _maxFailedAttempts;
+            command.Parameters.Add("@LockoutMinutes", SqlDbType.Int).Value = _lockoutMinutes;
+
+            await connection.OpenAsync();
+
+            object? result = await command.ExecuteScalarAsync();
+
+            if (result is null || result is DBNull)
+            {
+                return null;
+            }
+
+            return Convert.ToDateTime(result);
+        }
+
+        private async Task ResetFailedLoginAsync(int userId)
+        {
+            await using SqlConnection connection = new SqlConnection(_connectionString);
+            await using SqlCommand command = new SqlCommand("SSR_User_ResetFailedLogin", connection);
+
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add("@UserId", SqlDbType.Int).Value = userId;
+
+            await connection.OpenAsync();
+            await command.ExecuteNonQueryAsync();
+        }
+
         private async Task UpgradePasswordHashAsync(int userId, string plainPassword)
         {
             await using SqlConnection connection = new SqlConnection(_connectionString);
@@ -113,8 +182,8 @@ namespace APP.Business.Services
 
             command.CommandType = CommandType.StoredProcedure;
 
-            command.Parameters.Add("@Username",SqlDbType.NVarChar,50).Value = dto.Username.Trim();
-            command.Parameters.Add("@Email",SqlDbType.NVarChar,150).Value = dto.Email.Trim();
+            command.Parameters.Add("@Username", SqlDbType.NVarChar, 50).Value = dto.Username.Trim();
+            command.Parameters.Add("@Email", SqlDbType.NVarChar, 150).Value = dto.Email.Trim();
             command.Parameters.Add("@Password", SqlDbType.NVarChar, 100).Value = _passwordService.Hash(dto.Password);
             await connection.OpenAsync();
 
@@ -159,8 +228,8 @@ namespace APP.Business.Services
 
             command.CommandType = CommandType.StoredProcedure;
 
-            command.Parameters.Add("@Username",SqlDbType.NVarChar,50).Value = dto.Username.Trim();
-            command.Parameters.Add("@Email",SqlDbType.NVarChar,150).Value = dto.Email.Trim();
+            command.Parameters.Add("@Username", SqlDbType.NVarChar, 50).Value = dto.Username.Trim();
+            command.Parameters.Add("@Email", SqlDbType.NVarChar, 150).Value = dto.Email.Trim();
             command.Parameters.Add("@Password", SqlDbType.NVarChar, 100).Value = _passwordService.Hash(dto.Password);
             await connection.OpenAsync();
             await using SqlDataReader reader = await command.ExecuteReaderAsync();
@@ -197,12 +266,12 @@ namespace APP.Business.Services
             };
         }
 
-        private string GenerateJwtToken(int userId,string username,string roleName,int expiryMinutes)
+        private string GenerateJwtToken(int userId, string username, string roleName, int expiryMinutes)
         {
             var jwtSection = _configuration.GetSection("Jwt");
             string jwtKey = jwtSection["Key"] ?? throw new InvalidOperationException("Jwt:Key is not configured.");
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
-            var credentials = new SigningCredentials(key,SecurityAlgorithms.HmacSha256);
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub,username),
@@ -232,12 +301,33 @@ namespace APP.Business.Services
                     : 60;
         }
 
+        // Reads a positive whole number from configuration, otherwise uses the default
+        private int ReadPositiveInt(string key, int defaultValue)
+        {
+            return int.TryParse(_configuration[key], out int value) && value > 0
+                ? value
+                : defaultValue;
+        }
+
         private static ApiResponse<LoginResponseDto> InvalidLoginResponse()
         {
             return new ApiResponse<LoginResponseDto>
             {
                 Success = false,
                 Message = "Invalid username or password.",
+                Data = null
+            };
+        }
+
+        private static ApiResponse<LoginResponseDto> LockedResponse(DateTime lockoutEndUtc)
+        {
+            int minutes = Math.Max(1, (int)Math.Ceiling((lockoutEndUtc - DateTime.UtcNow).TotalMinutes));
+
+            return new ApiResponse<LoginResponseDto>
+            {
+                Success = false,
+                Message = $"Too many failed login attempts. Please try again in {minutes} minute(s).",
+                ErrorCode = "ACCOUNT_LOCKED",
                 Data = null
             };
         }
@@ -249,7 +339,7 @@ namespace APP.Business.Services
                 "USERNAME_EXISTS" => "Username already exists.",
                 "EMAIL_EXISTS" => "Email already exists.",
                 "EMPLOYEE_ROLE_NOT_FOUND" => "Employee role is not available.",
-                _ =>"Employee registration failed."
+                _ => "Employee registration failed."
             };
         }
 

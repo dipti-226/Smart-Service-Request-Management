@@ -2363,3 +2363,105 @@ BEGIN
     WHERE UserId = @UserId;
 END;
 GO
+
+
+==================================================
+Date: 28-Oct-2026
+Change: Login lockout - Users.FailedLoginCount, Users.LockoutEndUtc,
+        SSR_User_GetByUsername (returns lockout state),
+        SSR_User_RecordFailedLogin, SSR_User_ResetFailedLogin
+==================================================
+USE [SmartServiceRequestDB];
+GO
+
+-- 1. Lockout tracking columns (safe to re-run)
+IF COL_LENGTH('dbo.Users', 'FailedLoginCount') IS NULL
+BEGIN
+    ALTER TABLE [dbo].[Users]
+    ADD [FailedLoginCount] INT NOT NULL
+        CONSTRAINT [DF_Users_FailedLoginCount] DEFAULT (0);
+END;
+GO
+
+IF COL_LENGTH('dbo.Users', 'LockoutEndUtc') IS NULL
+BEGIN
+    ALTER TABLE [dbo].[Users]
+    ADD [LockoutEndUtc] DATETIME2(7) NULL;
+END;
+GO
+
+-- 2. Login lookup now also returns the lockout state (old columns unchanged)
+CREATE OR ALTER PROCEDURE [dbo].[SSR_User_GetByUsername]
+(
+    @Username NVARCHAR(50)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        u.UserId,
+        u.Username,
+        u.Email,
+        u.Password,
+        u.RoleId,
+        r.RoleName,
+        u.IsActive,
+        u.FailedLoginCount,
+        u.LockoutEndUtc
+    FROM dbo.Users u
+    INNER JOIN dbo.Roles r
+        ON u.RoleId = r.RoleId
+    WHERE u.Username = @Username
+      AND u.IsActive = 1
+      AND r.IsActive = 1;
+END;
+GO
+
+-- 3. Count a wrong password; lock the account when the limit is reached
+CREATE OR ALTER PROCEDURE [dbo].[SSR_User_RecordFailedLogin]
+(
+    @UserId         INT,
+    @MaxAttempts    INT,
+    @LockoutMinutes INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- One atomic UPDATE: on the Nth failure the counter restarts at 0
+    -- and LockoutEndUtc is set, so the user gets a fresh set of attempts
+    -- after the lock expires.
+    UPDATE dbo.Users
+    SET FailedLoginCount =
+            CASE WHEN FailedLoginCount + 1 >= @MaxAttempts
+                 THEN 0
+                 ELSE FailedLoginCount + 1 END,
+        LockoutEndUtc =
+            CASE WHEN FailedLoginCount + 1 >= @MaxAttempts
+                 THEN DATEADD(MINUTE, @LockoutMinutes, SYSUTCDATETIME())
+                 ELSE LockoutEndUtc END
+    WHERE UserId = @UserId;
+
+    SELECT LockoutEndUtc
+    FROM dbo.Users
+    WHERE UserId = @UserId;
+END;
+GO
+
+-- 4. Clear the counter after a successful login
+CREATE OR ALTER PROCEDURE [dbo].[SSR_User_ResetFailedLogin]
+(
+    @UserId INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE dbo.Users
+    SET FailedLoginCount = 0,
+        LockoutEndUtc = NULL
+    WHERE UserId = @UserId
+      AND (FailedLoginCount <> 0 OR LockoutEndUtc IS NOT NULL);
+END;
+GO

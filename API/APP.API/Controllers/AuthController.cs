@@ -3,6 +3,7 @@ using APP.Common.Models;
 using APP.Models.DTOs.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace APP.API.Controllers
 {
@@ -18,12 +19,19 @@ namespace APP.API.Controllers
         }
 
         [HttpPost("login")]
+        [EnableRateLimiting("login")]
         public async Task<ActionResult<ApiResponse<LoginResponseDto>>> Login(LoginRequestDto dto)
         {
             var response = await _authService.LoginAsync(dto);
 
             if (!response.Success)
             {
+                // Account locked after too many wrong passwords
+                if (response.ErrorCode == "ACCOUNT_LOCKED")
+                {
+                    return StatusCode(StatusCodes.Status429TooManyRequests, response);
+                }
+
                 return Unauthorized(response);
             }
 
@@ -31,6 +39,7 @@ namespace APP.API.Controllers
         }
 
         [HttpPost("register")]
+        [EnableRateLimiting("register")]
         public async Task<ActionResult<ApiResponse<bool>>> Register(RegisterRequestDto dto)
         {
             var response = await _authService.RegisterEmployeeAsync(dto);

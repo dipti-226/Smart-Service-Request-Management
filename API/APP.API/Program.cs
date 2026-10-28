@@ -5,31 +5,33 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using APP.Common.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Controllers
-// Controllers
 builder.Services.AddControllers().ConfigureApiBehaviorOptions(options =>
+{
+    // Validation errors use the same { success, message } shape as every other API error
+    options.InvalidModelStateResponseFactory = context =>
     {
-        // Validation errors use the same { success, message } shape as every other API error
-        options.InvalidModelStateResponseFactory = context =>
-        {
-            string message = context.ModelState.Values
-                .SelectMany(entry => entry.Errors)
-                .Select(error => error.ErrorMessage)
-                .FirstOrDefault(text => !string.IsNullOrWhiteSpace(text))
-                ?? "Invalid request data.";
+        string message = context.ModelState.Values
+            .SelectMany(entry => entry.Errors)
+            .Select(error => error.ErrorMessage)
+            .FirstOrDefault(text => !string.IsNullOrWhiteSpace(text))
+            ?? "Invalid request data.";
 
-            return new BadRequestObjectResult(new ApiResponse<object>
-            {
-                Success = false,
-                Message = message,
-                ErrorCode = "VALIDATION_ERROR",
-                Data = null
-            });
-        };
-    });
+        return new BadRequestObjectResult(new ApiResponse<object>
+        {
+            Success = false,
+            Message = message,
+            ErrorCode = "VALIDATION_ERROR",
+            Data = null
+        });
+    };
+});
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -104,6 +106,74 @@ builder.Services
 // Authorization
 builder.Services.AddAuthorization();
 
+// Rate limiting (applied to login and register only, see AuthController)
+var rateLimitSection = builder.Configuration.GetSection("RateLimiting");
+
+int loginPermitLimit = Math.Max(1, rateLimitSection.GetValue<int>("Login:PermitLimit", 20));
+int loginWindowSeconds = Math.Max(1, rateLimitSection.GetValue<int>("Login:WindowSeconds", 60));
+int registerPermitLimit = Math.Max(1, rateLimitSection.GetValue<int>("Register:PermitLimit", 10));
+int registerWindowSeconds = Math.Max(1, rateLimitSection.GetValue<int>("Register:WindowSeconds", 600));
+bool trustForwardedHeaders = rateLimitSection.GetValue<bool>("TrustForwardedHeaders", false);
+
+// One counter per client IP address
+static string GetClientKey(HttpContext httpContext)
+{
+    return httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+}
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy("login", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            GetClientKey(httpContext),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = loginPermitLimit,
+                Window = TimeSpan.FromSeconds(loginWindowSeconds),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
+
+    options.AddPolicy("register", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            GetClientKey(httpContext),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = registerPermitLimit,
+                Window = TimeSpan.FromSeconds(registerWindowSeconds),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
+
+    // Same { success, message } shape as every other API error
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        string message = "Too many requests. Please try again later.";
+
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out TimeSpan retryAfter))
+        {
+            int seconds = Math.Max(1, (int)Math.Ceiling(retryAfter.TotalSeconds));
+
+            context.HttpContext.Response.Headers["Retry-After"] = seconds.ToString();
+            message = $"Too many requests. Please try again in {seconds} seconds.";
+        }
+
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+
+        await context.HttpContext.Response.WriteAsJsonAsync(
+            new ApiResponse<object>
+            {
+                Success = false,
+                Message = message,
+                ErrorCode = "RATE_LIMITED",
+                Data = null
+            },
+            cancellationToken);
+    };
+});
+
 // CORS - Angular
 builder.Services.AddCors(options =>
 {
@@ -118,6 +188,22 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Only when the host sits behind a reverse proxy / CDN: read the real client IP.
+// Leave RateLimiting:TrustForwardedHeaders = false when the API is reached directly,
+// otherwise a caller could fake the header and dodge the IP limit.
+if (trustForwardedHeaders)
+{
+    var forwardedOptions = new ForwardedHeadersOptions
+    {
+        ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+    };
+
+    forwardedOptions.KnownNetworks.Clear();
+    forwardedOptions.KnownProxies.Clear();
+
+    app.UseForwardedHeaders(forwardedOptions);
+}
+
 // Swagger
 if (app.Environment.IsDevelopment())
 {
@@ -131,7 +217,10 @@ app.UseHttpsRedirection();
 // CORS
 app.UseCors("AngularPolicy");
 
-// Authentication & Authorization (no [Authorize] attributes yet � this just wires the pipeline)
+// Rate limiter (after CORS so the 429 response still reaches the Angular app)
+app.UseRateLimiter();
+
+// Authentication & Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
