@@ -83,9 +83,7 @@ namespace APP.Business.Services
 
         // One request, only if the logged-in employee created it.
         // "Not found" is returned for missing AND not-own requests.
-        public async Task<ApiResponse<AdvancedRequestDto>> GetOwnRequestDetailsAsync(
-            int requestId,
-            int callerUserId)
+        public async Task<ApiResponse<AdvancedRequestDto>> GetOwnRequestDetailsAsync(int requestId,int callerUserId)
         {
             await using SqlConnection connection = new SqlConnection(_connectionString);
             await using SqlCommand command = new SqlCommand("SSR_Request_GetOwnById", connection);
@@ -118,10 +116,7 @@ namespace APP.Business.Services
         }
 
         // Edit an own request (type, description, priority) while it is Open
-        public async Task<ApiResponse<AdvancedRequestDto>> UpdateOwnRequestAsync(
-            int requestId,
-            UpdateOwnRequestDto dto,
-            int callerUserId)
+        public async Task<ApiResponse<AdvancedRequestDto>> UpdateOwnRequestAsync(int requestId,UpdateOwnRequestDto dto,int callerUserId)
         {
             await using SqlConnection connection = new SqlConnection(_connectionString);
             await using SqlCommand command = new SqlCommand("SSR_Request_UpdateOwn", connection);
@@ -175,15 +170,9 @@ namespace APP.Business.Services
         // Cancel an own request while it is Open.
         // Uses the normal status update (Employee role), so the transition rules
         // and the status history are applied exactly as for every other status change.
-        public async Task<ApiResponse<AdvancedRequestDto>> CancelOwnRequestAsync(
-            int requestId,
-            int callerUserId)
+        public async Task<ApiResponse<AdvancedRequestDto>> CancelOwnRequestAsync(int requestId,int callerUserId)
         {
-            var result = await UpdateRequestStatusAsync(
-                requestId,
-                new UpdateRequestStatusDto { Status = "Cancelled" },
-                callerUserId,
-                "Employee");
+            var result = await UpdateRequestStatusAsync(requestId,new UpdateRequestStatusDto { Status = "Cancelled" },callerUserId,"Employee");
 
             if (result.Success)
             {
@@ -195,6 +184,51 @@ namespace APP.Business.Services
             {
                 result.Message = "Only requests in 'Open' status can be cancelled.";
                 result.ErrorCode = "NOT_OPEN";
+            }
+            else
+            {
+                // Not the owner, or the request does not exist: same answer for both
+                result.Message = "Request not found.";
+                result.ErrorCode = "NOT_FOUND";
+            }
+
+            return result;
+        }
+
+        // Close an own request after it is Resolved
+        public Task<ApiResponse<AdvancedRequestDto>> CloseOwnRequestAsync(int requestId, int callerUserId)
+        {
+            return ChangeOwnStatusAsync(
+                requestId, callerUserId, "Closed",
+                "Request closed successfully.",
+                "Only requests in 'Resolved' status can be closed.");
+        }
+
+        // Reopen an own request after it is Resolved (status goes back to Open)
+        public Task<ApiResponse<AdvancedRequestDto>> ReopenOwnRequestAsync(int requestId, int callerUserId)
+        {
+            return ChangeOwnStatusAsync(
+                requestId, callerUserId, "Open",
+                "Request reopened successfully.",
+                "Only requests in 'Resolved' status can be reopened.");
+        }
+
+        // Same normal status update as cancel: ownership, transition rules and history
+        // are all applied by SSR_Request_UpdateStatus with the Employee role.
+        private async Task<ApiResponse<AdvancedRequestDto>> ChangeOwnStatusAsync(int requestId,int callerUserId,string newStatus,string successMessage,string wrongStatusMessage)
+        {
+            var result = await UpdateRequestStatusAsync(requestId,new UpdateRequestStatusDto { Status = newStatus },callerUserId,"Employee");
+
+            if (result.Success)
+            {
+                result.Message = successMessage;
+                return result;
+            }
+
+            if (result.ErrorCode == "INVALID_TRANSITION")
+            {
+                result.Message = wrongStatusMessage;
+                result.ErrorCode = "NOT_RESOLVED";
             }
             else
             {

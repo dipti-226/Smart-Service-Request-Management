@@ -48,6 +48,29 @@
 
             </div>
 
+            } @else if (isResolved()) {
+
+            <p class="hint">
+                This request has been resolved. Close it if the issue is fixed,
+                or reopen it if the problem is still there.
+            </p>
+
+            <div class="action-buttons">
+
+                <button type="button" class="close-btn" [disabled]="isChangingStatus()" (click)="closeRequest()">
+                    @if (isChangingStatus()) {
+                    Please wait...
+                    } @else {
+                    Close Request
+                    }
+                </button>
+
+                <button type="button" class="reopen-btn" [disabled]="isChangingStatus()" (click)="reopenRequest()">
+                    Reopen Request
+                </button>
+
+            </div>
+
             } @else {
 
             <p class="hint">

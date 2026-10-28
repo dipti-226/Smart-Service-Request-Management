@@ -100,7 +100,41 @@
     opacity: .6;
     cursor: not-allowed;
 }
+.close-btn {
+    padding: 9px 18px;
+    border: none;
+    border-radius: 8px;
+    background: #16a34a;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
 
+.close-btn:hover:not(:disabled) {
+    background: #15803d;
+}
+
+.reopen-btn {
+    padding: 9px 18px;
+    border: 1px solid #2563eb;
+    border-radius: 8px;
+    background: #fff;
+    color: #1d4ed8;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.reopen-btn:hover:not(:disabled) {
+    background: #eff6ff;
+}
+
+.close-btn:disabled,
+.reopen-btn:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
 .comments-wrapper {
     border-top: 1px solid #f0f1f3;
     padding-top: 20px;

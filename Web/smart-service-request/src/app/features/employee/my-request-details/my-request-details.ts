@@ -1,3 +1,5 @@
+import { Observable } from 'rxjs';
+import { ApiResponse } from '../../../core/models/api-response.model';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
@@ -25,7 +27,9 @@ export class MyRequestDetailsComponent implements OnInit {
 
   // Edit and cancel are possible only while the status is Open
   isOpen = computed(() => this.request()?.status === 'Open');
-
+  // Close and Reopen are possible only while the status is Resolved
+  isResolved = computed(() => this.request()?.status === 'Resolved');
+  isChangingStatus = signal(false);
   isLoading = signal(true);
   isCancelling = signal(false);
 
@@ -129,6 +133,96 @@ export class MyRequestDetailsComponent implements OnInit {
         this.actionError.set(
           error?.error?.message || 'Unable to cancel the request.'
         );
+      }
+    });
+  }
+
+    async closeRequest(): Promise<void> {
+
+    const current = this.request();
+
+    if (!current || this.isChangingStatus()) {
+      return;
+    }
+
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Close request',
+      message: `Close request ${current.requestCode}? A closed request cannot be reopened.`,
+      confirmText: 'Yes, close request',
+      cancelText: 'Keep it',
+      danger: false
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.runStatusChange(
+      this.requestService.closeOwnRequest(current.requestId),
+      'Request closed successfully.',
+      'Unable to close the request.'
+    );
+  }
+
+  async reopenRequest(): Promise<void> {
+
+    const current = this.request();
+
+    if (!current || this.isChangingStatus()) {
+      return;
+    }
+
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Reopen request',
+      message: `Reopen request ${current.requestCode}? It will go back to Open.`,
+      confirmText: 'Yes, reopen request',
+      cancelText: 'Keep it resolved',
+      danger: false
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.runStatusChange(
+      this.requestService.reopenOwnRequest(current.requestId),
+      'Request reopened successfully.',
+      'Unable to reopen the request.'
+    );
+  }
+
+  private runStatusChange(
+    call: Observable<ApiResponse<AdvancedRequest>>,
+    successText: string,
+    failText: string
+  ): void {
+
+    this.isChangingStatus.set(true);
+    this.actionError.set('');
+    this.actionSuccess.set('');
+
+    call.subscribe({
+
+      next: response => {
+
+        this.isChangingStatus.set(false);
+
+        if (!response.success || !response.data) {
+          this.actionError.set(response.message || failText);
+          return;
+        }
+
+        this.request.set(response.data);
+        this.actionSuccess.set(response.message || successText);
+      },
+
+      error: error => {
+
+        this.isChangingStatus.set(false);
+
+        console.error(error);
+
+        this.actionError.set(error?.error?.message || failText);
       }
     });
   }

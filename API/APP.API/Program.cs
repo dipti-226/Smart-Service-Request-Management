@@ -64,6 +64,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 // Business Services
+builder.Services.AddSingleton<PasswordService>();
 builder.Services.AddScoped<RequestService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<AdvancedRequestService>();

@@ -64,6 +64,36 @@ namespace APP.API.Controllers
             return response.Success ? Ok(response) : Fail(response);
         }
 
+        // PUT: api/Employee/requests/5/close
+        // Close own request (only while Resolved)
+        [HttpPut("requests/{id:int}/close")]
+        public async Task<ActionResult<ApiResponse<AdvancedRequestDto>>> CloseOwnRequest(int id)
+        {
+            if (!TryGetUserId(out int userId))
+            {
+                return InvalidUser();
+            }
+
+            var response = await _advancedRequestService.CloseOwnRequestAsync(id, userId);
+
+            return response.Success ? Ok(response) : Fail(response);
+        }
+
+        // PUT: api/Employee/requests/5/reopen
+        // Reopen own request (only while Resolved)
+        [HttpPut("requests/{id:int}/reopen")]
+        public async Task<ActionResult<ApiResponse<AdvancedRequestDto>>> ReopenOwnRequest(int id)
+        {
+            if (!TryGetUserId(out int userId))
+            {
+                return InvalidUser();
+            }
+
+            var response = await _advancedRequestService.ReopenOwnRequestAsync(id, userId);
+
+            return response.Success ? Ok(response) : Fail(response);
+        }
+
         private bool TryGetUserId(out int userId)
         {
             return int.TryParse(User.FindFirst("userId")?.Value, out userId);

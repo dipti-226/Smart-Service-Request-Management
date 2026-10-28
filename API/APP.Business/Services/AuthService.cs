@@ -14,10 +14,12 @@ namespace APP.Business.Services
     {
         private readonly string _connectionString;
         private readonly IConfiguration _configuration;
+        private readonly PasswordService _passwordService;
 
-        public AuthService(IConfiguration configuration)
+        public AuthService(IConfiguration configuration, PasswordService passwordService)
         {
             _configuration = configuration;
+            _passwordService = passwordService;
 
             _connectionString =
                 configuration.GetConnectionString("DefaultConnection")
@@ -26,32 +28,43 @@ namespace APP.Business.Services
 
         public async Task<ApiResponse<LoginResponseDto>> LoginAsync(LoginRequestDto dto)
         {
-            await using SqlConnection connection = new SqlConnection(_connectionString);
-            await using SqlCommand command = new SqlCommand("SSR_User_GetByUsername", connection);
+            int userId;
+            string username;
+            string storedPassword;
+            string roleName;
 
-            command.CommandType = CommandType.StoredProcedure;
+            await using (SqlConnection connection = new SqlConnection(_connectionString))
+            await using (SqlCommand command = new SqlCommand("SSR_User_GetByUsername", connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
 
-            command.Parameters.Add("@Username",SqlDbType.NVarChar,50).Value = dto.Username.Trim();
+                command.Parameters.Add("@Username", SqlDbType.NVarChar, 50).Value = dto.Username.Trim();
 
-            await connection.OpenAsync();
-            await using SqlDataReader reader = await command.ExecuteReaderAsync();
+                await connection.OpenAsync();
+                await using SqlDataReader reader = await command.ExecuteReaderAsync();
 
-            if (!await reader.ReadAsync())
+                if (!await reader.ReadAsync())
+                {
+                    _passwordService.VerifyDummy(dto.Password);
+                    return InvalidLoginResponse();
+                }
+
+                userId = Convert.ToInt32(reader["UserId"]);
+                username = reader["Username"]?.ToString() ?? string.Empty;
+                storedPassword = reader["Password"]?.ToString() ?? string.Empty;
+                roleName = reader["RoleName"]?.ToString() ?? string.Empty;
+            }
+
+            PasswordCheckResult check = _passwordService.Verify(storedPassword, dto.Password);
+
+            if (check == PasswordCheckResult.Failed)
             {
                 return InvalidLoginResponse();
             }
 
-            int userId = Convert.ToInt32(reader["UserId"]);
-            string username = reader["Username"]?.ToString() ?? string.Empty;
-            string storedPassword = reader["Password"]?.ToString() ?? string.Empty;
-            string roleName = reader["RoleName"]?.ToString() ?? string.Empty;
-
-            if (!string.Equals(
-                    dto.Password,
-                    storedPassword,
-                    StringComparison.Ordinal))
+            if (check == PasswordCheckResult.ValidRehashNeeded)
             {
-                return InvalidLoginResponse();
+                await UpgradePasswordHashAsync(userId, dto.Password);
             }
 
             int expiryMinutes = GetExpiryMinutes();
@@ -77,6 +90,22 @@ namespace APP.Business.Services
             };
         }
 
+        private async Task UpgradePasswordHashAsync(int userId, string plainPassword)
+        {
+            await using SqlConnection connection = new SqlConnection(_connectionString);
+            await using SqlCommand command = new SqlCommand("SSR_User_UpdatePassword", connection);
+
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add("@UserId", SqlDbType.Int).Value = userId;
+            command.Parameters.Add("@PasswordHash", SqlDbType.NVarChar, 100).Value =
+                _passwordService.Hash(plainPassword);
+
+            await connection.OpenAsync();
+            await command.ExecuteNonQueryAsync();
+        }
+
+
         public async Task<ApiResponse<bool>> RegisterEmployeeAsync(RegisterRequestDto dto)
         {
             await using SqlConnection connection = new SqlConnection(_connectionString);
@@ -86,8 +115,7 @@ namespace APP.Business.Services
 
             command.Parameters.Add("@Username",SqlDbType.NVarChar,50).Value = dto.Username.Trim();
             command.Parameters.Add("@Email",SqlDbType.NVarChar,150).Value = dto.Email.Trim();
-            command.Parameters.Add("@Password",SqlDbType.NVarChar,100).Value = dto.Password;
-
+            command.Parameters.Add("@Password", SqlDbType.NVarChar, 100).Value = _passwordService.Hash(dto.Password);
             await connection.OpenAsync();
 
             await using SqlDataReader reader = await command.ExecuteReaderAsync();
@@ -133,8 +161,7 @@ namespace APP.Business.Services
 
             command.Parameters.Add("@Username",SqlDbType.NVarChar,50).Value = dto.Username.Trim();
             command.Parameters.Add("@Email",SqlDbType.NVarChar,150).Value = dto.Email.Trim();
-            command.Parameters.Add("@Password",SqlDbType.NVarChar,100).Value = dto.Password;
-
+            command.Parameters.Add("@Password", SqlDbType.NVarChar, 100).Value = _passwordService.Hash(dto.Password);
             await connection.OpenAsync();
             await using SqlDataReader reader = await command.ExecuteReaderAsync();
 

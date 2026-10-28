@@ -98,6 +98,22 @@ export class RequestService {
     ).pipe(tap(response => this.notifyStatusChanged(response.success)));
   }
 
+    // Close own request (only while Resolved)
+  closeOwnRequest(id: number): Observable<ApiResponse<AdvancedRequest>> {
+    return this.http.put<ApiResponse<AdvancedRequest>>(
+      `${this.employeeApiUrl}/requests/${id}/close`,
+      {}
+    ).pipe(tap(response => this.notifyStatusChanged(response.success)));
+  }
+
+  // Reopen own request (only while Resolved)
+  reopenOwnRequest(id: number): Observable<ApiResponse<AdvancedRequest>> {
+    return this.http.put<ApiResponse<AdvancedRequest>>(
+      `${this.employeeApiUrl}/requests/${id}/reopen`,
+      {}
+    ).pipe(tap(response => this.notifyStatusChanged(response.success)));
+  }
+
   private notifyStatusChanged(success: boolean): void {
     if (success) {
       this.statusChanged.update(count => count + 1);

@@ -2340,3 +2340,26 @@ BEGIN
     ORDER BY h.ChangedDate, h.HistoryId;
 END;
 GO
+
+
+==================================================
+Date: 28-Oct-2026
+Change: Password hashing - SSR_User_UpdatePassword (used to replace a
+        plain-text password with a hash at login). No table changes.
+==================================================
+
+CREATE OR ALTER PROCEDURE [dbo].[SSR_User_UpdatePassword]
+(
+    @UserId       INT,
+    @PasswordHash NVARCHAR(100)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- UpdatedDate is left alone on purpose: this runs silently at login.
+    UPDATE dbo.Users
+    SET Password = @PasswordHash
+    WHERE UserId = @UserId;
+END;
+GO
