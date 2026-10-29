@@ -1,0 +1,111 @@
+<div class="page">
+
+  <div class="form-card">
+
+    <div class="form-header">
+      <h1>My Profile</h1>
+      <p>Your name and specializations help the admin assign you the right requests.</p>
+    </div>
+
+    @if (isLoading()) {
+
+      <div class="state-message">Loading your profile...</div>
+
+    } @else {
+
+      @if (profile(); as p) {
+
+        <div class="status-row">
+          @if (p.isProfileComplete) {
+            <span class="profile-badge complete">Profile complete</span>
+          } @else {
+            <span class="profile-badge incomplete">Profile incomplete</span>
+          }
+        </div>
+
+        @if (successMessage()) {
+          <div class="success-banner">{{ successMessage() }}</div>
+        }
+
+        @if (errorMessage()) {
+          <div class="error-banner">{{ errorMessage() }}</div>
+        }
+
+        <form [formGroup]="profileForm" (ngSubmit)="save()" novalidate>
+
+          <div class="field">
+            <label>Username</label>
+            <div class="readonly-value">{{ p.username }}</div>
+          </div>
+
+          <div class="field">
+            <label>Email</label>
+            <div class="readonly-value">{{ p.email }}</div>
+          </div>
+
+          <div class="field">
+            <label for="fullName">Full Name</label>
+            <input id="fullName" type="text" formControlName="fullName" autocomplete="name" />
+
+            @if (fullName.touched && fullName.invalid) {
+              <span class="field-error">{{ fullNameError() }}</span>
+            }
+          </div>
+
+          <div class="field">
+            <label for="phone">Phone (optional)</label>
+            <input id="phone" type="tel" formControlName="phone" autocomplete="tel" />
+
+            @if (phone.touched && phone.invalid) {
+              <span class="field-error">{{ phoneError() }}</span>
+            }
+          </div>
+
+          <fieldset class="field specializations">
+            <legend>Specializations</legend>
+            <p class="field-hint">Choose every area you can handle.</p>
+
+            @for (s of p.specializations; track s.specializationId) {
+              <label class="spec-option">
+                <input
+                  type="checkbox"
+                  [checked]="isSelected(s.specializationId)"
+                  (change)="onSpecializationChange(s.specializationId, $event)" />
+                <span class="spec-text">
+                  <strong>{{ s.name }}</strong>
+                  @if (s.requestType) {
+                    <small>Handles {{ s.requestType }} requests</small>
+                  }
+                </span>
+              </label>
+            }
+
+            @if (specializationsTouched() && selectedIds().length === 0) {
+              <span class="field-error">Select at least one specialization.</span>
+            }
+          </fieldset>
+
+          <div class="form-actions">
+            <a routerLink="/assigned-requests" class="cancel-btn">Cancel</a>
+
+            <button type="submit" class="submit-btn" [disabled]="isSaving()">
+              @if (isSaving()) {
+                Saving...
+              } @else {
+                Save Profile
+              }
+            </button>
+          </div>
+
+        </form>
+
+      } @else {
+
+        <div class="error-banner">{{ errorMessage() || 'Unable to load your profile.' }}</div>
+
+      }
+
+    }
+
+  </div>
+</div>

@@ -2465,3 +2465,237 @@ BEGIN
       AND (FailedLoginCount <> 0 OR LockoutEndUtc IS NOT NULL);
 END;
 GO
+
+==================================================
+Date: 29-Oct-2026
+Change: Technician profiles - dbo.Specializations (seeded), dbo.TechnicianSpecializations,
+        dbo.UserProfiles, SSR_TechnicianProfile_GetByUserId, SSR_TechnicianProfile_Save
+==================================================
+USE [SmartServiceRequestDB];
+GO
+
+-- 1. Specializations (lookup). RequestType links each one to the request type it covers.
+IF OBJECT_ID('dbo.Specializations', 'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[Specializations]
+    (
+        [SpecializationId] INT IDENTITY(1,1) NOT NULL
+            CONSTRAINT [PK_Specializations] PRIMARY KEY,
+        [Name]             NVARCHAR(100) NOT NULL,
+        [RequestType]      NVARCHAR(100) NULL,
+        [IsActive]         BIT NOT NULL
+            CONSTRAINT [DF_Specializations_IsActive] DEFAULT (1),
+        [CreatedDate]      DATETIME2(7) NOT NULL
+            CONSTRAINT [DF_Specializations_CreatedDate] DEFAULT (SYSUTCDATETIME())
+    );
+
+    CREATE UNIQUE INDEX [UX_Specializations_Name]
+        ON [dbo].[Specializations]([Name]);
+END;
+GO
+
+INSERT INTO dbo.Specializations (Name, RequestType)
+SELECT v.Name, v.RequestType
+FROM (VALUES
+    (N'Computer Support', N'Computer'),
+    (N'Network Support',  N'Network'),
+    (N'Software Support', N'Software'),
+    (N'Hardware Repair',  N'Hardware'),
+    (N'General Support',  N'Other')
+) AS v(Name, RequestType)
+WHERE NOT EXISTS (SELECT 1 FROM dbo.Specializations s WHERE s.Name = v.Name);
+GO
+
+-- 2. Which specializations each technician has chosen
+IF OBJECT_ID('dbo.TechnicianSpecializations', 'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[TechnicianSpecializations]
+    (
+        [TechnicianId]     INT NOT NULL,
+        [SpecializationId] INT NOT NULL,
+
+        CONSTRAINT [PK_TechnicianSpecializations]
+            PRIMARY KEY ([TechnicianId], [SpecializationId]),
+
+        CONSTRAINT [FK_TechnicianSpecializations_Technicians]
+            FOREIGN KEY ([TechnicianId]) REFERENCES [dbo].[Technicians]([TechnicianId])
+            ON DELETE CASCADE,
+
+        CONSTRAINT [FK_TechnicianSpecializations_Specializations]
+            FOREIGN KEY ([SpecializationId]) REFERENCES [dbo].[Specializations]([SpecializationId])
+    );
+END;
+GO
+
+-- 3. Profile details (shared by all roles, so admin/employee profiles can reuse it later)
+IF OBJECT_ID('dbo.UserProfiles', 'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[UserProfiles]
+    (
+        [UserId]      INT NOT NULL
+            CONSTRAINT [PK_UserProfiles] PRIMARY KEY,
+        [FullName]    NVARCHAR(100) NOT NULL,
+        [Phone]       NVARCHAR(20) NULL,
+        [CreatedDate] DATETIME2(7) NOT NULL
+            CONSTRAINT [DF_UserProfiles_CreatedDate] DEFAULT (SYSUTCDATETIME()),
+        [UpdatedDate] DATETIME2(7) NULL,
+
+        CONSTRAINT [FK_UserProfiles_Users]
+            FOREIGN KEY ([UserId]) REFERENCES [dbo].[Users]([UserId])
+            ON DELETE CASCADE
+    );
+END;
+GO
+
+-- 4. Read a technician's profile: two result sets
+--    (1) the profile row, no row = this user is not an active technician
+--    (2) every active specialization, flagged when the technician has chosen it
+CREATE OR ALTER PROCEDURE [dbo].[SSR_TechnicianProfile_GetByUserId]
+(
+    @UserId INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @TechnicianId INT;
+
+    SELECT @TechnicianId = t.TechnicianId
+    FROM dbo.Technicians t
+    WHERE t.UserId = @UserId
+      AND t.IsActive = 1;
+
+    SELECT
+        u.UserId,
+        u.Username,
+        u.Email,
+        @TechnicianId AS TechnicianId,
+        ISNULL(p.FullName, N'') AS FullName,
+        ISNULL(p.Phone, N'')    AS Phone,
+        CAST(
+            CASE
+                WHEN p.UserId IS NOT NULL
+                 AND EXISTS
+                     (
+                         SELECT 1
+                         FROM dbo.TechnicianSpecializations ts
+                         INNER JOIN dbo.Specializations s
+                             ON s.SpecializationId = ts.SpecializationId
+                            AND s.IsActive = 1
+                         WHERE ts.TechnicianId = @TechnicianId
+                     )
+                THEN 1 ELSE 0
+            END AS BIT) AS IsProfileComplete
+    FROM dbo.Users u
+    LEFT JOIN dbo.UserProfiles p
+        ON p.UserId = u.UserId
+    WHERE u.UserId = @UserId
+      AND @TechnicianId IS NOT NULL;
+
+    SELECT
+        s.SpecializationId,
+        s.Name,
+        ISNULL(s.RequestType, N'') AS RequestType,
+        CAST(CASE WHEN ts.TechnicianId IS NULL THEN 0 ELSE 1 END AS BIT) AS IsSelected
+    FROM dbo.Specializations s
+    LEFT JOIN dbo.TechnicianSpecializations ts
+        ON ts.SpecializationId = s.SpecializationId
+       AND ts.TechnicianId = @TechnicianId
+    WHERE s.IsActive = 1
+    ORDER BY s.Name;
+END;
+GO
+
+-- 5. Save a technician's profile and specializations in one transaction
+--    @SpecializationIds is a comma-separated list, for example '1,4'
+CREATE OR ALTER PROCEDURE [dbo].[SSR_TechnicianProfile_Save]
+(
+    @UserId            INT,
+    @FullName          NVARCHAR(100),
+    @Phone             NVARCHAR(20) = NULL,
+    @SpecializationIds NVARCHAR(500)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    DECLARE @TechnicianId INT;
+
+    SELECT @TechnicianId = TechnicianId
+    FROM dbo.Technicians
+    WHERE UserId = @UserId
+      AND IsActive = 1;
+
+    IF @TechnicianId IS NULL
+    BEGIN
+        SELECT CAST(0 AS BIT) AS Success, 'TECHNICIAN_NOT_FOUND' AS ErrorCode;
+        RETURN;
+    END;
+
+    DECLARE @Wanted TABLE (SpecializationId INT PRIMARY KEY);
+
+    INSERT INTO @Wanted (SpecializationId)
+    SELECT DISTINCT TRY_CAST(LTRIM(RTRIM([value])) AS INT)
+    FROM STRING_SPLIT(@SpecializationIds, ',')
+    WHERE TRY_CAST(LTRIM(RTRIM([value])) AS INT) IS NOT NULL;
+
+    IF NOT EXISTS (SELECT 1 FROM @Wanted)
+    BEGIN
+        SELECT CAST(0 AS BIT) AS Success, 'NO_SPECIALIZATION' AS ErrorCode;
+        RETURN;
+    END;
+
+    -- Every chosen id must be an active specialization
+    IF EXISTS
+    (
+        SELECT 1
+        FROM @Wanted w
+        WHERE NOT EXISTS
+        (
+            SELECT 1
+            FROM dbo.Specializations s
+            WHERE s.SpecializationId = w.SpecializationId
+              AND s.IsActive = 1
+        )
+    )
+    BEGIN
+        SELECT CAST(0 AS BIT) AS Success, 'INVALID_SPECIALIZATION' AS ErrorCode;
+        RETURN;
+    END;
+
+    BEGIN TRANSACTION;
+
+    UPDATE dbo.UserProfiles WITH (UPDLOCK, SERIALIZABLE)
+    SET FullName    = @FullName,
+        Phone       = NULLIF(LTRIM(RTRIM(@Phone)), N''),
+        UpdatedDate = SYSUTCDATETIME()
+    WHERE UserId = @UserId;
+
+    IF @@ROWCOUNT = 0
+    BEGIN
+        INSERT INTO dbo.UserProfiles (UserId, FullName, Phone)
+        VALUES (@UserId, @FullName, NULLIF(LTRIM(RTRIM(@Phone)), N''));
+    END;
+
+    DELETE ts
+    FROM dbo.TechnicianSpecializations ts
+    WHERE ts.TechnicianId = @TechnicianId
+      AND ts.SpecializationId NOT IN (SELECT SpecializationId FROM @Wanted);
+
+    INSERT INTO dbo.TechnicianSpecializations (TechnicianId, SpecializationId)
+    SELECT @TechnicianId, w.SpecializationId
+    FROM @Wanted w
+    WHERE NOT EXISTS
+    (
+        SELECT 1
+        FROM dbo.TechnicianSpecializations ts
+        WHERE ts.TechnicianId = @TechnicianId
+          AND ts.SpecializationId = w.SpecializationId
+    );
+
+    COMMIT TRANSACTION;
+
+    SELECT CAST(1 AS BIT) AS Success, CAST(NULL AS VARCHAR(30)) AS ErrorCode;
+END;
+GO

@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import {authGuard,roleGuard,rootRedirectGuard} from './core/guards/auth.guard';
+import { authGuard, roleGuard, rootRedirectGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -97,7 +97,16 @@ export const routes: Routes = [
         .then(m => m.TechnicianFormComponent)
   },
 
-    {
+  {
+    path: 'technician/profile',
+    title: 'My Profile',
+    canActivate: [roleGuard],
+    data: { roles: ['Technician'] },
+    loadComponent: () =>
+      import('./features/technician/technician-profile/technician-profile')
+        .then(m => m.TechnicianProfileComponent)
+  },
+  {
     path: 'assigned-requests',
     title: 'Assigned Requests',
     canActivate: [roleGuard],
@@ -115,8 +124,8 @@ export const routes: Routes = [
       import('./features/technician/assigned-request-details/assigned-request-details')
         .then(m => m.AssignedRequestDetailsComponent)
   },
-  
-    {
+
+  {
     path: 'my-requests/:id',
     title: 'Request Details',
     canActivate: [roleGuard],
@@ -134,7 +143,7 @@ export const routes: Routes = [
       import('./features/employee/my-request-edit/my-request-edit')
         .then(m => m.MyRequestEditComponent)
   },
-  
+
   {
     path: 'no-access',
     title: 'No Access',

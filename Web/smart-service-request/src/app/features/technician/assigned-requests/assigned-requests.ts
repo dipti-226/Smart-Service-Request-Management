@@ -10,11 +10,19 @@ import { PagedListState } from '../../../core/utils/paged-list-state';
 import { ListFilterBarComponent } from '../../../shared/components/list-filter-bar/list-filter-bar';
 import { PagerComponent } from '../../../shared/components/pager/pager';
 import { OpenAgeComponent } from '../../../shared/components/open-age/open-age';
+import { ProfileReminderComponent } from '../../../shared/components/profile-reminder/profile-reminder';
 
 @Component({
   selector: 'app-assigned-requests',
   standalone: true,
-  imports: [RouterLink, DatePipe, ListFilterBarComponent, PagerComponent, OpenAgeComponent],
+  imports: [
+    RouterLink,
+    DatePipe,
+    ListFilterBarComponent,
+    PagerComponent,
+    OpenAgeComponent,
+    ProfileReminderComponent
+  ],
   templateUrl: './assigned-requests.html',
   styleUrl: './assigned-requests.css'
 })
