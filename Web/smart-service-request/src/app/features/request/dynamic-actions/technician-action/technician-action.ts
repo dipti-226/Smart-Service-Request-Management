@@ -1,11 +1,12 @@
-import {Component,EventEmitter,Input,Output} from '@angular/core';
+import {Component,DestroyRef,EventEmitter,Input,OnInit,Output,inject,signal} from '@angular/core';
 
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 
-import {
-  AdvancedRequest,
-  Technician
-} from '../../../../core/models/request.model';
+import {AdvancedRequest,Technician} from '../../../../core/models/request.model';
+
+import { TechnicianRecommendation } from '../../../../core/models/technician-recommendation.model';
+import { TechnicianRecommendationService } from '../../../../core/services/technician-recommendation.service';
 
 // Statuses that count as a technician's active workload (same list as the API)
 const ACTIVE_STATUSES = ['Open', 'In Progress', 'On Hold'];
@@ -20,7 +21,10 @@ const LOCKED_STATUSES = ['Cancelled', 'Closed'];
   templateUrl: './technician-action.html',
   styleUrl: './technician-action.css'
 })
-export class TechnicianActionComponent {
+export class TechnicianActionComponent implements OnInit {
+
+  private readonly recommendationService = inject(TechnicianRecommendationService);
+  private readonly destroyRef = inject(DestroyRef);
 
   @Input()
   request!: AdvancedRequest;
@@ -33,6 +37,49 @@ export class TechnicianActionComponent {
     new EventEmitter<number>();
 
   selectedTechnicianId: number | null = null;
+
+  // The technician the server suggests for this request (null until loaded, or on error)
+  recommendation = signal<TechnicianRecommendation | null>(null);
+
+  ngOnInit(): void {
+
+    if (!this.request || this.isAssignmentLocked) {
+      return;
+    }
+
+    this.recommendationService
+      .getForRequest(this.request.requestId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+
+        next: response => {
+          if (response.success && response.data) {
+            this.recommendation.set(response.data);
+          }
+        },
+
+        // The recommendation is optional: if it fails, the dropdown still works
+        error: () => { }
+      });
+  }
+
+  // true when the request already has the recommended technician
+  get recommendationIsCurrent(): boolean {
+
+    const rec = this.recommendation();
+
+    return !!rec && rec.technicianId === this.request?.technicianId;
+  }
+
+  // Selects the recommended technician in the dropdown (nothing is assigned yet)
+  useRecommended(): void {
+
+    const rec = this.recommendation();
+
+    if (rec?.technicianId) {
+      this.selectedTechnicianId = rec.technicianId;
+    }
+  }
 
   // Cancelled and Closed requests cannot get a technician any more
   get isAssignmentLocked(): boolean {

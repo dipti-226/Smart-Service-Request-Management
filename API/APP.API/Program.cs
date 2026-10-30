@@ -75,6 +75,7 @@ builder.Services.AddScoped<CommentService>();
 builder.Services.AddScoped<RequestHistoryService>();
 builder.Services.AddScoped<RequestExportService>();
 builder.Services.AddScoped<TechnicianProfileService>();
+builder.Services.AddScoped<TechnicianRecommendationService>();
 
 
 // JWT signing and validation configuration.

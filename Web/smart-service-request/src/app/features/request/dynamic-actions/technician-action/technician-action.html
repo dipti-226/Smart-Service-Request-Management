@@ -33,6 +33,44 @@
 
   <div class="technician-form">
 
+    @if (!isAssignmentLocked) {
+
+    @if (recommendation(); as rec) {
+
+    @if (rec.hasRecommendation) {
+
+    <div class="recommendation-card">
+
+      <div class="recommendation-title">Recommended technician</div>
+
+      <div class="recommendation-name">
+        {{ rec.technicianName }} · {{ rec.activeRequests }}/{{ rec.maxActiveRequests }}
+      </div>
+
+      <p class="recommendation-reason">{{ rec.reason }}</p>
+
+      @if (recommendationIsCurrent) {
+
+      <small class="recommendation-current">
+        This request is already assigned to the recommended technician.
+      </small>
+
+      } @else {
+
+      <button type="button" class="use-recommended-btn" (click)="useRecommended()">
+        Use this technician
+      </button>
+
+      }
+
+    </div>
+
+    }
+
+    }
+
+    }
+
     @if (isAssignmentLocked) {
 
     <p class="capacity-note locked">

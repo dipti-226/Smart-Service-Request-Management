@@ -33,6 +33,52 @@
   cursor: not-allowed;
 }
 
+.recommendation-card {
+  padding: 14px 16px;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  background: #f0fdf4;
+}
+
+.recommendation-title {
+  color: #166534;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.recommendation-name {
+  margin-top: 4px;
+  color: #14532d;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.recommendation-reason {
+  margin: 6px 0 10px;
+  color: #166534;
+  font-size: 14px;
+}
+
+.recommendation-current {
+  color: #166534;
+  font-size: 13px;
+}
+
+.technician-form .use-recommended-btn {
+  border: none;
+  border-radius: 8px;
+  background: #16a34a;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.technician-form .use-recommended-btn:hover {
+  background: #15803d;
+}
+
 .capacity-note {
   margin: 0;
   padding: 10px 12px;

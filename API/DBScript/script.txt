@@ -2857,3 +2857,93 @@ BEGIN
 
 END;
 GO
+
+==================================================
+Date: 30-Oct-2026
+Change: Technician recommendation - SSR_Request_GetRecommendedTechnician
+==================================================
+USE [SmartServiceRequestDB];
+GO
+
+-- Picks the technician to recommend for a request:
+--   specialists for the request type first, then the lightest workload, then name.
+-- A technician at the workload limit is never recommended (unless the request is already theirs).
+CREATE OR ALTER PROCEDURE [dbo].[SSR_Request_GetRecommendedTechnician]
+(
+    @RequestId         INT,
+    @MaxActiveRequests INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @RequestType         NVARCHAR(100);
+    DECLARE @Status              NVARCHAR(30);
+    DECLARE @CurrentTechnicianId INT;
+
+    SELECT
+        @RequestType = RequestType,
+        @Status = Status,
+        @CurrentTechnicianId = TechnicianId
+    FROM dbo.Requests
+    WHERE RequestId = @RequestId
+      AND IsActive = 1;
+
+    IF @RequestType IS NULL
+    BEGIN
+        SELECT 'REQUEST_NOT_FOUND' AS ErrorCode;
+        RETURN;
+    END;
+
+    -- Final statuses: no technician can be assigned any more
+    IF @Status IN (N'Cancelled', N'Closed')
+    BEGIN
+        SELECT 'REQUEST_LOCKED' AS ErrorCode;
+        RETURN;
+    END;
+
+    -- Only active work adds to a technician's workload (same rule as the assignment check)
+    DECLARE @CountsAsWorkload BIT =
+        CASE WHEN @Status IN (N'Open', N'In Progress', N'On Hold') THEN 1 ELSE 0 END;
+
+    SELECT TOP (1)
+        t.TechnicianId,
+        t.TechnicianName,
+        @RequestType AS RequestType,
+        w.ActiveRequests,
+        CAST(
+            CASE
+                WHEN EXISTS
+                (
+                    SELECT 1
+                    FROM dbo.TechnicianSpecializations ts
+                    INNER JOIN dbo.Specializations s
+                        ON s.SpecializationId = ts.SpecializationId
+                       AND s.IsActive = 1
+                    WHERE ts.TechnicianId = t.TechnicianId
+                      AND s.RequestType = @RequestType
+                )
+                THEN 1 ELSE 0
+            END AS BIT) AS MatchesSpecialization
+    FROM dbo.Technicians t
+    CROSS APPLY
+    (
+        SELECT COUNT(*) AS ActiveRequests
+        FROM dbo.Requests r
+        WHERE r.TechnicianId = t.TechnicianId
+          AND r.IsActive = 1
+          AND r.Status IN (N'Open', N'In Progress', N'On Hold')
+    ) w
+    WHERE t.IsActive = 1
+      AND
+      (
+          @CountsAsWorkload = 0
+          OR w.ActiveRequests < @MaxActiveRequests
+          OR t.TechnicianId = @CurrentTechnicianId
+      )
+    ORDER BY
+        MatchesSpecialization DESC,
+        w.ActiveRequests ASC,
+        t.TechnicianName ASC;
+END;
+GO
