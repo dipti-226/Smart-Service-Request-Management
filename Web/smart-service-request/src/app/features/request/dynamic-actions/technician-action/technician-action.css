@@ -79,6 +79,69 @@
   background: #15803d;
 }
 
+.ai-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid #ddd6fe;
+  border-radius: 10px;
+  background: #f5f3ff;
+}
+
+.ai-title {
+  color: #5b21b6;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.ai-reason {
+  margin: 0;
+  color: #4c1d95;
+  font-size: 14px;
+}
+
+.ai-order {
+  margin: 0;
+  padding-left: 20px;
+  color: #4c1d95;
+  font-size: 14px;
+}
+
+.ai-hint {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.ai-note {
+  margin: 0;
+  color: #4c1d95;
+  font-size: 14px;
+}
+
+.ai-error {
+  margin: 0;
+  color: #b91c1c;
+  font-size: 14px;
+}
+
+.technician-form .ai-btn,
+.technician-form .ai-use-btn {
+  border: none;
+  border-radius: 8px;
+  background: #7c3aed;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.technician-form .ai-btn:hover:not(:disabled),
+.technician-form .ai-use-btn:hover {
+  background: #6d28d9;
+}
+
 .capacity-note {
   margin: 0;
   padding: 10px 12px;

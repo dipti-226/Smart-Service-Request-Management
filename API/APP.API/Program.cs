@@ -1,3 +1,4 @@
+using APP.Business.Ai;
 using APP.Business.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -77,6 +78,14 @@ builder.Services.AddScoped<RequestExportService>();
 builder.Services.AddScoped<TechnicianProfileService>();
 builder.Services.AddScoped<TechnicianRecommendationService>();
 
+// AI (optional). Nothing here runs unless Ai:Enabled is true and a key is configured.
+int aiTimeoutSeconds = Math.Clamp(builder.Configuration.GetValue<int>("Ai:TimeoutSeconds", 10), 2, 30);
+
+builder.Services.AddHttpClient<GroqAiClient>(client => client.Timeout = TimeSpan.FromSeconds(aiTimeoutSeconds));
+builder.Services.AddHttpClient<GeminiAiClient>(client => client.Timeout = TimeSpan.FromSeconds(aiTimeoutSeconds));
+
+builder.Services.AddScoped<AiService>();
+builder.Services.AddScoped<TechnicianAiService>();
 
 // JWT signing and validation configuration.
 var jwtSection = builder.Configuration.GetSection("Jwt");
@@ -109,13 +118,15 @@ builder.Services
 // Authorization
 builder.Services.AddAuthorization();
 
-// Rate limiting (applied to login and register only, see AuthController)
+// Rate limiting (login, register and the AI button, see the controllers)
 var rateLimitSection = builder.Configuration.GetSection("RateLimiting");
 
 int loginPermitLimit = Math.Max(1, rateLimitSection.GetValue<int>("Login:PermitLimit", 20));
 int loginWindowSeconds = Math.Max(1, rateLimitSection.GetValue<int>("Login:WindowSeconds", 60));
 int registerPermitLimit = Math.Max(1, rateLimitSection.GetValue<int>("Register:PermitLimit", 10));
 int registerWindowSeconds = Math.Max(1, rateLimitSection.GetValue<int>("Register:WindowSeconds", 600));
+int aiPermitLimit = Math.Max(1, rateLimitSection.GetValue<int>("Ai:PermitLimit", 6));
+int aiWindowSeconds = Math.Max(1, rateLimitSection.GetValue<int>("Ai:WindowSeconds", 60));
 bool trustForwardedHeaders = rateLimitSection.GetValue<bool>("TrustForwardedHeaders", false);
 
 // One counter per client IP address
@@ -146,6 +157,17 @@ builder.Services.AddRateLimiter(options =>
             {
                 PermitLimit = registerPermitLimit,
                 Window = TimeSpan.FromSeconds(registerWindowSeconds),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
+
+    options.AddPolicy("ai", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            GetClientKey(httpContext),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = aiPermitLimit,
+                Window = TimeSpan.FromSeconds(aiWindowSeconds),
                 QueueLimit = 0,
                 AutoReplenishment = true
             }));

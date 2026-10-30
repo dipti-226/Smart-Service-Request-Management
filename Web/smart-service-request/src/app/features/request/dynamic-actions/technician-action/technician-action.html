@@ -65,6 +65,69 @@
 
     </div>
 
+    @if (aiEnabled()) {
+
+    <div class="ai-box">
+
+      @if (!aiResult()) {
+
+      <button type="button" class="ai-btn" [disabled]="aiLoading()" (click)="askAi()">
+        @if (aiLoading()) {
+        Asking AI...
+        } @else {
+        Ask AI for a second opinion
+        }
+      </button>
+
+      <small class="ai-hint">
+        The AI only compares technicians who are already eligible. The final choice is yours,
+        and the workload limit is checked again when you assign.
+      </small>
+
+      }
+
+      @if (aiError()) {
+      <p class="ai-error">{{ aiError() }}</p>
+      }
+
+      @if (aiResult(); as ai) {
+
+      @if (ai.aiUsed) {
+
+      <div class="ai-title">AI second opinion</div>
+
+      <p class="ai-reason">{{ ai.reason }}</p>
+
+      <ol class="ai-order">
+        @for (t of ai.technicians.slice(0, 3); track t.technicianId) {
+        <li>{{ t.technicianName }} · {{ t.activeRequests }}/{{ t.maxActiveRequests }}</li>
+        }
+      </ol>
+
+      @if (ai.aiChangedTopChoice) {
+      <small class="ai-hint">
+        The AI preferred a different technician than the standard rule. Both are valid, so you decide.
+      </small>
+      }
+
+      @if (ai.recommendedTechnicianId && ai.recommendedTechnicianId !== request.technicianId) {
+      <button type="button" class="ai-use-btn" (click)="selectTechnician(ai.recommendedTechnicianId)">
+        Use the AI's top choice
+      </button>
+      }
+
+      } @else {
+
+      <p class="ai-note">{{ ai.note }}</p>
+
+      }
+
+      }
+
+    </div>
+
+    }
+
     }
 
     }

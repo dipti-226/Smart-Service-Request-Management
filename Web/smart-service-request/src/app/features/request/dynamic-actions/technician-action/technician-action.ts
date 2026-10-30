@@ -5,7 +5,9 @@ import { FormsModule } from '@angular/forms';
 
 import {AdvancedRequest,Technician} from '../../../../core/models/request.model';
 
+import { AiTechnicianSuggestion } from '../../../../core/models/ai.model';
 import { TechnicianRecommendation } from '../../../../core/models/technician-recommendation.model';
+import { AiService } from '../../../../core/services/ai.service';
 import { TechnicianRecommendationService } from '../../../../core/services/technician-recommendation.service';
 
 // Statuses that count as a technician's active workload (same list as the API)
@@ -24,6 +26,7 @@ const LOCKED_STATUSES = ['Cancelled', 'Closed'];
 export class TechnicianActionComponent implements OnInit {
 
   private readonly recommendationService = inject(TechnicianRecommendationService);
+  private readonly aiService = inject(AiService);
   private readonly destroyRef = inject(DestroyRef);
 
   @Input()
@@ -40,6 +43,12 @@ export class TechnicianActionComponent implements OnInit {
 
   // The technician the server suggests for this request (null until loaded, or on error)
   recommendation = signal<TechnicianRecommendation | null>(null);
+
+  // AI second opinion (only used when the AI is switched on in the API settings)
+  aiEnabled = signal(false);
+  aiLoading = signal(false);
+  aiResult = signal<AiTechnicianSuggestion | null>(null);
+  aiError = signal('');
 
   ngOnInit(): void {
 
@@ -61,6 +70,12 @@ export class TechnicianActionComponent implements OnInit {
         // The recommendation is optional: if it fails, the dropdown still works
         error: () => { }
       });
+
+    // Any problem here simply means "AI off": the screen stays exactly as it was
+    this.aiService
+      .isEnabled()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(enabled => this.aiEnabled.set(enabled));
   }
 
   // true when the request already has the recommended technician
@@ -77,8 +92,58 @@ export class TechnicianActionComponent implements OnInit {
     const rec = this.recommendation();
 
     if (rec?.technicianId) {
-      this.selectedTechnicianId = rec.technicianId;
+      this.selectTechnician(rec.technicianId);
     }
+  }
+
+  // Selects a technician in the dropdown, only if the dropdown actually offers them
+  selectTechnician(technicianId: number): void {
+
+    if (this.availableTechnicians.some(t => t.technicianId === technicianId)) {
+      this.selectedTechnicianId = technicianId;
+    }
+  }
+
+  // Asks the AI for a second opinion. The server only lets it reorder and explain
+  // technicians that are already eligible, and re-checks everything when you assign.
+  askAi(): void {
+
+    if (!this.request || this.aiLoading()) {
+      return;
+    }
+
+    this.aiLoading.set(true);
+    this.aiError.set('');
+    this.aiResult.set(null);
+
+    this.aiService
+      .suggestTechnician(this.request.requestId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+
+        next: response => {
+
+          this.aiLoading.set(false);
+
+          if (!response.success || !response.data) {
+            this.aiError.set(response.message || 'The AI suggestion is not available right now.');
+            return;
+          }
+
+          this.aiResult.set(response.data);
+        },
+
+        error: error => {
+
+          this.aiLoading.set(false);
+
+          this.aiError.set(
+            error?.status === 429
+              ? 'Too many AI requests. Please wait a minute and try again.'
+              : error?.error?.message || 'The AI suggestion is not available right now.'
+          );
+        }
+      });
   }
 
   // Cancelled and Closed requests cannot get a technician any more

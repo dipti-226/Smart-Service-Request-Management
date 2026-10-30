@@ -2947,3 +2947,180 @@ BEGIN
         t.TechnicianName ASC;
 END;
 GO
+
+==================================================
+Date: 30-Oct-2026
+Change: AI foundation - dbo.AiUsage, SSR_AiUsage_TryConsume, SSR_Request_GetEligibleTechnicians
+==================================================
+USE [SmartServiceRequestDB];
+GO
+
+-- Daily AI usage per user (used for the daily caps)
+IF OBJECT_ID('dbo.AiUsage', 'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[AiUsage]
+    (
+        [UsageDate] DATE NOT NULL,
+        [UserId]    INT  NOT NULL,
+        [Calls]     INT  NOT NULL
+            CONSTRAINT [DF_AiUsage_Calls] DEFAULT (0),
+
+        CONSTRAINT [PK_AiUsage] PRIMARY KEY ([UsageDate], [UserId]),
+
+        CONSTRAINT [FK_AiUsage_Users]
+            FOREIGN KEY ([UserId]) REFERENCES [dbo].[Users]([UserId])
+            ON DELETE CASCADE
+    );
+END;
+GO
+
+-- Counts one AI call if the user and the daily totals are under their limits
+CREATE OR ALTER PROCEDURE [dbo].[SSR_AiUsage_TryConsume]
+(
+    @UserId           INT,
+    @DailyLimitPerUser INT,
+    @DailyLimitTotal  INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    DECLARE @Today      DATE = CAST(SYSUTCDATETIME() AS DATE);
+    DECLARE @TotalCalls INT;
+    DECLARE @UserCalls  INT;
+
+    BEGIN TRANSACTION;
+
+    SELECT @TotalCalls = ISNULL(SUM(Calls), 0)
+    FROM dbo.AiUsage WITH (UPDLOCK, HOLDLOCK)
+    WHERE UsageDate = @Today;
+
+    SELECT @UserCalls = ISNULL(MAX(Calls), 0)
+    FROM dbo.AiUsage
+    WHERE UsageDate = @Today
+      AND UserId = @UserId;
+
+    IF @TotalCalls >= @DailyLimitTotal OR @UserCalls >= @DailyLimitPerUser
+    BEGIN
+        ROLLBACK TRANSACTION;
+        SELECT CAST(0 AS BIT) AS Allowed;
+        RETURN;
+    END;
+
+    UPDATE dbo.AiUsage
+    SET Calls = Calls + 1
+    WHERE UsageDate = @Today
+      AND UserId = @UserId;
+
+    IF @@ROWCOUNT = 0
+    BEGIN
+        INSERT INTO dbo.AiUsage (UsageDate, UserId, Calls)
+        VALUES (@Today, @UserId, 1);
+    END;
+
+    COMMIT TRANSACTION;
+
+    SELECT CAST(1 AS BIT) AS Allowed;
+END;
+GO
+
+-- Request details + every ELIGIBLE technician, in rule order
+-- (specialists first, then lightest workload, then name).
+-- Same eligibility rules as the recommendation and the assignment check.
+CREATE OR ALTER PROCEDURE [dbo].[SSR_Request_GetEligibleTechnicians]
+(
+    @RequestId         INT,
+    @MaxActiveRequests INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @RequestType         NVARCHAR(100);
+    DECLARE @Priority            NVARCHAR(20);
+    DECLARE @Description         NVARCHAR(1000);
+    DECLARE @Status              NVARCHAR(30);
+    DECLARE @CurrentTechnicianId INT;
+
+    SELECT
+        @RequestType = RequestType,
+        @Priority = Priority,
+        @Description = RequestDescription,
+        @Status = Status,
+        @CurrentTechnicianId = TechnicianId
+    FROM dbo.Requests
+    WHERE RequestId = @RequestId
+      AND IsActive = 1;
+
+    IF @RequestType IS NULL
+    BEGIN
+        SELECT 'REQUEST_NOT_FOUND' AS ErrorCode;
+        RETURN;
+    END;
+
+    IF @Status IN (N'Cancelled', N'Closed')
+    BEGIN
+        SELECT 'REQUEST_LOCKED' AS ErrorCode;
+        RETURN;
+    END;
+
+    DECLARE @CountsAsWorkload BIT =
+        CASE WHEN @Status IN (N'Open', N'In Progress', N'On Hold') THEN 1 ELSE 0 END;
+
+    -- Result set 1: the request
+    SELECT
+        @RequestType AS RequestType,
+        @Priority    AS Priority,
+        @Description AS RequestDescription;
+
+    -- Result set 2: eligible technicians in rule order
+    SELECT
+        t.TechnicianId,
+        t.TechnicianName,
+        w.ActiveRequests,
+        CAST(
+            CASE
+                WHEN EXISTS
+                (
+                    SELECT 1
+                    FROM dbo.TechnicianSpecializations ts
+                    INNER JOIN dbo.Specializations s
+                        ON s.SpecializationId = ts.SpecializationId
+                       AND s.IsActive = 1
+                    WHERE ts.TechnicianId = t.TechnicianId
+                      AND s.RequestType = @RequestType
+                )
+                THEN 1 ELSE 0
+            END AS BIT) AS MatchesSpecialization,
+        ISNULL(
+            (
+                SELECT STRING_AGG(s2.Name, N', ') WITHIN GROUP (ORDER BY s2.Name)
+                FROM dbo.TechnicianSpecializations ts2
+                INNER JOIN dbo.Specializations s2
+                    ON s2.SpecializationId = ts2.SpecializationId
+                   AND s2.IsActive = 1
+                WHERE ts2.TechnicianId = t.TechnicianId
+            ), N'') AS Specializations
+    FROM dbo.Technicians t
+    CROSS APPLY
+    (
+        SELECT COUNT(*) AS ActiveRequests
+        FROM dbo.Requests r
+        WHERE r.TechnicianId = t.TechnicianId
+          AND r.IsActive = 1
+          AND r.Status IN (N'Open', N'In Progress', N'On Hold')
+    ) w
+    WHERE t.IsActive = 1
+      AND
+      (
+          @CountsAsWorkload = 0
+          OR w.ActiveRequests < @MaxActiveRequests
+          OR t.TechnicianId = @CurrentTechnicianId
+      )
+    ORDER BY
+        MatchesSpecialization DESC,
+        w.ActiveRequests ASC,
+        t.TechnicianName ASC;
+END;
+GO
