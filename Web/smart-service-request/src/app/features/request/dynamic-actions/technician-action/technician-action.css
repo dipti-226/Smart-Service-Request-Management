@@ -26,3 +26,36 @@
   padding: 10px 16px;
   cursor: pointer;
 }
+
+.technician-form select:disabled,
+.technician-form button:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+.capacity-note {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #1e40af;
+  font-size: 14px;
+}
+
+.capacity-note.warning {
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.capacity-note.locked {
+  border-color: #d1d5db;
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.workload-hint {
+  color: #6b7280;
+  font-size: 13px;
+}

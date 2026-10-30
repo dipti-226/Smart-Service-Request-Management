@@ -33,27 +33,54 @@
 
   <div class="technician-form">
 
+    @if (isAssignmentLocked) {
+
+    <p class="capacity-note locked">
+      {{ lockedMessage }}
+    </p>
+
+    } @else if (technicians.length > 0 && availableTechnicians.length === 0) {
+
+    <p class="capacity-note warning">
+      All technicians are at full capacity ({{ maxActiveRequests }} active requests each).
+      Assign this request after a technician finishes one.
+    </p>
+
+    } @else if (hiddenTechnicianNames.length > 0) {
+
+    <p class="capacity-note">
+      At full capacity ({{ maxActiveRequests }} active requests) and not shown:
+      {{ hiddenTechnicianNames.join(', ') }}
+    </p>
+
+    }
+
     <label for="technician">
       Select Technician
     </label>
 
-    <select id="technician" [(ngModel)]="selectedTechnicianId">
+    <select id="technician" [(ngModel)]="selectedTechnicianId"
+      [disabled]="isAssignmentLocked || availableTechnicians.length === 0">
 
       <option [ngValue]="null">
         Select Technician
       </option>
 
-      @for (technician of technicians; track technician.technicianId) {
+      @for (technician of availableTechnicians; track technician.technicianId) {
 
       <option [ngValue]="technician.technicianId">
-        {{ technician.technicianName }}
+        {{ label(technician) }}
       </option>
 
       }
 
     </select>
 
-    <button type="button" (click)="assignTechnician()" [disabled]="!selectedTechnicianId">
+    <small class="workload-hint">
+      The number after each name is active requests / limit (Open, In Progress and On Hold count).
+    </small>
+
+    <button type="button" (click)="assignTechnician()" [disabled]="isAssignmentLocked || !selectedTechnicianId">
       Assign Technician
     </button>
 

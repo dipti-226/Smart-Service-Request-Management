@@ -26,7 +26,7 @@ export interface UpdateRequest {
 
 /*
  * Advanced Request
- * Used by Day-08 Advanced Angular Components
+ * Used by  Advanced Angular Components
  */
 
 export interface AdvancedRequest {
@@ -52,6 +52,16 @@ export interface Technician {
   technicianName: string;
   isActive: boolean;
   createdDate: string;
+
+  // From the technician profile (empty until they complete it)
+  fullName: string;
+  // Comma-separated, for example "Hardware Repair, Network Support"
+  specializations: string;
+
+  // Open + In Progress + On Hold requests, and the limit from the API settings
+  activeRequests: number;
+  maxActiveRequests: number;
+  isAtCapacity: boolean;
 }
 
 

@@ -12,10 +12,18 @@ namespace APP.Business.Services
     {
         private readonly string _connectionString;
 
+        // Most Open / In Progress / On Hold requests one technician may hold at a time
+        private readonly int _maxActiveRequests;
+
         public AdvancedRequestService(IConfiguration configuration)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection")
                 ?? throw new InvalidOperationException("DefaultConnection is not configured.");
+
+            _maxActiveRequests =
+                int.TryParse(configuration["Workload:MaxActiveRequestsPerTechnician"], out int max) && max > 0
+                    ? max
+                    : 3;
         }
         // Get Request Details
 
@@ -50,7 +58,7 @@ namespace APP.Business.Services
 
         // One request, only if it is assigned to the logged-in technician.
         // "Not found" is returned for missing AND not-assigned requests.
-        public async Task<ApiResponse<AdvancedRequestDto>> GetAssignedRequestDetailsAsync(int requestId,int technicianUserId)
+        public async Task<ApiResponse<AdvancedRequestDto>> GetAssignedRequestDetailsAsync(int requestId, int technicianUserId)
         {
             await using SqlConnection connection = new SqlConnection(_connectionString);
             await using SqlCommand command = new SqlCommand("SSR_Request_GetAssignedById", connection);
@@ -172,7 +180,11 @@ namespace APP.Business.Services
         // and the status history are applied exactly as for every other status change.
         public async Task<ApiResponse<AdvancedRequestDto>> CancelOwnRequestAsync(int requestId,int callerUserId)
         {
-            var result = await UpdateRequestStatusAsync(requestId,new UpdateRequestStatusDto { Status = "Cancelled" },callerUserId,"Employee");
+            var result = await UpdateRequestStatusAsync(
+                requestId,
+                new UpdateRequestStatusDto { Status = "Cancelled" },
+                callerUserId,
+                "Employee");
 
             if (result.Success)
             {
@@ -217,7 +229,11 @@ namespace APP.Business.Services
         // are all applied by SSR_Request_UpdateStatus with the Employee role.
         private async Task<ApiResponse<AdvancedRequestDto>> ChangeOwnStatusAsync(int requestId,int callerUserId,string newStatus,string successMessage,string wrongStatusMessage)
         {
-            var result = await UpdateRequestStatusAsync(requestId,new UpdateRequestStatusDto { Status = newStatus },callerUserId,"Employee");
+            var result = await UpdateRequestStatusAsync(
+                requestId,
+                new UpdateRequestStatusDto { Status = newStatus },
+                callerUserId,
+                "Employee");
 
             if (result.Success)
             {
@@ -240,7 +256,7 @@ namespace APP.Business.Services
             return result;
         }
         // Get Technicians
-        public async Task<ApiResponse<List<TechnicianDto>>>GetTechniciansAsync()
+        public async Task<ApiResponse<List<TechnicianDto>>> GetTechniciansAsync()
         {
             await using SqlConnection connection = new SqlConnection(_connectionString);
             await using SqlCommand command = new SqlCommand("SSR_Technician_GetAll", connection);
@@ -260,7 +276,12 @@ namespace APP.Business.Services
                     TechnicianId = Convert.ToInt32(reader["TechnicianId"]),
                     TechnicianName = reader["TechnicianName"]?.ToString() ?? string.Empty,
                     IsActive = Convert.ToBoolean(reader["IsActive"]),
-                    CreatedDate = Convert.ToDateTime(reader["CreatedDate"])
+                    CreatedDate = Convert.ToDateTime(reader["CreatedDate"]),
+                    FullName = reader["FullName"]?.ToString() ?? string.Empty,
+                    Specializations = reader["Specializations"]?.ToString() ?? string.Empty,
+                    ActiveRequests = Convert.ToInt32(reader["ActiveRequests"]),
+                    MaxActiveRequests = _maxActiveRequests,
+                    IsAtCapacity = Convert.ToInt32(reader["ActiveRequests"]) >= _maxActiveRequests
                 });
             }
 
@@ -274,7 +295,7 @@ namespace APP.Business.Services
 
         // Update Request Status
 
-        public async Task<ApiResponse<AdvancedRequestDto>>UpdateRequestStatusAsync(int requestId,UpdateRequestStatusDto dto,int? callerUserId = null,string? callerRole = null)
+        public async Task<ApiResponse<AdvancedRequestDto>> UpdateRequestStatusAsync(int requestId, UpdateRequestStatusDto dto, int? callerUserId = null, string? callerRole = null)
         {
             // Validate status at API/service level
             var allowedStatuses = new[]
@@ -304,8 +325,8 @@ namespace APP.Business.Services
             command.Parameters.AddWithValue("@Status", dto.Status);
 
             // Caller info: used by the SP for ownership, transition rules and history
-            command.Parameters.Add("@CallerUserId", SqlDbType.Int).Value =(object?)callerUserId ?? DBNull.Value;
-            command.Parameters.Add("@CallerRole", SqlDbType.NVarChar, 50).Value =(object?)callerRole ?? DBNull.Value;
+            command.Parameters.Add("@CallerUserId", SqlDbType.Int).Value = (object?)callerUserId ?? DBNull.Value;
+            command.Parameters.Add("@CallerRole", SqlDbType.NVarChar, 50).Value = (object?)callerRole ?? DBNull.Value;
 
             await connection.OpenAsync();
             await using SqlDataReader reader = await command.ExecuteReaderAsync();
@@ -324,7 +345,7 @@ namespace APP.Business.Services
             {
                 string errorCode = reader["ErrorCode"]?.ToString() ?? string.Empty;
 
-                string currentStatus = HasColumn(reader, "CurrentStatus")? reader["CurrentStatus"]?.ToString() ?? string.Empty: string.Empty;
+                string currentStatus = HasColumn(reader, "CurrentStatus") ? reader["CurrentStatus"]?.ToString() ?? string.Empty : string.Empty;
 
                 string message = errorCode switch
                 {
@@ -356,7 +377,7 @@ namespace APP.Business.Services
             };
         }
 
-        public async Task<ApiResponse<List<string>>> GetAllowedStatusesAsync(int requestId,int? callerUserId,string callerRole)
+        public async Task<ApiResponse<List<string>>> GetAllowedStatusesAsync(int requestId, int? callerUserId, string callerRole)
         {
             await using SqlConnection connection = new SqlConnection(_connectionString);
             await using SqlCommand command = new SqlCommand("SSR_Request_GetAllowedStatuses", connection);
@@ -386,13 +407,14 @@ namespace APP.Business.Services
 
         // Assign Technician
 
-        public async Task<ApiResponse<AdvancedRequestDto>>AssignTechnicianAsync(int requestId, AssignTechnicianDto dto)
+        public async Task<ApiResponse<AdvancedRequestDto>> AssignTechnicianAsync(int requestId, AssignTechnicianDto dto)
         {
             await using SqlConnection connection = new SqlConnection(_connectionString);
             await using SqlCommand command = new SqlCommand("SSR_Request_AssignTechnician", connection);
             command.CommandType = CommandType.StoredProcedure;
             command.Parameters.AddWithValue("@RequestId", requestId);
             command.Parameters.AddWithValue("@TechnicianId", dto.TechnicianId);
+            command.Parameters.AddWithValue("@MaxActiveRequests", _maxActiveRequests);
 
             await connection.OpenAsync();
             await using SqlDataReader reader = await command.ExecuteReaderAsync();
@@ -416,6 +438,8 @@ namespace APP.Business.Services
                 {
                     "REQUEST_NOT_FOUND" => "Request not found or already inactive.",
                     "TECHNICIAN_NOT_FOUND" => "Technician not found or inactive.",
+                    "TECHNICIAN_AT_CAPACITY" =>
+                        $"This technician already has {_maxActiveRequests} active requests (Open, In Progress or On Hold), which is the limit. Choose another technician.",
                     _ => "Request or technician not found."
                 };
 

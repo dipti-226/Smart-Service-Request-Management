@@ -2699,3 +2699,161 @@ BEGIN
     SELECT CAST(1 AS BIT) AS Success, CAST(NULL AS VARCHAR(30)) AS ErrorCode;
 END;
 GO
+
+==================================================
+Date: 29-Oct-2026
+Change: Technician workload limit - SSR_Technician_GetAll (adds FullName, Specializations,
+        ActiveRequests), SSR_Request_AssignTechnician (@MaxActiveRequests, TECHNICIAN_AT_CAPACITY)
+==================================================
+USE [SmartServiceRequestDB];
+GO
+
+-- Technician list for the dropdown: now also returns full name, specializations and workload
+CREATE OR ALTER PROCEDURE [dbo].[SSR_Technician_GetAll]
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        t.TechnicianId,
+        t.TechnicianName,
+        t.IsActive,
+        t.CreatedDate,
+        ISNULL(p.FullName, N'') AS FullName,
+        ISNULL(
+            (
+                SELECT STRING_AGG(s.Name, N', ') WITHIN GROUP (ORDER BY s.Name)
+                FROM dbo.TechnicianSpecializations ts
+                INNER JOIN dbo.Specializations s
+                    ON s.SpecializationId = ts.SpecializationId
+                   AND s.IsActive = 1
+                WHERE ts.TechnicianId = t.TechnicianId
+            ), N'') AS Specializations,
+        (
+            SELECT COUNT(*)
+            FROM dbo.Requests r
+            WHERE r.TechnicianId = t.TechnicianId
+              AND r.IsActive = 1
+              AND r.Status IN (N'Open', N'In Progress', N'On Hold')
+        ) AS ActiveRequests
+    FROM dbo.Technicians t
+    LEFT JOIN dbo.UserProfiles p
+        ON p.UserId = t.UserId
+    WHERE t.IsActive = 1
+    ORDER BY t.TechnicianName;
+END;
+GO
+
+-- Assign a technician. @MaxActiveRequests = NULL means "no workload check" (the old behaviour).
+CREATE OR ALTER PROCEDURE [dbo].[SSR_Request_AssignTechnician]
+(
+    @RequestId         INT,
+    @TechnicianId      INT,
+    @MaxActiveRequests INT = NULL
+)
+AS
+BEGIN
+
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    -- Validate request
+    IF NOT EXISTS
+    (
+        SELECT 1
+        FROM dbo.Requests
+        WHERE RequestId = @RequestId
+          AND IsActive = 1
+    )
+    BEGIN
+        SELECT
+            'REQUEST_NOT_FOUND' AS ErrorCode;
+        RETURN;
+    END;
+
+    -- Validate technician
+    IF NOT EXISTS
+    (
+        SELECT 1
+        FROM dbo.Technicians
+        WHERE TechnicianId = @TechnicianId
+          AND IsActive = 1
+    )
+    BEGIN
+        SELECT
+            'TECHNICIAN_NOT_FOUND' AS ErrorCode;
+        RETURN;
+    END;
+
+    BEGIN TRANSACTION;
+
+    -- Lock this technician's row, so two admins cannot both take the last free slot
+    DECLARE @LockedTechnicianId INT;
+
+    SELECT @LockedTechnicianId = TechnicianId
+    FROM dbo.Technicians WITH (UPDLOCK, ROWLOCK)
+    WHERE TechnicianId = @TechnicianId;
+
+    IF @MaxActiveRequests IS NOT NULL
+    BEGIN
+        DECLARE @CurrentTechnicianId INT;
+        DECLARE @CurrentStatus NVARCHAR(30);
+
+        SELECT
+            @CurrentTechnicianId = TechnicianId,
+            @CurrentStatus = Status
+        FROM dbo.Requests
+        WHERE RequestId = @RequestId
+          AND IsActive = 1;
+
+        -- Only a request that is still active work adds to the workload,
+        -- and moving it to the technician who already has it adds nothing.
+        IF @CurrentStatus IN (N'Open', N'In Progress', N'On Hold')
+           AND ISNULL(@CurrentTechnicianId, 0) <> @TechnicianId
+           AND
+           (
+               SELECT COUNT(*)
+               FROM dbo.Requests
+               WHERE TechnicianId = @TechnicianId
+                 AND IsActive = 1
+                 AND Status IN (N'Open', N'In Progress', N'On Hold')
+           ) >= @MaxActiveRequests
+        BEGIN
+            ROLLBACK TRANSACTION;
+
+            SELECT
+                'TECHNICIAN_AT_CAPACITY' AS ErrorCode;
+            RETURN;
+        END;
+    END;
+
+    -- Assign technician
+    UPDATE dbo.Requests
+    SET
+        TechnicianId = @TechnicianId,
+        UpdatedDate = SYSUTCDATETIME()
+    WHERE RequestId = @RequestId
+      AND IsActive = 1;
+
+    COMMIT TRANSACTION;
+
+    -- Return updated request
+    SELECT
+        r.RequestId,
+        r.RequestCode,
+        r.RequestType,
+        r.RequestDescription,
+        r.Priority,
+        r.Status,
+        r.TechnicianId,
+        t.TechnicianName,
+        r.CreatedDate,
+        r.UpdatedDate
+    FROM dbo.Requests r
+    LEFT JOIN dbo.Technicians t
+        ON r.TechnicianId = t.TechnicianId
+    WHERE r.RequestId = @RequestId
+      AND r.IsActive = 1;
+
+END;
+GO
