@@ -196,3 +196,116 @@
   color: #dc2626;
   font-weight: 600;
 }
+
+
+/* ---------- AI suggestion (type and priority) ---------- */
+.ai-assist {
+  margin-top: 10px;
+}
+
+.ai-link-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.ai-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: #6d28d9;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ai-link:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.ai-link:disabled {
+  color: #a1a1aa;
+  cursor: not-allowed;
+}
+
+.ai-muted {
+  color: #6b7280;
+  font-size: 12.5px;
+}
+
+.ai-error {
+  color: #b91c1c;
+  font-size: 12.5px;
+}
+
+.ai-card {
+  padding: 14px 16px;
+  border: 1px solid #ddd6fe;
+  border-radius: 10px;
+  background: #f5f3ff;
+}
+
+.ai-card-title {
+  color: #5b21b6;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ai-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.ai-chip {
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: #ede9fe;
+  color: #4c1d95;
+  font-size: 13px;
+}
+
+.ai-reason {
+  margin: 8px 0 10px;
+  color: #4c1d95;
+  font-size: 13.5px;
+}
+
+.ai-card-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.ai-apply-btn {
+  padding: 7px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #7c3aed;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ai-apply-btn:hover {
+  background: #6d28d9;
+}
+
+.ai-dismiss-btn {
+  padding: 7px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ai-dismiss-btn:hover {
+  background: #f3f4f6;
+}

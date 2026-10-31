@@ -63,6 +63,67 @@
           </span>
         </div>
 
+        @if (aiEnabled()) {
+
+        <div class="ai-assist">
+
+          @if (aiLoading()) {
+
+          <small class="ai-muted">Asking AI...</small>
+
+          } @else if (aiResult(); as ai) {
+
+          @if (ai.aiUsed) {
+
+          <div class="ai-card">
+
+            <div class="ai-card-title">✨ AI suggestion</div>
+
+            <div class="ai-chips">
+              <span class="ai-chip">Type: <strong>{{ ai.requestType }}</strong></span>
+              <span class="ai-chip">Priority: <strong>{{ ai.priority }}</strong></span>
+            </div>
+
+            <p class="ai-reason">{{ ai.reason }}</p>
+
+            <div class="ai-card-actions">
+              <button type="button" class="ai-apply-btn" (click)="applySuggestion()">Apply</button>
+              <button type="button" class="ai-dismiss-btn" (click)="dismissSuggestion()">Dismiss</button>
+            </div>
+
+          </div>
+
+          } @else {
+
+          <small class="ai-muted">{{ ai.note }}</small>
+
+          }
+
+          } @else {
+
+          <div class="ai-link-row">
+
+            <button type="button" class="ai-link" [disabled]="!canSuggest" [title]="aiHint"
+              (click)="suggestClassification()">
+              ✨ Suggest type &amp; priority
+            </button>
+
+            @if (aiError()) {
+            <small class="ai-error">{{ aiError() }}</small>
+            } @else if (aiApplied()) {
+            <small class="ai-muted">Suggestion applied. You can still change it.</small>
+            } @else if (!canSuggest) {
+            <small class="ai-muted">Write at least {{ aiMinLength }} characters to get a suggestion.</small>
+            }
+
+          </div>
+
+          }
+
+        </div>
+
+        }
+
       </div>
 
       <div class="form-group">

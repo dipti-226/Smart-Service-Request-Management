@@ -4,7 +4,11 @@ import { Observable, catchError, map, of, shareReplay } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
-import { AiStatus, AiTechnicianSuggestion } from '../models/ai.model';
+import {
+  AiRequestClassification,
+  AiStatus,
+  AiTechnicianSuggestion
+} from '../models/ai.model';
 
 @Injectable({
   providedIn: 'root'
@@ -37,6 +41,14 @@ export class AiService {
     return this.http.post<ApiResponse<AiTechnicianSuggestion>>(
       `${environment.apiUrl}/TechnicianRecommendation/${requestId}/ai`,
       {}
+    );
+  }
+
+  // A suggested request type and priority for a description (a suggestion only)
+  classifyRequest(description: string): Observable<ApiResponse<AiRequestClassification>> {
+    return this.http.post<ApiResponse<AiRequestClassification>>(
+      `${environment.apiUrl}/Ai/classify-request`,
+      { description }
     );
   }
 }

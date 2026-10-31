@@ -24,3 +24,17 @@ export interface AiTechnicianSuggestion {
   // Only technicians the server already considers eligible, in the suggested order
   technicians: EligibleTechnician[];
 }
+
+// A suggested request type and priority for a description
+export interface AiRequestClassification {
+  // false = no suggestion (see note)
+  aiUsed: boolean;
+  // Why there is no suggestion (empty when there is one)
+  note: string;
+  // Always one of the form's own request types
+  requestType: string;
+  // Always Low, Medium, High or Critical
+  priority: string;
+  // One short sentence explaining the suggestion
+  reason: string;
+}

@@ -1,11 +1,13 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 
 import { AuthService } from '../../../core/services/auth.service';
+import { AiService } from '../../../core/services/ai.service';
 import { RequestService } from '../../../core/services/request.service';
+import { AiRequestClassification } from '../../../core/models/ai.model';
 import { REQUEST_TYPES } from '../../../core/models/request.model';
 import { REQUEST_PRIORITIES } from '../../../core/models/paged.model';
 import { VALIDATION } from '../../../core/validation/validation-rules';
@@ -25,6 +27,8 @@ export class RequestFormComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly authService = inject(AuthService);
+  private readonly aiService = inject(AiService);
+  private readonly destroyRef = inject(DestroyRef);
   readonly fieldError = getFieldError;
   readonly priorities = REQUEST_PRIORITIES;
 
@@ -58,7 +62,48 @@ export class RequestFormComponent implements OnInit {
     { initialValue: 0 }
   );
 
+  // ---------- AI suggestion for the type and priority ----------
+  // Only used when the AI is switched on in the API settings. It never changes the form
+  // by itself: the user clicks Apply, and can still change both fields afterwards.
+
+  readonly aiHint =
+    'The AI reads your description and suggests a type and priority. ' +
+    'It is only a suggestion: you can change both before you submit.';
+
+  // The description must have at least this many characters before the AI is asked
+  readonly aiMinLength = 15;
+
+  readonly descriptionTrimmedLength = toSignal(
+    this.requestForm.controls.requestDescription.valueChanges.pipe(map(value => value.trim().length)),
+    { initialValue: 0 }
+  );
+
+  aiEnabled = signal(false);
+  aiLoading = signal(false);
+  aiResult = signal<AiRequestClassification | null>(null);
+  aiError = signal('');
+  aiApplied = signal(false);
+
+  get canSuggest(): boolean {
+    return this.descriptionTrimmedLength() >= this.aiMinLength && !this.aiLoading();
+  }
+
   ngOnInit(): void {
+
+    // Any problem here simply means "AI off": the form stays exactly as it was
+    this.aiService
+      .isEnabled()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(enabled => this.aiEnabled.set(enabled));
+
+    // Changing the description makes an earlier suggestion out of date
+    this.requestForm.controls.requestDescription.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.aiResult.set(null);
+        this.aiError.set('');
+        this.aiApplied.set(false);
+      });
 
     this.route.paramMap.subscribe(params => {
       const idParam = params.get('id');
@@ -84,6 +129,73 @@ export class RequestFormComponent implements OnInit {
         this.requestForm.reset({ requestType: '', requestDescription: '', priority: '', status: '' });
       }
     });
+  }
+
+  // Asks the AI to suggest a request type and priority for the description
+  suggestClassification(): void {
+
+    if (!this.canSuggest) {
+      return;
+    }
+
+    this.aiLoading.set(true);
+    this.aiError.set('');
+    this.aiApplied.set(false);
+    this.aiResult.set(null);
+
+    this.aiService
+      .classifyRequest(this.requestForm.controls.requestDescription.value.trim())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+
+        next: response => {
+
+          this.aiLoading.set(false);
+
+          if (!response.success || !response.data) {
+            this.aiError.set(response.message || 'The AI suggestion is not available right now.');
+            return;
+          }
+
+          this.aiResult.set(response.data);
+        },
+
+        error: error => {
+
+          this.aiLoading.set(false);
+
+          this.aiError.set(
+            error?.status === 429
+              ? 'Too many AI requests. Please wait a minute and try again.'
+              : error?.error?.message || 'The AI suggestion is not available right now.'
+          );
+        }
+      });
+  }
+
+  // Copies the suggested type and priority into the form (the user can still change them)
+  applySuggestion(): void {
+
+    const suggestion = this.aiResult();
+
+    if (!suggestion?.aiUsed) {
+      return;
+    }
+
+    this.requestForm.patchValue({
+      requestType: suggestion.requestType,
+      priority: suggestion.priority
+    });
+
+    this.requestForm.controls.requestType.markAsDirty();
+    this.requestForm.controls.priority.markAsDirty();
+
+    this.aiResult.set(null);
+    this.aiApplied.set(true);
+  }
+
+  dismissSuggestion(): void {
+    this.aiResult.set(null);
   }
 
     // Leave without saving: go to the user's own home page (the same page they land on after login).
