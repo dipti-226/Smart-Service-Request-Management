@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {Component,DestroyRef,EventEmitter,Input,OnInit,Output,inject,signal} from '@angular/core';
 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -19,7 +20,7 @@ const LOCKED_STATUSES = ['Cancelled', 'Closed'];
 @Component({
   selector: 'app-technician-action',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, NgTemplateOutlet],
   templateUrl: './technician-action.html',
   styleUrl: './technician-action.css'
 })
@@ -40,6 +41,14 @@ export class TechnicianActionComponent implements OnInit {
     new EventEmitter<number>();
 
   selectedTechnicianId: number | null = null;
+
+  // Tooltip texts (kept out of the layout to keep the panel clean)
+  readonly workloadHint =
+    'The number after each name is active requests / limit. Open, In Progress and On Hold requests count.';
+
+  readonly aiHint =
+    'The AI only compares technicians who are already eligible. The final choice is yours, ' +
+    'and the workload limit is checked again when you assign.';
 
   // The technician the server suggests for this request (null until loaded, or on error)
   recommendation = signal<TechnicianRecommendation | null>(null);
@@ -78,12 +87,49 @@ export class TechnicianActionComponent implements OnInit {
       .subscribe(enabled => this.aiEnabled.set(enabled));
   }
 
+  // ---------- Recommendation ----------
+
+  get hasRecommendation(): boolean {
+    return !!this.recommendation()?.hasRecommendation;
+  }
+
   // true when the request already has the recommended technician
   get recommendationIsCurrent(): boolean {
 
     const rec = this.recommendation();
 
     return !!rec && rec.technicianId === this.request?.technicianId;
+  }
+
+  // Shown as a tag next to the current technician when they are already the best match
+  get bestMatchText(): string {
+
+    return this.recommendation()?.matchesSpecialization
+      ? `Best match for ${this.request.requestType} requests`
+      : 'Least busy available technician';
+  }
+
+  // The "Suggested" part of the card (not needed when the current technician is the best match)
+  get showStandardSuggestion(): boolean {
+    return !this.isAssignmentLocked && this.hasRecommendation && !this.recommendationIsCurrent;
+  }
+
+  get showAiBlock(): boolean {
+    return this.aiLoading() || !!this.aiResult() || !!this.aiError();
+  }
+
+  get showSuggestionCard(): boolean {
+    return !this.isAssignmentLocked
+      && this.hasRecommendation
+      && (this.showStandardSuggestion || this.showAiBlock);
+  }
+
+  get canAskAi(): boolean {
+    return this.aiEnabled()
+      && !this.isAssignmentLocked
+      && this.hasRecommendation
+      && !this.aiResult()
+      && !this.aiLoading();
   }
 
   // Selects the recommended technician in the dropdown (nothing is assigned yet)
@@ -146,6 +192,8 @@ export class TechnicianActionComponent implements OnInit {
       });
   }
 
+  // ---------- Assignment ----------
+
   // Cancelled and Closed requests cannot get a technician any more
   get isAssignmentLocked(): boolean {
     return !!this.request && LOCKED_STATUSES.includes(this.request.status);
@@ -156,6 +204,11 @@ export class TechnicianActionComponent implements OnInit {
     return this.request?.status === 'Cancelled'
       ? 'This request was cancelled, so a technician cannot be assigned.'
       : 'This request is closed, so a technician cannot be assigned.';
+  }
+
+  // First line of the dropdown
+  get selectPlaceholder(): string {
+    return this.request?.technicianName ? 'Reassign to...' : 'Select technician';
   }
 
   // Technicians who can take this request. Someone at the limit is hidden,
@@ -178,6 +231,23 @@ export class TechnicianActionComponent implements OnInit {
     return this.technicians
       .filter(t => !this.availableTechnicians.includes(t))
       .map(t => t.technicianName);
+  }
+
+  // One short grey line. Empty when nobody is hidden, or when nobody is available at all
+  // (that case has its own warning).
+  get hiddenMessage(): string {
+
+    const names = this.hiddenTechnicianNames;
+
+    if (names.length === 0 || this.availableTechnicians.length === 0) {
+      return '';
+    }
+
+    const limit = this.maxActiveRequests;
+
+    return names.length === 1
+      ? `${names[0]} is at full capacity (${limit}/${limit}) and not shown.`
+      : `${names.join(', ')} are at full capacity (${limit}/${limit}) and not shown.`;
   }
 
   get maxActiveRequests(): number {

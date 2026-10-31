@@ -74,8 +74,8 @@ namespace APP.Business.Services
             bool matches = Convert.ToBoolean(reader["MatchesSpecialization"]);
 
             string reason = matches
-                ? $"Handles {requestType} requests and has the lightest workload among specialists ({activeRequests}/{_maxActiveRequests})."
-                : $"No available specialist for {requestType} requests, so this is the least busy technician ({activeRequests}/{_maxActiveRequests}).";
+                ? $"Specialist for {requestType} requests with the lightest workload ({activeRequests}/{_maxActiveRequests})."
+                : $"No available {requestType} specialist, so this is the least busy technician ({activeRequests}/{_maxActiveRequests}).";
 
             return new ApiResponse<TechnicianRecommendationDto>
             {

@@ -4,167 +4,50 @@
 
   @if (request) {
 
-  <p>
-    <strong>Request:</strong>
-    {{ request.requestCode }}
-  </p>
+  <div class="current-row">
 
-  <p>
-    <strong>Request Type:</strong>
-    {{ request.requestType }}
-  </p>
-
-  <p>
-    <strong>Status:</strong>
-    <span class="status" [attr.data-status]="request.status">{{ request.status }}</span>
-  </p>
-
-  <p>
-    <strong>Current Technician:</strong>
+    <span class="current-label">Current:</span>
 
     @if (request.technicianName) {
-    {{ request.technicianName }}
-    } @else {
-    Not Assigned
+
+    <strong class="current-name">{{ request.technicianName }}</strong>
+
+    @if (recommendationIsCurrent) {
+    <span class="best-match-tag">✓ {{ bestMatchText }}</span>
     }
 
-  </p>
+    } @else {
+
+    <span class="not-assigned">Not assigned</span>
+
+    }
+
+  </div>
+
   }
 
-  <div class="technician-form">
+  @if (isAssignmentLocked) {
 
-    @if (!isAssignmentLocked) {
+  <p class="note locked">
+    {{ lockedMessage }}
+  </p>
 
-    @if (recommendation(); as rec) {
+  } @else if (technicians.length > 0 && availableTechnicians.length === 0) {
 
-    @if (rec.hasRecommendation) {
+  <p class="note warning">
+    All technicians are at full capacity ({{ maxActiveRequests }} active requests each).
+    Assign this request after a technician finishes one.
+  </p>
 
-    <div class="recommendation-card">
+  }
 
-      <div class="recommendation-title">Recommended technician</div>
+  <div class="action-row">
 
-      <div class="recommendation-name">
-        {{ rec.technicianName }} · {{ rec.activeRequests }}/{{ rec.maxActiveRequests }}
-      </div>
-
-      <p class="recommendation-reason">{{ rec.reason }}</p>
-
-      @if (recommendationIsCurrent) {
-
-      <small class="recommendation-current">
-        This request is already assigned to the recommended technician.
-      </small>
-
-      } @else {
-
-      <button type="button" class="use-recommended-btn" (click)="useRecommended()">
-        Use this technician
-      </button>
-
-      }
-
-    </div>
-
-    @if (aiEnabled()) {
-
-    <div class="ai-box">
-
-      @if (!aiResult()) {
-
-      <button type="button" class="ai-btn" [disabled]="aiLoading()" (click)="askAi()">
-        @if (aiLoading()) {
-        Asking AI...
-        } @else {
-        Ask AI for a second opinion
-        }
-      </button>
-
-      <small class="ai-hint">
-        The AI only compares technicians who are already eligible. The final choice is yours,
-        and the workload limit is checked again when you assign.
-      </small>
-
-      }
-
-      @if (aiError()) {
-      <p class="ai-error">{{ aiError() }}</p>
-      }
-
-      @if (aiResult(); as ai) {
-
-      @if (ai.aiUsed) {
-
-      <div class="ai-title">AI second opinion</div>
-
-      <p class="ai-reason">{{ ai.reason }}</p>
-
-      <ol class="ai-order">
-        @for (t of ai.technicians.slice(0, 3); track t.technicianId) {
-        <li>{{ t.technicianName }} · {{ t.activeRequests }}/{{ t.maxActiveRequests }}</li>
-        }
-      </ol>
-
-      @if (ai.aiChangedTopChoice) {
-      <small class="ai-hint">
-        The AI preferred a different technician than the standard rule. Both are valid, so you decide.
-      </small>
-      }
-
-      @if (ai.recommendedTechnicianId && ai.recommendedTechnicianId !== request.technicianId) {
-      <button type="button" class="ai-use-btn" (click)="selectTechnician(ai.recommendedTechnicianId)">
-        Use the AI's top choice
-      </button>
-      }
-
-      } @else {
-
-      <p class="ai-note">{{ ai.note }}</p>
-
-      }
-
-      }
-
-    </div>
-
-    }
-
-    }
-
-    }
-
-    }
-
-    @if (isAssignmentLocked) {
-
-    <p class="capacity-note locked">
-      {{ lockedMessage }}
-    </p>
-
-    } @else if (technicians.length > 0 && availableTechnicians.length === 0) {
-
-    <p class="capacity-note warning">
-      All technicians are at full capacity ({{ maxActiveRequests }} active requests each).
-      Assign this request after a technician finishes one.
-    </p>
-
-    } @else if (hiddenTechnicianNames.length > 0) {
-
-    <p class="capacity-note">
-      At full capacity ({{ maxActiveRequests }} active requests) and not shown:
-      {{ hiddenTechnicianNames.join(', ') }}
-    </p>
-
-    }
-
-    <label for="technician">
-      Select Technician
-    </label>
-
-    <select id="technician" [(ngModel)]="selectedTechnicianId"
+    <select id="technician" aria-label="Select technician" [(ngModel)]="selectedTechnicianId"
       [disabled]="isAssignmentLocked || availableTechnicians.length === 0">
 
       <option [ngValue]="null">
-        Select Technician
+        {{ selectPlaceholder }}
       </option>
 
       @for (technician of availableTechnicians; track technician.technicianId) {
@@ -177,14 +60,125 @@
 
     </select>
 
-    <small class="workload-hint">
-      The number after each name is active requests / limit (Open, In Progress and On Hold count).
-    </small>
-
-    <button type="button" (click)="assignTechnician()" [disabled]="isAssignmentLocked || !selectedTechnicianId">
-      Assign Technician
+    <button type="button" class="assign-btn" (click)="assignTechnician()"
+      [disabled]="isAssignmentLocked || !selectedTechnicianId">
+      Assign
     </button>
+
+    <span class="hint-icon" tabindex="0" role="img" [title]="workloadHint" [attr.aria-label]="workloadHint">ⓘ</span>
 
   </div>
 
+  @if (showSuggestionCard) {
+
+  <div class="suggestion-card">
+
+    @if (showStandardSuggestion) {
+
+    @if (recommendation(); as rec) {
+
+    <div class="suggestion-head">
+
+      <span class="suggestion-title">Suggested</span>
+
+      @if (canAskAi) {
+      <ng-container [ngTemplateOutlet]="askAiLink"></ng-container>
+      }
+
+    </div>
+
+    <div class="suggestion-name">
+      {{ rec.technicianName }} · {{ rec.activeRequests }}/{{ rec.maxActiveRequests }}
+    </div>
+
+    <p class="suggestion-reason">{{ rec.reason }}</p>
+
+    <button type="button" class="use-btn" (click)="useRecommended()">
+      Use this technician
+    </button>
+
+    }
+
+    }
+
+    @if (showAiBlock) {
+
+    <div class="ai-block" [class.with-divider]="showStandardSuggestion">
+
+      @if (aiLoading()) {
+
+      <p class="ai-muted">Asking AI...</p>
+
+      } @else if (aiError()) {
+
+      <p class="ai-error">{{ aiError() }}</p>
+
+      } @else {
+
+      @if (aiResult(); as ai) {
+
+      @if (ai.aiUsed) {
+
+      <div class="ai-title">✨ AI second opinion</div>
+
+      <p class="ai-reason">{{ ai.reason }}</p>
+
+      <ol class="ai-order">
+        @for (t of ai.technicians.slice(0, 3); track t.technicianId) {
+        <li>{{ t.technicianName }} · {{ t.activeRequests }}/{{ t.maxActiveRequests }}</li>
+        }
+      </ol>
+
+      @if (ai.aiChangedTopChoice) {
+      <small class="ai-muted">
+        The AI preferred a different technician than the standard rule. Both are valid, so you decide.
+      </small>
+      }
+
+      @if (ai.recommendedTechnicianId && ai.recommendedTechnicianId !== request.technicianId) {
+      <button type="button" class="ai-use-btn" (click)="selectTechnician(ai.recommendedTechnicianId)">
+        Use the AI's top choice
+      </button>
+      }
+
+      } @else {
+
+      <p class="ai-muted">{{ ai.note }}</p>
+
+      }
+
+      }
+
+      }
+
+    </div>
+
+    }
+
+  </div>
+
+  }
+
+  @if (hiddenMessage || (canAskAi && !showStandardSuggestion)) {
+
+  <div class="tools-row">
+
+    @if (hiddenMessage) {
+    <span class="info-line">ⓘ {{ hiddenMessage }}</span>
+    }
+
+    @if (canAskAi && !showStandardSuggestion) {
+    <ng-container [ngTemplateOutlet]="askAiLink"></ng-container>
+    }
+
+  </div>
+
+  }
+
 </div>
+
+<ng-template #askAiLink>
+  <button type="button" class="ask-ai-link" [title]="aiHint" (click)="askAi()">
+    ✨ Ask AI
+  </button>
+</ng-template>
