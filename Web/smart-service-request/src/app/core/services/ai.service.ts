@@ -5,10 +5,12 @@ import { Observable, catchError, map, of, shareReplay } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
 import {
+  AiReplyDraft,
   AiRequestClassification,
   AiRequestSummary,
   AiStatus,
-  AiTechnicianSuggestion
+  AiTechnicianSuggestion,
+  ReplyDraftIntent
 } from '../models/ai.model';
 
 @Injectable({
@@ -58,6 +60,14 @@ export class AiService {
     return this.http.post<ApiResponse<AiRequestSummary>>(
       `${environment.apiUrl}/Ai/summarize-request/${requestId}`,
       {}
+    );
+  }
+
+  // A draft comment for the person to edit and post (nothing is posted by this call)
+  draftReply(requestId: number, intent: ReplyDraftIntent): Observable<ApiResponse<AiReplyDraft>> {
+    return this.http.post<ApiResponse<AiReplyDraft>>(
+      `${environment.apiUrl}/Ai/draft-reply/${requestId}`,
+      { intent }
     );
   }
 }

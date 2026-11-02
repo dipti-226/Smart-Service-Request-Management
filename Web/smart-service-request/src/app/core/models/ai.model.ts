@@ -55,3 +55,16 @@ export interface AiRequestSummary {
   cached: boolean;
   generatedAtUtc: string | null;
 }
+
+// What a drafted reply is for
+export type ReplyDraftIntent = 'progress' | 'info' | 'resolved';
+
+// A draft comment for the person to edit and post (Admin and Technician)
+export interface AiReplyDraft {
+  // false = no draft (see note)
+  aiUsed: boolean;
+  // Why there is no draft (empty when there is one)
+  note: string;
+  // Plain text, may have line breaks
+  draft: string;
+}

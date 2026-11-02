@@ -88,6 +88,7 @@ builder.Services.AddScoped<AiService>();
 builder.Services.AddScoped<TechnicianAiService>();
 builder.Services.AddScoped<RequestAiService>();
 builder.Services.AddScoped<RequestSummaryAiService>();
+builder.Services.AddScoped<ReplyDraftAiService>();
 
 
 

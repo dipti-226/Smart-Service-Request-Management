@@ -15,15 +15,14 @@ namespace APP.API.Controllers
         private readonly AiService _aiService;
         private readonly RequestAiService _requestAiService;
         private readonly RequestSummaryAiService _summaryAiService;
+        private readonly ReplyDraftAiService _replyDraftAiService;
 
-        public AiController(
-            AiService aiService,
-            RequestAiService requestAiService,
-            RequestSummaryAiService summaryAiService)
+        public AiController(AiService aiService,RequestAiService requestAiService,RequestSummaryAiService summaryAiService,ReplyDraftAiService replyDraftAiService)
         {
             _aiService = aiService;
             _requestAiService = requestAiService;
             _summaryAiService = summaryAiService;
+            _replyDraftAiService = replyDraftAiService;
         }
 
         // GET: api/Ai/status
@@ -86,6 +85,35 @@ namespace APP.API.Controllers
                 requestId,
                 userId,
                 role,
+                HttpContext.RequestAborted);
+
+            return response.Success ? Ok(response) : NotFound(response);
+        }
+
+        // POST: api/Ai/draft-reply/5
+        // A draft comment for the person to edit and post. Nothing is posted here.
+        // An Admin can draft for any request, a Technician only for requests assigned to them.
+        [HttpPost("draft-reply/{requestId:int}")]
+        [Authorize(Roles = "Admin,Technician")]
+        [EnableRateLimiting("ai")]
+        public async Task<ActionResult<ApiResponse<AiReplyDraftDto>>> DraftReply(int requestId, DraftReplyDto dto)
+        {
+            if (!int.TryParse(User.FindFirst("userId")?.Value, out int userId))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new ApiResponse<AiReplyDraftDto>
+                {
+                    Success = false,
+                    Message = "Invalid user."
+                });
+            }
+
+            string role = User.IsInRole("Admin") ? "Admin" : "Technician";
+
+            var response = await _replyDraftAiService.DraftAsync(
+                requestId,
+                userId,
+                role,
+                dto.Intent,
                 HttpContext.RequestAborted);
 
             return response.Success ? Ok(response) : NotFound(response);

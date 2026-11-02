@@ -55,6 +55,56 @@
         <div class="error-banner">{{ postError() }}</div>
         }
 
+        @if (canDraft && aiEnabled()) {
+
+        <div class="ai-draft">
+
+            <div class="ai-draft-row">
+
+                <span class="ai-draft-label">✨ Draft a reply:</span>
+
+                @for (option of draftOptions; track option.intent) {
+                <button type="button" class="ai-chip" [disabled]="draftLoading()" [title]="aiHint"
+                    (click)="requestDraft(option.intent)">
+                    @if (draftLoading() && draftIntent() === option.intent) {
+                    Drafting...
+                    } @else {
+                    {{ option.label }}
+                    }
+                </button>
+                }
+
+            </div>
+
+            @if (draft()) {
+
+            <div class="ai-draft-card">
+
+                <div class="ai-draft-title">✨ AI draft (edit it before you post)</div>
+
+                <p class="ai-draft-text">{{ draft() }}</p>
+
+                <div class="ai-draft-actions">
+                    <button type="button" class="ai-use-btn" (click)="useDraft()">Use this draft</button>
+                    <button type="button" class="ai-dismiss-btn" (click)="dismissDraft()">Dismiss</button>
+                </div>
+
+            </div>
+
+            }
+
+            @if (draftNote()) {
+            <small class="ai-note">{{ draftNote() }}</small>
+            }
+
+            @if (draftError()) {
+            <small class="ai-problem">{{ draftError() }}</small>
+            }
+
+        </div>
+
+        }
+
         <textarea aria-label="Add a comment" rows="3" [maxLength]="maxLength" placeholder="Write a comment..."
             [formControl]="commentControl" (input)="charCount.set($any($event.target).value.length)"></textarea>
 
