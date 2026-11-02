@@ -6,11 +6,12 @@ import { AdvancedRequest } from '../../../core/models/request.model';
 import { RequestDetailViewComponent } from '../../../shared/components/request-detail-view/request-detail-view';
 import { RequestCommentsComponent } from '../../../shared/components/request-comments/request-comments';
 import { RequestTimelineComponent } from '../../../shared/components/request-timeline/request-timeline';
+import { RequestAiSummaryComponent } from '../../../shared/components/request-ai-summary/request-ai-summary';
 
 @Component({
   selector: 'app-assigned-request-details',
   standalone: true,
-  imports: [RouterLink, RequestDetailViewComponent, RequestTimelineComponent, RequestCommentsComponent],
+  imports: [RouterLink, RequestDetailViewComponent, RequestTimelineComponent, RequestAiSummaryComponent, RequestCommentsComponent],
   templateUrl: './assigned-request-details.html',
   styleUrl: './assigned-request-details.css'
 })

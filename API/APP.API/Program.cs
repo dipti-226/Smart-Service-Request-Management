@@ -87,6 +87,8 @@ builder.Services.AddHttpClient<GeminiAiClient>(client => client.Timeout = TimeSp
 builder.Services.AddScoped<AiService>();
 builder.Services.AddScoped<TechnicianAiService>();
 builder.Services.AddScoped<RequestAiService>();
+builder.Services.AddScoped<RequestSummaryAiService>();
+
 
 
 // JWT signing and validation configuration.

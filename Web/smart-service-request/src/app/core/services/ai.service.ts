@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
 import {
   AiRequestClassification,
+  AiRequestSummary,
   AiStatus,
   AiTechnicianSuggestion
 } from '../models/ai.model';
@@ -49,6 +50,14 @@ export class AiService {
     return this.http.post<ApiResponse<AiRequestClassification>>(
       `${environment.apiUrl}/Ai/classify-request`,
       { description }
+    );
+  }
+
+  // A short summary of one request (Admin, or the Technician it is assigned to)
+  summarizeRequest(requestId: number): Observable<ApiResponse<AiRequestSummary>> {
+    return this.http.post<ApiResponse<AiRequestSummary>>(
+      `${environment.apiUrl}/Ai/summarize-request/${requestId}`,
+      {}
     );
   }
 }

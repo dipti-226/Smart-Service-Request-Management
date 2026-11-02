@@ -38,3 +38,20 @@ export interface AiRequestClassification {
   // One short sentence explaining the suggestion
   reason: string;
 }
+
+// A short summary of one request (Admin and Technician)
+export interface AiRequestSummary {
+  // false = no summary (see note)
+  aiUsed: boolean;
+  // Why there is no summary (empty when there is one)
+  note: string;
+  // What the request is about and where it stands now
+  overview: string;
+  // What is stopping progress ("None" when nothing is)
+  blockers: string;
+  // The most useful next action
+  nextStep: string;
+  // true when this is a saved summary (nothing changed since it was made)
+  cached: boolean;
+  generatedAtUtc: string | null;
+}

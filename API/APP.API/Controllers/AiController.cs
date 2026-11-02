@@ -14,11 +14,16 @@ namespace APP.API.Controllers
     {
         private readonly AiService _aiService;
         private readonly RequestAiService _requestAiService;
+        private readonly RequestSummaryAiService _summaryAiService;
 
-        public AiController(AiService aiService, RequestAiService requestAiService)
+        public AiController(
+            AiService aiService,
+            RequestAiService requestAiService,
+            RequestSummaryAiService summaryAiService)
         {
             _aiService = aiService;
             _requestAiService = requestAiService;
+            _summaryAiService = summaryAiService;
         }
 
         // GET: api/Ai/status
@@ -56,6 +61,34 @@ namespace APP.API.Controllers
                 HttpContext.RequestAborted);
 
             return Ok(response);
+        }
+
+        // POST: api/Ai/summarize-request/5
+        // A short summary of one request. An Admin can summarize any request,
+        // a Technician only requests assigned to them.
+        [HttpPost("summarize-request/{requestId:int}")]
+        [Authorize(Roles = "Admin,Technician")]
+        [EnableRateLimiting("ai")]
+        public async Task<ActionResult<ApiResponse<AiRequestSummaryDto>>> SummarizeRequest(int requestId)
+        {
+            if (!int.TryParse(User.FindFirst("userId")?.Value, out int userId))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new ApiResponse<AiRequestSummaryDto>
+                {
+                    Success = false,
+                    Message = "Invalid user."
+                });
+            }
+
+            string role = User.IsInRole("Admin") ? "Admin" : "Technician";
+
+            var response = await _summaryAiService.SummarizeAsync(
+                requestId,
+                userId,
+                role,
+                HttpContext.RequestAborted);
+
+            return response.Success ? Ok(response) : NotFound(response);
         }
     }
 }

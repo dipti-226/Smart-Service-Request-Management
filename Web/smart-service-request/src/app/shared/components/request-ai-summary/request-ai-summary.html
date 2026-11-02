@@ -1,0 +1,73 @@
+@if (allowed && aiEnabled()) {
+
+  <section class="summary-card">
+
+    <div class="summary-head">
+
+      <h3>✨ AI summary</h3>
+
+      @if (!isLoading()) {
+
+        @if (summary()?.aiUsed) {
+          <button type="button" class="link-btn" (click)="summarize()">Refresh</button>
+        } @else {
+          <button type="button" class="summary-btn" [title]="hint" (click)="summarize()">
+            Summarize this request
+          </button>
+        }
+
+      }
+
+    </div>
+
+    @if (isLoading()) {
+
+      <p class="muted">Reading the request, its history and comments...</p>
+
+    } @else if (errorMessage()) {
+
+      <p class="error-text">{{ errorMessage() }}</p>
+
+    } @else if (summary(); as s) {
+
+      @if (s.aiUsed) {
+
+        @if (isStale()) {
+          <p class="stale">The request changed after this summary was made. Refresh to update it.</p>
+        }
+
+        <dl class="summary-list">
+          <dt>Overview</dt>
+          <dd>{{ s.overview }}</dd>
+
+          <dt>Blockers</dt>
+          <dd>{{ s.blockers }}</dd>
+
+          <dt>Next step</dt>
+          <dd>{{ s.nextStep }}</dd>
+        </dl>
+
+        <p class="footnote">
+          AI-generated from the description, status history and comments. Please check important details yourself.
+          @if (s.generatedAtUtc) {
+            Generated at {{ s.generatedAtUtc | date:'HH:mm' }}.
+          }
+        </p>
+
+      } @else {
+
+        <p class="muted">{{ s.note }}</p>
+
+      }
+
+    } @else {
+
+      <p class="muted">
+        Get a short overview, what is blocking progress, and a suggested next step.
+      </p>
+
+    }
+
+  </section>
+
+}

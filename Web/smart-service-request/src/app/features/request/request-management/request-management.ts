@@ -12,6 +12,7 @@ import { ListFilterBarComponent } from '../../../shared/components/list-filter-b
 import { PagerComponent } from '../../../shared/components/pager/pager';
 import { RequestCommentsComponent } from '../../../shared/components/request-comments/request-comments';
 import { RequestTimelineComponent } from '../../../shared/components/request-timeline/request-timeline';
+import { RequestAiSummaryComponent } from '../../../shared/components/request-ai-summary/request-ai-summary';
 import { OpenAgeComponent } from '../../../shared/components/open-age/open-age';
 import { ExportCsvButtonComponent } from '../../../shared/components/export-csv-button/export-csv-button';
 
@@ -25,6 +26,7 @@ import { ExportCsvButtonComponent } from '../../../shared/components/export-csv-
     ListFilterBarComponent,
     PagerComponent,
     RequestTimelineComponent,
+    RequestAiSummaryComponent,
     OpenAgeComponent,
     ExportCsvButtonComponent,
     RequestCommentsComponent
