@@ -89,7 +89,7 @@ builder.Services.AddScoped<TechnicianAiService>();
 builder.Services.AddScoped<RequestAiService>();
 builder.Services.AddScoped<RequestSummaryAiService>();
 builder.Services.AddScoped<ReplyDraftAiService>();
-
+builder.Services.AddScoped<DescriptionAssistAiService>();
 
 
 // JWT signing and validation configuration.

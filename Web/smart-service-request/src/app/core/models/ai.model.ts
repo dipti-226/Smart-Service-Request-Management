@@ -39,6 +39,18 @@ export interface AiRequestClassification {
   reason: string;
 }
 
+// Help with a request description: questions about missing details and clearer wording
+export interface AiDescriptionHelp {
+  // false = no help (see note)
+  aiUsed: boolean;
+  // Why there is no help, or a short remark (for example why no rewrite is offered)
+  note: string;
+  // Up to 3 short questions about details that are still missing (may be empty)
+  missingDetails: string[];
+  // A clearer version of the user's own text. Empty = nothing to offer.
+  improvedDescription: string;
+}
+
 // A short summary of one request (Admin and Technician)
 export interface AiRequestSummary {
   // false = no summary (see note)

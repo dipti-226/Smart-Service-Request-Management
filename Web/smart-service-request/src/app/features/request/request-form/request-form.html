@@ -67,11 +67,52 @@
 
         <div class="ai-assist">
 
-          @if (aiLoading()) {
+          <div class="ai-link-row">
 
-          <small class="ai-muted">Asking AI...</small>
+            <button type="button" class="ai-link" [disabled]="!canSuggest" [title]="aiHint"
+              (click)="suggestClassification()">
+              @if (aiLoading()) {
+              Asking AI...
+              } @else {
+              ✨ Suggest type &amp; priority
+              }
+            </button>
 
-          } @else if (aiResult(); as ai) {
+            <button type="button" class="ai-link" [disabled]="!canImprove" [title]="helpHint"
+              (click)="improveDescription()">
+              @if (helpLoading()) {
+              Asking AI...
+              } @else {
+              ✨ Improve my description
+              }
+            </button>
+
+            @if (!hasEnoughText) {
+            <small class="ai-muted">Write at least {{ aiMinLength }} characters to use the AI help.</small>
+            }
+
+          </div>
+
+          @if (aiError()) {
+          <small class="ai-error">{{ aiError() }}</small>
+          }
+
+          @if (helpError()) {
+          <small class="ai-error">{{ helpError() }}</small>
+          }
+
+          @if (aiApplied()) {
+          <small class="ai-muted">Suggestion applied. You can still change it.</small>
+          }
+
+          @if (previousDescription() !== null) {
+          <small class="ai-muted">
+            Wording applied. You can still edit it.
+            <button type="button" class="ai-undo" (click)="undoWording()">Undo</button>
+          </small>
+          }
+
+          @if (aiResult(); as ai) {
 
           @if (ai.aiUsed) {
 
@@ -99,24 +140,62 @@
 
           }
 
-          } @else {
+          }
 
-          <div class="ai-link-row">
+          @if (helpResult(); as help) {
 
-            <button type="button" class="ai-link" [disabled]="!canSuggest" [title]="aiHint"
-              (click)="suggestClassification()">
-              ✨ Suggest type &amp; priority
-            </button>
+          @if (help.aiUsed) {
 
-            @if (aiError()) {
-            <small class="ai-error">{{ aiError() }}</small>
-            } @else if (aiApplied()) {
-            <small class="ai-muted">Suggestion applied. You can still change it.</small>
-            } @else if (!canSuggest) {
-            <small class="ai-muted">Write at least {{ aiMinLength }} characters to get a suggestion.</small>
+          <div class="ai-card">
+
+            <div class="ai-card-title">✨ Description help</div>
+
+            @if (help.missingDetails.length > 0) {
+
+            <p class="ai-subtitle">A technician will probably need to know:</p>
+
+            <ul class="ai-list">
+              @for (question of help.missingDetails; track question) {
+              <li>{{ question }}</li>
+              }
+            </ul>
+
+            }
+
+            @if (help.improvedDescription) {
+
+            <p class="ai-subtitle">Clearer wording of what you wrote:</p>
+
+            <p class="ai-wording">{{ help.improvedDescription }}</p>
+
+            <div class="ai-card-actions">
+              <button type="button" class="ai-apply-btn" (click)="useImprovedWording()">Use this wording</button>
+              <button type="button" class="ai-dismiss-btn" (click)="dismissHelp()">Dismiss</button>
+            </div>
+
+            } @else {
+
+            @if (help.missingDetails.length === 0) {
+            <p class="ai-reason">Your description already has the details a technician usually needs.</p>
+            }
+
+            <div class="ai-card-actions">
+              <button type="button" class="ai-dismiss-btn" (click)="dismissHelp()">Close</button>
+            </div>
+
+            }
+
+            @if (help.note) {
+            <small class="ai-muted">{{ help.note }}</small>
             }
 
           </div>
+
+          } @else {
+
+          <small class="ai-muted">{{ help.note }}</small>
+
+          }
 
           }
 
@@ -185,13 +264,8 @@
           } @else {
           @if (isEditMode()) { Update Request } @else { Submit Request }
           }
-
         </button>
-
       </div>
-
     </form>
-
   </div>
-
 </div>

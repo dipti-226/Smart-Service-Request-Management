@@ -7,7 +7,7 @@ import { map } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { AiService } from '../../../core/services/ai.service';
 import { RequestService } from '../../../core/services/request.service';
-import { AiRequestClassification } from '../../../core/models/ai.model';
+import { AiDescriptionHelp, AiRequestClassification } from '../../../core/models/ai.model';
 import { REQUEST_TYPES } from '../../../core/models/request.model';
 import { REQUEST_PRIORITIES } from '../../../core/models/paged.model';
 import { VALIDATION } from '../../../core/validation/validation-rules';
@@ -62,13 +62,18 @@ export class RequestFormComponent implements OnInit {
     { initialValue: 0 }
   );
 
-  // ---------- AI suggestion for the type and priority ----------
+  // ---------- AI help for the description ----------
   // Only used when the AI is switched on in the API settings. It never changes the form
-  // by itself: the user clicks Apply, and can still change both fields afterwards.
+  // by itself: the user clicks Apply or "Use this wording", and can still change everything
+  // afterwards.
 
   readonly aiHint =
     'The AI reads your description and suggests a type and priority. ' +
     'It is only a suggestion: you can change both before you submit.';
+
+  readonly helpHint =
+    'The AI points out details a technician may need and offers clearer wording of your own text. ' +
+    'Nothing changes until you click "Use this wording".';
 
   // The description must have at least this many characters before the AI is asked
   readonly aiMinLength = 15;
@@ -79,13 +84,36 @@ export class RequestFormComponent implements OnInit {
   );
 
   aiEnabled = signal(false);
+
+  // Suggested type and priority
   aiLoading = signal(false);
   aiResult = signal<AiRequestClassification | null>(null);
   aiError = signal('');
   aiApplied = signal(false);
 
+  // Missing details and clearer wording
+  helpLoading = signal(false);
+  helpResult = signal<AiDescriptionHelp | null>(null);
+  helpError = signal('');
+
+  // The description as it was before "Use this wording", so the change can be undone
+  previousDescription = signal<string | null>(null);
+
+  get hasEnoughText(): boolean {
+    return this.descriptionTrimmedLength() >= this.aiMinLength;
+  }
+
+  // One AI call at a time
+  get aiBusy(): boolean {
+    return this.aiLoading() || this.helpLoading();
+  }
+
   get canSuggest(): boolean {
-    return this.descriptionTrimmedLength() >= this.aiMinLength && !this.aiLoading();
+    return this.hasEnoughText && !this.aiBusy;
+  }
+
+  get canImprove(): boolean {
+    return this.hasEnoughText && !this.aiBusy;
   }
 
   ngOnInit(): void {
@@ -96,13 +124,16 @@ export class RequestFormComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(enabled => this.aiEnabled.set(enabled));
 
-    // Changing the description makes an earlier suggestion out of date
+    // Changing the description makes earlier suggestions out of date
     this.requestForm.controls.requestDescription.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.aiResult.set(null);
         this.aiError.set('');
         this.aiApplied.set(false);
+        this.helpResult.set(null);
+        this.helpError.set('');
+        this.previousDescription.set(null);
       });
 
     this.route.paramMap.subscribe(params => {
@@ -196,6 +227,84 @@ export class RequestFormComponent implements OnInit {
 
   dismissSuggestion(): void {
     this.aiResult.set(null);
+  }
+
+  // Asks the AI which details are missing and for clearer wording of the description
+  improveDescription(): void {
+
+    if (!this.canImprove) {
+      return;
+    }
+
+    this.helpLoading.set(true);
+    this.helpError.set('');
+    this.helpResult.set(null);
+    this.previousDescription.set(null);
+
+    const value = this.requestForm.getRawValue();
+
+    this.aiService
+      .improveDescription(value.requestDescription.trim(), value.requestType || null)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+
+        next: response => {
+
+          this.helpLoading.set(false);
+
+          if (!response.success || !response.data) {
+            this.helpError.set(response.message || 'The AI help is not available right now.');
+            return;
+          }
+
+          this.helpResult.set(response.data);
+        },
+
+        error: error => {
+
+          this.helpLoading.set(false);
+
+          this.helpError.set(
+            error?.status === 429
+              ? 'Too many AI requests. Please wait a minute and try again.'
+              : error?.error?.message || 'The AI help is not available right now.'
+          );
+        }
+      });
+  }
+
+  // Replaces the description with the clearer wording. The old text is kept so it can be undone.
+  useImprovedWording(): void {
+
+    const improved = this.helpResult()?.improvedDescription;
+
+    if (!improved || improved.length > this.descriptionMax) {
+      return;
+    }
+
+    const control = this.requestForm.controls.requestDescription;
+    const before = control.value;
+
+    // Changing the description clears the old suggestions (see ngOnInit)
+    control.setValue(improved);
+    control.markAsDirty();
+
+    this.previousDescription.set(before);
+  }
+
+  undoWording(): void {
+
+    const before = this.previousDescription();
+
+    if (before === null) {
+      return;
+    }
+
+    this.requestForm.controls.requestDescription.setValue(before);
+  }
+
+  dismissHelp(): void {
+    this.helpResult.set(null);
   }
 
     // Leave without saving: go to the user's own home page (the same page they land on after login).

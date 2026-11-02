@@ -198,8 +198,11 @@
 }
 
 
-/* ---------- AI suggestion (type and priority) ---------- */
+/* ---------- AI help for the description ---------- */
 .ai-assist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   margin-top: 10px;
 }
 
@@ -207,7 +210,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 12px;
+  gap: 4px 16px;
 }
 
 .ai-link {
@@ -227,6 +230,20 @@
 .ai-link:disabled {
   color: #a1a1aa;
   cursor: not-allowed;
+}
+
+.ai-undo {
+  padding: 0;
+  border: none;
+  background: none;
+  color: #6d28d9;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ai-undo:hover {
+  text-decoration: underline;
 }
 
 .ai-muted {
@@ -275,9 +292,41 @@
   font-size: 13.5px;
 }
 
+.ai-subtitle {
+  margin: 10px 0 4px;
+  color: #5b21b6;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ai-list {
+  margin: 0 0 4px;
+  padding-left: 20px;
+  color: #4c1d95;
+  font-size: 13.5px;
+}
+
+.ai-list li {
+  margin-bottom: 2px;
+}
+
+.ai-wording {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border: 1px solid #ddd6fe;
+  border-radius: 8px;
+  background: #fff;
+  color: #1f2937;
+  font-size: 13.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .ai-card-actions {
   display: flex;
   gap: 10px;
+  margin-bottom: 4px;
 }
 
 .ai-apply-btn {

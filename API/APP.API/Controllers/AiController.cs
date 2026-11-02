@@ -16,13 +16,15 @@ namespace APP.API.Controllers
         private readonly RequestAiService _requestAiService;
         private readonly RequestSummaryAiService _summaryAiService;
         private readonly ReplyDraftAiService _replyDraftAiService;
+        private readonly DescriptionAssistAiService _descriptionAiService;
 
-        public AiController(AiService aiService,RequestAiService requestAiService,RequestSummaryAiService summaryAiService,ReplyDraftAiService replyDraftAiService)
+        public AiController(AiService aiService,RequestAiService requestAiService,RequestSummaryAiService summaryAiService,ReplyDraftAiService replyDraftAiService,DescriptionAssistAiService descriptionAiService)
         {
             _aiService = aiService;
             _requestAiService = requestAiService;
             _summaryAiService = summaryAiService;
             _replyDraftAiService = replyDraftAiService;
+            _descriptionAiService = descriptionAiService;
         }
 
         // GET: api/Ai/status
@@ -56,6 +58,31 @@ namespace APP.API.Controllers
 
             var response = await _requestAiService.ClassifyAsync(
                 dto.Description,
+                userId,
+                HttpContext.RequestAborted);
+
+            return Ok(response);
+        }
+
+        // POST: api/Ai/improve-description
+        // Points out missing details and offers clearer wording. Suggestion only.
+        [HttpPost("improve-description")]
+        [Authorize(Roles = "Admin,Employee")]
+        [EnableRateLimiting("ai")]
+        public async Task<ActionResult<ApiResponse<AiDescriptionHelpDto>>> ImproveDescription(ImproveDescriptionDto dto)
+        {
+            if (!int.TryParse(User.FindFirst("userId")?.Value, out int userId))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new ApiResponse<AiDescriptionHelpDto>
+                {
+                    Success = false,
+                    Message = "Invalid user."
+                });
+            }
+
+            var response = await _descriptionAiService.HelpAsync(
+                dto.Description,
+                dto.RequestType,
                 userId,
                 HttpContext.RequestAborted);
 
