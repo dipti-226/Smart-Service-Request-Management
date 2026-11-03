@@ -245,6 +245,23 @@ if (app.Environment.IsDevelopment())
 // HTTPS
 app.UseHttpsRedirection();
 
+// Angular (production): the built Angular app is copied into wwwroot when the app is deployed.
+// index.html is never cached, so a new deployment is picked up at once; the other files have a
+// hash in their name, so the browser can keep them.
+var staticFileOptions = new StaticFileOptions
+{
+    OnPrepareResponse = context =>
+    {
+        if (string.Equals(context.File.Name, "index.html", StringComparison.OrdinalIgnoreCase))
+        {
+            context.Context.Response.Headers.CacheControl = "no-cache";
+        }
+    }
+};
+
+app.UseDefaultFiles();
+app.UseStaticFiles(staticFileOptions);
+
 // CORS
 app.UseCors("AngularPolicy");
 
@@ -257,5 +274,23 @@ app.UseAuthorization();
 
 // Controllers
 app.MapControllers();
+
+// Health check (no database access, only shows that the app is running)
+app.MapGet("/health", () => Results.Ok(new { status = "Healthy" }));
+
+// An unknown /api/... address is a real 404 in the API's own response shape,
+// never the Angular page.
+app.MapFallback("/api/{**path}", () => Results.Json(
+    new ApiResponse<object>
+    {
+        Success = false,
+        Message = "The requested API endpoint was not found.",
+        ErrorCode = "NOT_FOUND",
+        Data = null
+    },
+    statusCode: StatusCodes.Status404NotFound));
+
+// Every other address that is not a file (/login, /dashboard, a page refresh) is an Angular route.
+app.MapFallbackToFile("index.html", staticFileOptions);
 
 app.Run();
