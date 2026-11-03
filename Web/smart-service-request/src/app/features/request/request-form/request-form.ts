@@ -7,7 +7,7 @@ import { map } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { AiService } from '../../../core/services/ai.service';
 import { RequestService } from '../../../core/services/request.service';
-import { AiDescriptionHelp, AiRequestClassification } from '../../../core/models/ai.model';
+import {AiDescriptionHelp,AiQuickTips,AiRequestClassification} from '../../../core/models/ai.model';
 import { REQUEST_TYPES } from '../../../core/models/request.model';
 import { REQUEST_PRIORITIES } from '../../../core/models/paged.model';
 import { VALIDATION } from '../../../core/validation/validation-rules';
@@ -75,6 +75,10 @@ export class RequestFormComponent implements OnInit {
     'The AI points out details a technician may need and offers clearer wording of your own text. ' +
     'Nothing changes until you click "Use this wording".';
 
+  readonly tipsHint =
+    'The AI suggests a few safe, simple things you can try yourself in a few minutes. ' +
+    'If they do not help, just submit your request.';
+
   // The description must have at least this many characters before the AI is asked
   readonly aiMinLength = 15;
 
@@ -84,6 +88,9 @@ export class RequestFormComponent implements OnInit {
   );
 
   aiEnabled = signal(false);
+
+  // The "Need help?" card: expanded or collapsed (only shows the three AI actions)
+  helpOpen = signal(false);
 
   // Suggested type and priority
   aiLoading = signal(false);
@@ -99,13 +106,30 @@ export class RequestFormComponent implements OnInit {
   // The description as it was before "Use this wording", so the change can be undone
   previousDescription = signal<string | null>(null);
 
+  // Safe things to try before submitting
+  tipsLoading = signal(false);
+  tipsResult = signal<AiQuickTips | null>(null);
+  tipsError = signal('');
+  tipsSolved = signal(false);
+
+    // True when the results section has anything to show (a result, a message or an error)
+  get hasAiOutput(): boolean {
+    return !!(this.aiResult() || this.helpResult() || this.tipsResult()
+      || this.aiError() || this.helpError() || this.tipsError()
+      || this.aiApplied() || this.tipsSolved() || this.previousDescription() !== null);
+  }
+
+  toggleHelp(): void {
+    this.helpOpen.update(open => !open);
+  }
+
   get hasEnoughText(): boolean {
     return this.descriptionTrimmedLength() >= this.aiMinLength;
   }
-
+  
   // One AI call at a time
   get aiBusy(): boolean {
-    return this.aiLoading() || this.helpLoading();
+    return this.aiLoading() || this.helpLoading() || this.tipsLoading();
   }
 
   get canSuggest(): boolean {
@@ -114,6 +138,11 @@ export class RequestFormComponent implements OnInit {
 
   get canImprove(): boolean {
     return this.hasEnoughText && !this.aiBusy;
+  }
+
+  // Tips are for before a request is submitted, so they are not offered when editing
+  get canShowTips(): boolean {
+    return !this.isEditMode() && this.hasEnoughText && !this.aiBusy;
   }
 
   ngOnInit(): void {
@@ -134,6 +163,9 @@ export class RequestFormComponent implements OnInit {
         this.helpResult.set(null);
         this.helpError.set('');
         this.previousDescription.set(null);
+        this.tipsResult.set(null);
+        this.tipsError.set('');
+        this.tipsSolved.set(false);
       });
 
     this.route.paramMap.subscribe(params => {
@@ -305,6 +337,63 @@ export class RequestFormComponent implements OnInit {
 
   dismissHelp(): void {
     this.helpResult.set(null);
+  }
+
+  // Asks the AI for a few safe things to try before submitting
+  showQuickTips(): void {
+
+    if (!this.canShowTips) {
+      return;
+    }
+
+    this.tipsLoading.set(true);
+    this.tipsError.set('');
+    this.tipsSolved.set(false);
+    this.tipsResult.set(null);
+
+    const value = this.requestForm.getRawValue();
+
+    this.aiService
+      .getQuickTips(value.requestDescription.trim(), value.requestType || null)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+
+        next: response => {
+
+          this.tipsLoading.set(false);
+
+          if (!response.success || !response.data) {
+            this.tipsError.set(response.message || 'The tips are not available right now.');
+            return;
+          }
+
+          this.tipsResult.set(response.data);
+        },
+
+        error: error => {
+
+          this.tipsLoading.set(false);
+
+          this.tipsError.set(
+            error?.status === 429
+              ? 'Too many AI requests. Please wait a minute and try again.'
+              : error?.error?.message || 'The tips are not available right now.'
+          );
+        }
+      });
+  }
+
+  dismissTips(): void {
+    this.tipsResult.set(null);
+  }
+
+  // The tips solved the problem: clear the form, no request is needed
+  solvedByTips(): void {
+
+    this.requestForm.reset({ requestType: '', requestDescription: '', priority: '', status: '' });
+
+    // reset() clears the old suggestions, so the message is set afterwards
+    this.tipsSolved.set(true);
   }
 
     // Leave without saving: go to the user's own home page (the same page they land on after login).

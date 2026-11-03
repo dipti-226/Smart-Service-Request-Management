@@ -263,6 +263,16 @@
   background: #f5f3ff;
 }
 
+.ai-card.warning {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.ai-card.warning .ai-card-title,
+.ai-card.warning .ai-reason {
+  color: #92400e;
+}
+
 .ai-card-title {
   color: #5b21b6;
   font-size: 12px;
@@ -310,6 +320,14 @@
   margin-bottom: 2px;
 }
 
+.ai-tips {
+  margin-top: 8px;
+}
+
+.ai-tips li {
+  margin-bottom: 4px;
+}
+
 .ai-wording {
   margin: 0 0 10px;
   padding: 10px 12px;
@@ -325,8 +343,13 @@
 
 .ai-card-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 4px;
+}
+
+.ai-card-actions-spaced {
+  margin-top: 10px;
 }
 
 .ai-apply-btn {
@@ -357,4 +380,148 @@
 
 .ai-dismiss-btn:hover {
   background: #f3f4f6;
+}
+
+/* ---------- Description + "Need help?" card ---------- */
+.desc-layout {
+  display: block;
+}
+
+.desc-layout.has-help {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 16px;
+  align-items: start;
+}
+
+.desc-main {
+  min-width: 0;
+}
+
+.help-card {
+  border: 1px solid #dbe4f3;
+  border-radius: 10px;
+  background: #f3f7fd;
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.help-card:hover,
+.help-card.open {
+  border-color: #bfd0ee;
+}
+
+.help-card.open {
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+}
+
+.help-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.help-card-head:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.3);
+  outline-offset: -3px;
+}
+
+.help-icon {
+  flex: none;
+  display: inline-flex;
+  color: #f59e0b;
+}
+
+.help-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.help-text strong {
+  font-size: 13.5px;
+  color: #111827;
+}
+
+.help-text span {
+  font-size: 12px;
+  line-height: 1.35;
+  color: #6b7280;
+}
+
+.help-arrow {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #2563eb;
+  color: #fff;
+  transition: transform 0.2s ease, background-color 0.15s ease;
+}
+
+.help-card-head:hover .help-arrow {
+  background: #1d4ed8;
+}
+
+.help-card.open .help-arrow {
+  transform: rotate(90deg);
+}
+
+.help-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 12px 12px;
+}
+
+.help-action {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.help-action:hover:not(:disabled) {
+  background: #f5f3ff;
+  border-color: #c4b5fd;
+  color: #5b21b6;
+}
+
+.help-action:disabled {
+  color: #a1a1aa;
+  background: #f9fafb;
+  cursor: not-allowed;
+}
+
+/* Results section (separate from the field) */
+.ai-assist {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed #e5e7eb;
+}
+
+@media (max-width: 640px) {
+  .desc-layout.has-help {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
 }

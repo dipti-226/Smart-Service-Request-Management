@@ -51,6 +51,18 @@ export interface AiDescriptionHelp {
   improvedDescription: string;
 }
 
+// A few safe things to try before submitting a request
+export interface AiQuickTips {
+  // true = the AI ran (the list may still be empty: nothing simple to try)
+  aiUsed: boolean;
+  // true = the description looks like a security matter, so no tips are given
+  securityConcern: boolean;
+  // A short remark: why there are no tips, or the security advice (empty otherwise)
+  note: string;
+  // 2 to 4 short, safe steps (empty when there is nothing simple to try)
+  tips: string[];
+}
+
 // A short summary of one request (Admin and Technician)
 export interface AiRequestSummary {
   // false = no summary (see note)

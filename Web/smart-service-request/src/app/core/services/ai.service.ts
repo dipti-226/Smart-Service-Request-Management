@@ -4,15 +4,7 @@ import { Observable, catchError, map, of, shareReplay } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
-import {
-  AiDescriptionHelp,
-  AiReplyDraft,
-  AiRequestClassification,
-  AiRequestSummary,
-  AiStatus,
-  AiTechnicianSuggestion,
-  ReplyDraftIntent
-} from '../models/ai.model';
+import {AiDescriptionHelp,AiQuickTips,AiReplyDraft,AiRequestClassification,AiRequestSummary,AiStatus,AiTechnicianSuggestion,ReplyDraftIntent} from '../models/ai.model';
 
 @Injectable({
   providedIn: 'root'
@@ -63,6 +55,17 @@ export class AiService {
   ): Observable<ApiResponse<AiDescriptionHelp>> {
     return this.http.post<ApiResponse<AiDescriptionHelp>>(
       `${environment.apiUrl}/Ai/improve-description`,
+      { description, requestType }
+    );
+  }
+
+  // A few safe things to try before submitting a request (suggestions only)
+  getQuickTips(
+    description: string,
+    requestType: string | null
+  ): Observable<ApiResponse<AiQuickTips>> {
+    return this.http.post<ApiResponse<AiQuickTips>>(
+      `${environment.apiUrl}/Ai/quick-tips`,
       { description, requestType }
     );
   }

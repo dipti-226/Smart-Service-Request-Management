@@ -17,14 +17,16 @@ namespace APP.API.Controllers
         private readonly RequestSummaryAiService _summaryAiService;
         private readonly ReplyDraftAiService _replyDraftAiService;
         private readonly DescriptionAssistAiService _descriptionAiService;
+        private readonly QuickTipsAiService _quickTipsAiService;
 
-        public AiController(AiService aiService,RequestAiService requestAiService,RequestSummaryAiService summaryAiService,ReplyDraftAiService replyDraftAiService,DescriptionAssistAiService descriptionAiService)
+        public AiController(AiService aiService,RequestAiService requestAiService,RequestSummaryAiService summaryAiService,ReplyDraftAiService replyDraftAiService,DescriptionAssistAiService descriptionAiService,QuickTipsAiService quickTipsAiService)
         {
             _aiService = aiService;
             _requestAiService = requestAiService;
             _summaryAiService = summaryAiService;
             _replyDraftAiService = replyDraftAiService;
             _descriptionAiService = descriptionAiService;
+            _quickTipsAiService = quickTipsAiService;
         }
 
         // GET: api/Ai/status
@@ -81,6 +83,31 @@ namespace APP.API.Controllers
             }
 
             var response = await _descriptionAiService.HelpAsync(
+                dto.Description,
+                dto.RequestType,
+                userId,
+                HttpContext.RequestAborted);
+
+            return Ok(response);
+        }
+
+        // POST: api/Ai/quick-tips
+        // A few safe things to try before submitting a request. Suggestion only.
+        [HttpPost("quick-tips")]
+        [Authorize(Roles = "Admin,Employee")]
+        [EnableRateLimiting("ai")]
+        public async Task<ActionResult<ApiResponse<AiQuickTipsDto>>> GetQuickTips(QuickTipsRequestDto dto)
+        {
+            if (!int.TryParse(User.FindFirst("userId")?.Value, out int userId))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new ApiResponse<AiQuickTipsDto>
+                {
+                    Success = false,
+                    Message = "Invalid user."
+                });
+            }
+
+            var response = await _quickTipsAiService.GetTipsAsync(
                 dto.Description,
                 dto.RequestType,
                 userId,
