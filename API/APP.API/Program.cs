@@ -276,7 +276,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Health check (no database access, only shows that the app is running)
-app.MapGet("/health", () => Results.Ok(new { status = "Healthy" }));
+app.MapGet("/health", () => Results.Ok(new { status = "Healthy", service = "DeskPilot" }));
 
 // An unknown /api/... address is a real 404 in the API's own response shape,
 // never the Angular page.
