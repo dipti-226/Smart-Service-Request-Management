@@ -1,0 +1,76 @@
+name: Deploy DeskPilot to MonsterASP
+
+on:
+  push:
+    branches:
+      - main
+
+# Only one production deployment at a time.
+# A newer push waits for the running deployment to finish; it never cancels it.
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  NG_CLI_ANALYTICS: "false"
+
+jobs:
+  build-and-deploy:
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: Web/smart-service-request/package-lock.json
+
+      - name: Install Angular dependencies
+        working-directory: Web/smart-service-request
+        run: npm ci
+
+      - name: Build Angular (production)
+        working-directory: Web/smart-service-request
+        run: npx ng build --configuration production
+
+      - name: Set up .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Copy Angular build into API wwwroot
+        shell: pwsh
+        run: |
+          $source = "Web/smart-service-request/dist/smart-service-request/browser"
+          $target = "API/APP.API/wwwroot"
+          if (-not (Test-Path "$source/index.html")) { throw "Angular build output not found: $source/index.html" }
+          New-Item -ItemType Directory -Force -Path $target | Out-Null
+          Copy-Item -Path "$source/*" -Destination $target -Recurse -Force
+
+      - name: Publish API (win-x86, framework-dependent)
+        run: dotnet publish API/APP.API/APP.API.csproj -c Release -o publish --runtime win-x86 --self-contained false
+
+      - name: Verify publish output
+        shell: pwsh
+        run: |
+          foreach ($file in @("publish/APP.API.dll", "publish/web.config", "publish/wwwroot/index.html")) {
+            if (-not (Test-Path $file)) { throw "Missing from publish output: $file" }
+          }
+
+      - name: Deploy to MonsterASP (Web Deploy)
+        uses: rasmusbuchholdt/simply-web-deploy@2.1.0
+        with:
+          website-name: ${{ secrets.WEBSITE_NAME }}
+          server-computer-name: ${{ secrets.SERVER_COMPUTER_NAME }}
+          server-username: ${{ secrets.SERVER_USERNAME }}
+          server-password: ${{ secrets.SERVER_PASSWORD }}
